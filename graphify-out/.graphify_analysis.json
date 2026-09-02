@@ -1,0 +1,208 @@
+{
+  "communities": {
+    "0": [
+      "eslint",
+      "eslint_js",
+      "eslint_plugin_react_hooks",
+      "eslint_plugin_react_refresh",
+      "globals",
+      "package_devdependencies",
+      "package_devdependencies_eslint",
+      "package_devdependencies_eslint_js",
+      "package_devdependencies_eslint_plugin_react_hooks",
+      "package_devdependencies_eslint_plugin_react_refresh",
+      "package_devdependencies_globals",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_typescript_eslint",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react_swc",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "typescript",
+      "typescript_eslint",
+      "vite",
+      "vitejs_plugin_react_swc"
+    ],
+    "1": [
+      "ref_es2023",
+      "ref_node",
+      "ref_vite_config_ts",
+      "tsconfig_node",
+      "tsconfig_node_compileroptions",
+      "tsconfig_node_compileroptions_allowimportingtsextensions",
+      "tsconfig_node_compileroptions_erasablesyntaxonly",
+      "tsconfig_node_compileroptions_lib",
+      "tsconfig_node_compileroptions_module",
+      "tsconfig_node_compileroptions_moduledetection",
+      "tsconfig_node_compileroptions_moduleresolution",
+      "tsconfig_node_compileroptions_noemit",
+      "tsconfig_node_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_node_compileroptions_nouncheckedsideeffectimports",
+      "tsconfig_node_compileroptions_nounusedlocals",
+      "tsconfig_node_compileroptions_nounusedparameters",
+      "tsconfig_node_compileroptions_skiplibcheck",
+      "tsconfig_node_compileroptions_strict",
+      "tsconfig_node_compileroptions_target",
+      "tsconfig_node_compileroptions_tsbuildinfofile",
+      "tsconfig_node_compileroptions_types",
+      "tsconfig_node_compileroptions_verbatimmodulesyntax",
+      "tsconfig_node_include"
+    ],
+    "2": [
+      "ref_src",
+      "ref_vite_client",
+      "tsconfig_app",
+      "tsconfig_app_compileroptions",
+      "tsconfig_app_compileroptions_allowimportingtsextensions",
+      "tsconfig_app_compileroptions_erasablesyntaxonly",
+      "tsconfig_app_compileroptions_jsx",
+      "tsconfig_app_compileroptions_module",
+      "tsconfig_app_compileroptions_moduledetection",
+      "tsconfig_app_compileroptions_moduleresolution",
+      "tsconfig_app_compileroptions_noemit",
+      "tsconfig_app_compileroptions_nofallthroughcasesinswitch",
+      "tsconfig_app_compileroptions_nouncheckedsideeffectimports",
+      "tsconfig_app_compileroptions_nounusedlocals",
+      "tsconfig_app_compileroptions_nounusedparameters",
+      "tsconfig_app_compileroptions_skiplibcheck",
+      "tsconfig_app_compileroptions_strict",
+      "tsconfig_app_compileroptions_target",
+      "tsconfig_app_compileroptions_tsbuildinfofile",
+      "tsconfig_app_compileroptions_types",
+      "tsconfig_app_compileroptions_usedefineforclassfields",
+      "tsconfig_app_compileroptions_verbatimmodulesyntax",
+      "tsconfig_app_include"
+    ],
+    "3": [
+      "emotion_react",
+      "emotion_styled",
+      "fontsource_roboto",
+      "mui_icons_material",
+      "mui_material",
+      "package_dependencies",
+      "package_dependencies_emotion_react",
+      "package_dependencies_emotion_styled",
+      "package_dependencies_fontsource_roboto",
+      "package_dependencies_mui_icons_material",
+      "package_dependencies_mui_material",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "react",
+      "react_dom"
+    ],
+    "4": [
+      "package",
+      "package_name",
+      "package_overrides",
+      "package_overrides_vite",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_preview",
+      "package_type",
+      "package_version"
+    ],
+    "5": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_es2022",
+      "tsconfig_app_compileroptions_lib"
+    ],
+    "6": [
+      "src_app",
+      "src_app_app",
+      "src_main"
+    ],
+    "7": [
+      "tsconfig",
+      "tsconfig_files",
+      "tsconfig_references"
+    ],
+    "8": [
+      "source_to_txt",
+      "source_to_txt_sh__entry"
+    ],
+    "9": [
+      "eslint_config"
+    ],
+    "10": [
+      "vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.08,
+    "1": 0.08695652173913043,
+    "2": 0.08695652173913043,
+    "3": 0.13333333333333333,
+    "4": 0.16666666666666666,
+    "5": 0.5,
+    "6": 1.0,
+    "7": 0.6666666666666666,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0
+  },
+  "gods": [
+    {
+      "id": "tsconfig_app_compileroptions",
+      "label": "compilerOptions",
+      "degree": 20
+    },
+    {
+      "id": "tsconfig_node_compileroptions",
+      "label": "compilerOptions",
+      "degree": 18
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 5
+    },
+    {
+      "id": "tsconfig_app_compileroptions_lib",
+      "label": "lib",
+      "degree": 4
+    },
+    {
+      "id": "package_dependencies_emotion_react",
+      "label": "@emotion/react",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_emotion_styled",
+      "label": "@emotion/styled",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_fontsource_roboto",
+      "label": "@fontsource/roboto",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_mui_icons_material",
+      "label": "@mui/icons-material",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_mui_material",
+      "label": "@mui/material",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_react",
+      "label": "react",
+      "degree": 2
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
