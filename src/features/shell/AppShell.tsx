@@ -1,8 +1,10 @@
 import { styled } from '@jfrader/ui';
 import { Outlet } from '@tanstack/react-router';
-import { SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT } from '../../config';
+import { Wordmark } from '../../components/Wordmark';
+import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT } from '../../config';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { LogoutButton } from '../auth/LogoutButton';
+import { useSessionExpiry } from '../auth/use-session-expiry';
 import { ContentRegion } from './ContentRegion';
 import { GroupLinks } from './GroupLinks';
 import { NavPalette } from './NavPalette';
@@ -79,10 +81,10 @@ const FootRow = styled.div(({ theme }) => ({
   gap: theme.space[2],
 }));
 
-const Wordmark = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
+const Mark = styled.div({ display: 'grid', minInlineSize: 0 });
+
+const Version = styled.span(({ theme }) => ({
   fontSize: theme.textSize.xs,
-  letterSpacing: '0.04em',
   color: theme.color.textSubtle,
 }));
 
@@ -124,6 +126,7 @@ export function AppShell() {
   const desktop = useDesktopShell();
   const palette = usePalette();
   const { node, pathname } = useShellNode();
+  useSessionExpiry();
   const content = (
     <ContentRegion screenKey={pathname}>
       <Outlet />
@@ -145,7 +148,10 @@ export function AppShell() {
             <RailFoot>
               <ThemeChoice />
               <FootRow>
-                <Wordmark>lightning-driver</Wordmark>
+                <Mark>
+                  <Wordmark />
+                  {APP_VERSION && <Version>App version {APP_VERSION}</Version>}
+                </Mark>
                 <LogoutButton />
               </FootRow>
             </RailFoot>

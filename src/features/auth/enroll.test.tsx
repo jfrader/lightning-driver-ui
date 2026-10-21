@@ -45,6 +45,13 @@ beforeEach(() => {
   );
 });
 
+/** Enrollment is a state of `/login` (P-2), opened from sign-in. */
+async function openEnrollment() {
+  const view = renderApp('/login');
+  await view.user.click(await screen.findByRole('button', { name: 'Enroll a passkey' }));
+  return view;
+}
+
 async function submitToken(view: ReturnType<typeof renderApp>, clicks: 1 | 2 = 1) {
   await view.user.type(await screen.findByLabelText(/^Enrollment token/), TOKEN);
   const create = screen.getByRole('button', { name: 'Create passkey' });
@@ -55,8 +62,7 @@ async function submitToken(view: ReturnType<typeof renderApp>, clicks: 1 | 2 = 1
 describe('passkey enrollment', () => {
   it('reaches enrollment from sign-in, registers a passkey with the host token and signs in', async () => {
     webauthn.startRegistration.mockResolvedValue(registration);
-    const view = renderApp('/login');
-    await view.user.click(await screen.findByRole('link', { name: 'Enroll a passkey' }));
+    const view = await openEnrollment();
 
     await submitToken(view);
 
@@ -76,7 +82,7 @@ describe('passkey enrollment', () => {
 
   it('starts one enrollment for a double-clicked submit', async () => {
     webauthn.startRegistration.mockResolvedValue(registration);
-    const view = renderApp('/enroll');
+    const view = await openEnrollment();
 
     await submitToken(view, 2);
 
@@ -87,20 +93,20 @@ describe('passkey enrollment', () => {
 
   it('reports a canceled passkey prompt and does not finish or retry', async () => {
     webauthn.startRegistration.mockRejectedValue(new DOMException('Not allowed', 'NotAllowedError'));
-    const view = renderApp('/enroll');
+    const view = await openEnrollment();
 
     await submitToken(view);
 
-    expect(await screen.findByText('Passkey request canceled. Nothing was sent.')).toBeInTheDocument();
+    expect(await screen.findByText('Passkey request canceled.')).toBeInTheDocument();
     expect(starts).toHaveLength(1);
     expect(finishes).toEqual([]);
     expect(screen.getByLabelText(/^Enrollment token/)).toHaveValue('');
-    expect(view.router.state.location.pathname).toBe('/enroll');
+    expect(view.router.state.location.pathname).toBe('/login');
   });
 
   it('reports an authenticator failure without finishing', async () => {
     webauthn.startRegistration.mockRejectedValue(new DOMException('Already registered', 'InvalidStateError'));
-    const view = renderApp('/enroll');
+    const view = await openEnrollment();
 
     await submitToken(view);
 
@@ -116,11 +122,12 @@ describe('passkey enrollment', () => {
         HttpResponse.json(safeError('enrollment_unavailable', 'This enrollment token is not valid.'), { status: 403 }),
       ),
     );
-    const view = renderApp('/enroll');
+    const view = await openEnrollment();
 
     await submitToken(view);
 
-    expect(await screen.findByText('This enrollment token is not valid.')).toBeInTheDocument();
+    expect(await screen.findByText('Enrollment is disabled on this host.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Enrollment token/)).toHaveValue('');
     expect(webauthn.startRegistration).not.toHaveBeenCalled();
     expect(finishes).toEqual([]);
   });

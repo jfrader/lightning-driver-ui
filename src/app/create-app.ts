@@ -10,7 +10,8 @@ import { createAppRouter, type AppRouter } from './router';
  * Query client policy: reads are cancelable and not retried automatically; mutations never
  * retry and never pause offline (`networkMode: 'always'` fails at once instead of queueing).
  * Nothing is persisted. A 401 for the current session drops every cached node read and returns
- * to sign-in; a 401 answering a request of an earlier session leaves the newer session alone.
+ * to sign-in with `Session ended.`; a 401 answering a request of an earlier session leaves the
+ * newer session alone.
  */
 export function createApp(history?: RouterHistory): { queryClient: QueryClient; router: AppRouter } {
   const onError = (error: unknown) => {
@@ -31,7 +32,11 @@ export function createApp(history?: RouterHistory): { queryClient: QueryClient; 
     queryClient.clear();
     const { pathname, href } = router.state.location;
     if (pathname === '/login') return;
-    void router.navigate({ to: '/login', search: { redirect: safeRedirectPath(href) }, replace: true });
+    void router.navigate({
+      to: '/login',
+      search: { redirect: safeRedirectPath(href), notice: 'session_ended' },
+      replace: true,
+    });
   }
 
   return { queryClient, router };

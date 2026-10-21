@@ -3,12 +3,14 @@ import type { Mock } from 'vitest';
 export interface WebauthnStubs {
   startAuthentication: Mock;
   startRegistration: Mock;
+  /** Defaults to a browser with WebAuthn. */
+  browserSupportsWebAuthn?: () => boolean;
 }
 
 /** Module factory for `vi.mock('@simplewebauthn/browser', …)`: real errors, stubbed ceremonies. */
 export async function webauthnModule(importOriginal: () => Promise<unknown>, stubs: WebauthnStubs) {
   const original = await importOriginal();
-  return { ...(original as object), ...stubs, browserSupportsWebAuthn: () => true };
+  return { ...(original as object), browserSupportsWebAuthn: () => true, ...stubs };
 }
 
 export const assertion = {

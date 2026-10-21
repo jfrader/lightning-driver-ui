@@ -7,7 +7,7 @@ import {
   type AuthenticationExtensionsClientInputs,
   type PublicKeyCredentialDescriptorJSON,
 } from '@simplewebauthn/browser';
-import { ApiError, ContractError, TransportError } from '../../api/errors';
+import { ApiError, ContractError, SessionEndedError, TransportError } from '../../api/errors';
 import type {
   AuthenticationChallenge,
   AuthenticationCredential,
@@ -89,7 +89,14 @@ export type PasskeyFailure = 'canceled' | 'unsupported' | 'failed';
 
 /** Classifies a browser passkey error. A canceled prompt is not an operation failure. */
 export function passkeyFailure(error: unknown): PasskeyFailure | null {
-  if (error instanceof ApiError || error instanceof TransportError || error instanceof ContractError) return null;
+  if (
+    error instanceof ApiError ||
+    error instanceof SessionEndedError ||
+    error instanceof TransportError ||
+    error instanceof ContractError
+  ) {
+    return null;
+  }
   if (error instanceof WebAuthnError && error.code === 'ERROR_CEREMONY_ABORTED') return 'canceled';
   const cause = error instanceof WebAuthnError ? error.cause : error;
   if (CANCELED_ERROR_NAMES.has(errorName(cause))) return 'canceled';

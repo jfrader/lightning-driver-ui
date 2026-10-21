@@ -14,7 +14,7 @@ export function LogoutButton({ variant = 'ghost' }: { variant?: 'ghost' | 'outli
     onSettled: () => {
       clearSessionCsrfToken();
       queryClient.clear();
-      void navigate({ to: '/login', search: { redirect: undefined }, replace: true });
+      void navigate({ to: '/login', search: { notice: 'signed_out' }, replace: true });
     },
   });
   return (

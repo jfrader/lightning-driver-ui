@@ -141,7 +141,7 @@ describe('a 401 from a previous session', () => {
 
     await view.user.click(screen.getByRole('button', { name: 'Sign out' }));
     await waitFor(() => expect(view.router.state.location.pathname).toBe('/login'));
-    await view.user.click(await screen.findByRole('button', { name: 'Sign in with passkey' }));
+    await view.user.click(await screen.findByRole('button', { name: 'Continue with passkey' }));
     // Sign-in lands on `/`, which opens the remembered node.
     await waitFor(() => expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab'));
     expect(await screen.findByText('500,000.123 sat')).toBeInTheDocument();

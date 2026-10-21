@@ -40,7 +40,7 @@ describe('passkey sign-in', () => {
     webauthn.startAuthentication.mockResolvedValue(assertion);
     const { user, router } = renderApp('/nodes/lnd-lab/payments');
 
-    await user.click(await screen.findByRole('button', { name: 'Sign in with passkey' }));
+    await user.click(await screen.findByRole('button', { name: 'Continue with passkey' }));
 
     expect(await screen.findByRole('heading', { name: 'Payments' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/nodes/lnd-lab/payments');
@@ -56,12 +56,12 @@ describe('passkey sign-in', () => {
     webauthn.startAuthentication.mockRejectedValue(canceledPasskey());
     const { user, router } = renderApp('/login');
 
-    await user.click(await screen.findByRole('button', { name: 'Sign in with passkey' }));
+    await user.click(await screen.findByRole('button', { name: 'Continue with passkey' }));
 
-    expect(await screen.findByText('Passkey request canceled. Nothing was sent.')).toBeInTheDocument();
+    expect(await screen.findByText('Passkey request canceled.')).toBeInTheDocument();
     expect(finishBodies).toEqual([]);
     expect(router.state.location.pathname).toBe('/login');
-    expect(screen.getByRole('button', { name: 'Sign in with passkey' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Continue with passkey' })).toBeEnabled();
   });
 
   it.each(['https://evil.example/steal', '//evil.example/steal', '/\\evil.example'])(
@@ -71,7 +71,7 @@ describe('passkey sign-in', () => {
       webauthn.startAuthentication.mockResolvedValue(assertion);
       const { user, router } = renderApp(`/login?redirect=${encodeURIComponent(redirect)}`);
 
-      await user.click(await screen.findByRole('button', { name: 'Sign in with passkey' }));
+      await user.click(await screen.findByRole('button', { name: 'Continue with passkey' }));
 
       expect(await screen.findByRole('heading', { name: 'Choose a node' })).toBeInTheDocument();
       expect(router.state.location.pathname).toBe('/');
@@ -96,7 +96,8 @@ describe('session loss', () => {
     await user.click(screen.getByRole('link', { name: 'Invoices' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
-    expect(router.state.location.search).toEqual({ redirect: '/nodes/lnd-lab/invoices' });
+    expect(router.state.location.search).toEqual({ redirect: '/nodes/lnd-lab/invoices', notice: 'session_ended' });
+    expect(await screen.findByText('Session ended.')).toBeInTheDocument();
     expect(queryClient.getQueryData(nodeKeys.summary('lnd-lab'))).toBeUndefined();
     expect(queryClient.getQueryData(nodeKeys.detail('lnd-lab', 'balances'))).toBeUndefined();
     expect(screen.queryByText('500,000.123 sat')).not.toBeInTheDocument();
