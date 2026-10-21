@@ -1,6 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import examples from '../../contract/examples.v1.json' with { type: 'json' };
-import { installSyntheticApi } from './synthetic-api';
+import { fixture, installSyntheticApi } from './synthetic-api';
 
 /** Touch targets on the phone layout. */
 const MIN_TOUCH_PX = 44;
@@ -38,7 +37,7 @@ async function hostAllows(page: Page, login: boolean, enrollment: boolean) {
   await page.route('**/api/v1/auth/bootstrap', (route) =>
     route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ ...examples.fixtures.bootstrap.value, login_available: login, enrollment_available: enrollment }),
+      body: JSON.stringify({ ...fixture('bootstrap'), login_available: login, enrollment_available: enrollment }),
     }),
   );
 }
@@ -68,7 +67,7 @@ for (const size of SIZES) {
       await hostAllows(page, true, true);
       await page.goto('/login');
 
-      const enroll = page.getByRole('button', { name: 'Enroll a passkey' });
+      const enroll = page.getByRole('button', { name: 'Enroll a sign-in method' });
       await expect(enroll).toBeVisible();
       await expectTouchTarget(page, enroll);
       await page.keyboard.press('Tab');
@@ -76,7 +75,7 @@ for (const size of SIZES) {
       await expectFocusRing(enroll);
       await page.keyboard.press('Enter');
 
-      await expect(page.getByRole('heading', { level: 1, name: 'Enroll a passkey' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Enroll' })).toBeVisible();
       await expect(page).toHaveURL(/\/login$/);
       const token = page.getByLabel(/^Enrollment token/);
       await expect(token).toBeFocused();
@@ -97,7 +96,7 @@ for (const size of SIZES) {
       await hostAllows(page, false, false);
       await page.goto('/login');
 
-      await expect(page.getByText('No passkey is enrolled.')).toBeVisible();
+      await expect(page.getByText('No sign-in method is enrolled.')).toBeVisible();
       await expect(page.getByText('api-server auth enrollment --config <path>')).toBeVisible();
       await expectTouchTarget(page, page.getByRole('button', { name: 'Reload' }));
       await expectNoHorizontalOverflow(page);

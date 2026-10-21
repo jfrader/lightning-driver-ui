@@ -1,9 +1,16 @@
 import type { Page, Route } from '@playwright/test';
+import type { EventTemplate } from 'nostr-tools/pure';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
+import { EXAMPLE_GAPS } from '../../src/test/example-gaps';
+import { SYNTHETIC_NOSTR_PUBKEY, SYNTHETIC_NPUB, isSignedTemplate } from './nostr-signer';
 
 type Fixtures = (typeof examples)['fixtures'];
-const fixture = <T extends keyof Fixtures>(name: T): Fixtures[T]['value'] =>
-  structuredClone(examples.fixtures[name].value);
+const gaps: Partial<Record<keyof Fixtures, object>> = EXAMPLE_GAPS;
+/** A frozen contract fixture with the fields the frozen examples still lack. */
+export const fixture = <T extends keyof Fixtures>(name: T): Fixtures[T]['value'] => ({
+  ...structuredClone(examples.fixtures[name].value),
+  ...gaps[name],
+});
 
 /** Inside the fixtures' review window (reviews expire 12:05Z). */
 export const FIXTURE_NOW = new Date('2026-10-21T12:01:00Z');
@@ -76,12 +83,63 @@ export interface RecordedRequest {
 const json = (route: Route, body: unknown, status = 200) =>
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
+const ORIGIN = 'https://manager.example.invalid';
+const NOSTR_CHALLENGE_ID = '00000000-0000-4000-8000-000000000a01';
+
+function safeError(code: string, message: string) {
+  return { error: { code, message, request_id: '00000000-0000-4000-8000-0000000009fd', operation_id: null, outcome: 'not_applicable' } };
+}
+
+/** A server-issued template; `binding` adds the purpose's extra tags (operation, digest). */
+function nostrChallenge(path: string, purpose: string, binding: string[][] = []) {
+  const url = `${ORIGIN}/api/v1${path}`;
+  const event: EventTemplate = {
+    kind: 27235,
+    created_at: Math.floor(FIXTURE_NOW.getTime() / 1000),
+    tags: [['u', url], ['method', 'POST'], ['challenge', 'c'.repeat(64)], ['purpose', purpose], ...binding],
+    content: '',
+  };
+  return { challenge_id: NOSTR_CHALLENGE_ID, nonce: 'c'.repeat(64), expires_at: '2026-10-21T12:03:00Z', url, event };
+}
+
+function bodyField(body: unknown, key: string): unknown {
+  return typeof body === 'object' && body !== null ? Reflect.get(body, key) : undefined;
+}
+
+export interface SyntheticOptions {
+  /** The operator has the synthetic Nostr key enrolled, so sign-in offers Nostr. */
+  nostrIdentity?: boolean;
+}
+
 /**
  * Serves the frozen contract fixtures at the browser's network boundary and records every
  * non-GET request. Anything outside the app origin is aborted, so no external host is reached.
+ * Nostr events are verified for real against the template this server issued.
  */
-export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]> {
+export async function installSyntheticApi(page: Page, options: SyntheticOptions = {}): Promise<RecordedRequest[]> {
   const mutations: RecordedRequest[] = [];
+  let session: object = fixture('session');
+  const identities = options.nostrIdentity
+    ? [{ pubkey: SYNTHETIC_NOSTR_PUBKEY, npub: SYNTHETIC_NPUB, label: null, created_at: '2026-10-21T11:00:00Z', last_used_at: null }]
+    : [];
+  // The template the last Nostr start issued, and its purpose, keyed by the finish path it is valid for.
+  const issued = new Map<string, { event: EventTemplate; purpose: string }>();
+  const nostrSession = () => {
+    session = { ...session, auth_method: 'nostr', nostr_pubkey: SYNTHETIC_NOSTR_PUBKEY, csrf_token: 'SYNTHETIC_NOSTR_SESSION_CSRF' };
+    return session;
+  };
+  const finishAnswer: Record<string, () => unknown> = {
+    login: nostrSession,
+    enrollment: nostrSession,
+    link: () => ({ identity: identities[0] }),
+    unlink: () => ({ removed: true }),
+  };
+  /** The issued template for `path`, once, if `event` is a real signature over it. */
+  const consumeSigned = (path: string, event: unknown) => {
+    const challenge = issued.get(path);
+    issued.delete(path);
+    return challenge && isSignedTemplate(event, challenge.event) ? challenge : null;
+  };
   // Counts the one unresolved operation the journal list serves.
   const node = { ...fixture('node_lnd'), unresolved_operation_count: '1' };
   const page$ = (nodeId: string) => ({ node_id: nodeId, network: node.network, observed_at: '2026-10-21T12:00:00Z' });
@@ -94,11 +152,26 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
     if (request.method() !== 'GET') {
       mutations.push({ method: request.method(), path, body: request.postDataJSON() });
     }
-    const [, resource, nodeId, sub, operationId, action] = path.split('/');
+    const [, resource, nodeId, sub, operationId, action, signer, step] = path.split('/');
 
-    if (path === '/auth/bootstrap') return json(route, fixture('bootstrap'));
+    if (path === '/auth/bootstrap') {
+      return json(route, { ...fixture('bootstrap'), nostr_login_available: identities.length > 0 });
+    }
     if (path === '/session' && request.method() === 'DELETE') return route.fulfill({ status: 204 });
-    if (path === '/session') return json(route, fixture('session'));
+    if (path === '/session') return json(route, session);
+    if (path === '/auth/nostr/identities') return json(route, { identities, passkey_count: 1 });
+    if (path === '/auth/nostr/start' && request.method() === 'POST') {
+      const purpose = String(bodyField(request.postDataJSON(), 'purpose'));
+      const target = bodyField(request.postDataJSON(), 'pubkey');
+      const challenge = nostrChallenge('/auth/nostr/finish', purpose, typeof target === 'string' ? [['target', target]] : []);
+      issued.set('/auth/nostr/finish', { event: challenge.event, purpose });
+      return json(route, challenge);
+    }
+    if (path === '/auth/nostr/finish' && request.method() === 'POST') {
+      const challenge = consumeSigned(path, bodyField(request.postDataJSON(), 'event'));
+      const answer = challenge ? finishAnswer[challenge.purpose] : undefined;
+      return answer ? json(route, answer()) : json(route, safeError('authentication_failed', 'Authentication failed.'), 401);
+    }
     if (path === '/config') return json(route, fixture('public_policy'));
     if (path === '/nodes') return json(route, { ...fixture('nodes_page'), items: [node], next_cursor: null, truncated: false });
     if (resource !== 'nodes' || nodeId !== node.id) return json(route, { error: { code: 'not_found', message: 'Not found.', request_id: '00000000-0000-4000-8000-0000000009fe', operation_id: null, outcome: 'not_applicable' } }, 404);
@@ -117,6 +190,28 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
       const body: unknown = request.postDataJSON();
       const kind = typeof body === 'object' && body !== null && 'kind' in body ? body.kind : null;
       return isKind(kind) ? json(route, operation(kind), 201) : route.abort();
+    }
+    if (sub === 'operations' && action === 'authorize' && signer === 'nostr' && request.method() === 'POST') {
+      const reviewed = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
+      if (!reviewed) return route.abort();
+      const finishPath = `${path.replace(/\/finish$/, '')}/finish`;
+      const grant = {
+        ...fixture('operation_authorization'),
+        operation_id: reviewed.id,
+        node_id: reviewed.node_id,
+        review_digest: reviewed.review.digest,
+      };
+      if (step === undefined) {
+        const challenge = nostrChallenge(finishPath, 'operation', [
+          ['operation', reviewed.id],
+          ['digest', reviewed.review.digest],
+        ]);
+        issued.set(finishPath, { event: challenge.event, purpose: 'operation' });
+        return json(route, { status: 'challenge_required', challenge });
+      }
+      return consumeSigned(finishPath, bodyField(request.postDataJSON(), 'event'))
+        ? json(route, grant)
+        : json(route, safeError('authentication_failed', 'Authentication failed.'), 409);
     }
     if (sub === 'operations' && action === 'authorize' && request.method() === 'POST') {
       // A recent-mode grant bound to this operation: the real step-up path, without a browser prompt.

@@ -5,10 +5,16 @@ import {
   AuthorizationStart,
   ConfirmOperationRequest,
   CreateOperationRequest,
+  NostrAuthorizationStart,
   Operation,
   OperationAuthorization,
 } from './generated/validators';
-import type { AuthenticationCredential, CreateOperationRequest as CreateRequest, Operation as Op } from './types';
+import type {
+  AuthenticationCredential,
+  CreateOperationRequest as CreateRequest,
+  NostrEvent,
+  Operation as Op,
+} from './types';
 
 function expectOperation(path: string, nodeId: string, operationId: string | null, operation: Op): Op {
   expectNode(path, nodeId, operation.node_id, operation);
@@ -64,6 +70,32 @@ export function finishOperationAuthorization(
   return apiRequest({
     method: 'POST',
     path: nodePath(nodeId, 'operations', operationId, 'authorize', 'finish'),
+    body,
+    response: OperationAuthorization,
+    signal,
+  });
+}
+
+/** Nostr step-up for a Nostr session: an operation-bound event template, or a recent-auth grant. */
+export function startNostrAuthorization(nodeId: string, operationId: string, reviewDigest: string, signal?: AbortSignal) {
+  return apiRequest({
+    method: 'POST',
+    path: nodePath(nodeId, 'operations', operationId, 'authorize', 'nostr'),
+    body: { review_digest: reviewDigest },
+    response: NostrAuthorizationStart,
+    signal,
+  });
+}
+
+export function finishNostrAuthorization(
+  nodeId: string,
+  operationId: string,
+  body: { challenge_id: string; review_digest: string; event: NostrEvent },
+  signal?: AbortSignal,
+) {
+  return apiRequest({
+    method: 'POST',
+    path: nodePath(nodeId, 'operations', operationId, 'authorize', 'nostr', 'finish'),
     body,
     response: OperationAuthorization,
     signal,

@@ -12,6 +12,7 @@ import { Amount } from '../display/Amount';
 import { AmountRange } from '../display/AmountRange';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
+import { useAuthMethod } from '../auth/use-auth-method';
 import { BACKEND_LABEL, REAUTH_LABEL, syncLabel } from '../nodes/labels';
 
 const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono }));
@@ -55,6 +56,7 @@ function NodeFacts({ node }: { node: NodeSummary }) {
 function PolicyFacts({ node }: { node: NodeSummary }) {
   const policy = useQuery(nodePolicyQueryOptions(node.id));
   const reauth = useSuspenseQuery(publicPolicyQueryOptions).data.reauth;
+  const method = useAuthMethod();
   const payBounds = policy.data?.pay_invoice_msat;
   return (
     <Section title="Policy">
@@ -78,7 +80,7 @@ function PolicyFacts({ node }: { node: NodeSummary }) {
               numeric: true,
               value: policy.data ? <Amount value={policy.data.max_routing_fee_msat} unit="msat" /> : <NotReported>…</NotReported>,
             },
-            { label: 'Confirmation', numeric: true, value: REAUTH_LABEL[reauth.mode] },
+            { label: 'Confirmation', numeric: true, value: REAUTH_LABEL[method][reauth.mode] },
           ]}
         />
       )}

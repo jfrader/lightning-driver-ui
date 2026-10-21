@@ -16,7 +16,7 @@ vi.mock('@simplewebauthn/browser', async (importOriginal) =>
 const fact = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling;
 
 describe('More (screens spec §5)', () => {
-  it('holds theme, unit, session and sign out, in that order and nothing else', async () => {
+  it('holds theme, unit, session, sign-in methods and sign out, in that order and nothing else', async () => {
     renderApp('/more');
     await screen.findByRole('heading', { name: 'More' });
     const main = screen.getByRole('main');
@@ -26,11 +26,12 @@ describe('More (screens spec §5)', () => {
       'Theme',
       'Amount unit',
       'Session',
+      'Sign-in methods',
     ]);
     expect(within(main).getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
     expect(within(main).getByRole('radiogroup', { name: 'Display unit' })).toBeInTheDocument();
     expect(within(main).getAllByRole('radiogroup')).toHaveLength(2);
-    expect(within(main).getAllByRole('button').map((button) => button.textContent)).toEqual(['Sign out']);
+    expect(within(main).getAllByRole('button').map((button) => button.textContent)).toEqual(['Link Nostr', 'Sign out']);
     expect(within(main).queryAllByRole('link')).toEqual([]);
     // 0.0.0 is the scaffold placeholder; it must not be printed as a version.
     expect(within(main).queryByText(/App version/)).not.toBeInTheDocument();
@@ -39,6 +40,7 @@ describe('More (screens spec §5)', () => {
   it('reads the session in UTC, with the absolute end relative to now', async () => {
     renderApp('/more');
     await waitFor(() => expect(fact('Signed in')).toHaveTextContent('Oct 21, 2026, 12:00:00 UTC'));
+    expect(fact('Signed in with')).toHaveTextContent('Passkey');
     expect(fact('Session ends')).toHaveTextContent('Oct 21, 2026, 20:00:00 UTC · in 8 hours');
     expect(fact('Ends if idle')).toHaveTextContent('Oct 21, 2026, 12:15:00 UTC');
     expect(fact('Confirmation')).toHaveTextContent('Passkey for every payment');

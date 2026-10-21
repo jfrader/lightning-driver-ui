@@ -72,7 +72,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
     const view = renderApp('/login');
     expect(await screen.findByRole('button', { name: 'Continue with passkey' })).toBeEnabled();
     expect(screen.getByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Enroll a passkey' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enroll a sign-in method' })).not.toBeInTheDocument();
     expect(view.container.querySelectorAll('input')).toHaveLength(0);
     expect(screen.queryByText(/password|one-time|TOTP/i)).not.toBeInTheDocument();
   });
@@ -80,9 +80,9 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
   it('L2 → enrollment and back: focus follows the operator, no route change', async () => {
     hostAllows(true, true);
     const view = renderApp('/login');
-    await view.user.click(await screen.findByRole('button', { name: 'Enroll a passkey' }));
+    await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Enroll a passkey' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Enrollment token/)).toHaveFocus();
     expect(view.router.state.location.pathname).toBe('/login');
 
@@ -93,7 +93,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
   it('L3: enrollment without sign-in has no way back to a sign-in that cannot work', async () => {
     hostAllows(false, true);
     renderApp('/login');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Enroll a passkey' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back to sign in' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Continue with passkey' })).not.toBeInTheDocument();
   });
@@ -101,7 +101,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
   it('L4: no passkey and no enrollment names the host command; Reload reads the host again', async () => {
     const host = hostAllows(false, false);
     const view = renderApp('/login');
-    expect(await screen.findByText('No passkey is enrolled.')).toBeInTheDocument();
+    expect(await screen.findByText('No sign-in method is enrolled.')).toBeInTheDocument();
     expect(pane()).toHaveTextContent(`Run ${HOST_COMMAND} on the host, then reload this page.`);
     expect(screen.queryByRole('button', { name: 'Continue with passkey' })).not.toBeInTheDocument();
 

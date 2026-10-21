@@ -111,6 +111,14 @@ export function checkEnrollmentToken(text: string): Checked<string> {
     : fail('Enter the full token from the host.');
 }
 
+const HEX_ENROLLMENT_TOKEN = /^[0-9a-f]{64}$/;
+
+/** The host token as Nostr enrollment carries it: the contract's 64 lowercase hex characters. */
+export function checkHexEnrollmentToken(text: string): Checked<string> {
+  const token = text.trim();
+  return HEX_ENROLLMENT_TOKEN.test(token) ? { ok: true, value: token } : fail('Enter the full token from the host.');
+}
+
 /** The policy amount range as words, e.g. for a field description. */
 export function rangeText(bounds: AmountBounds, unit: WireUnit, display: AmountEntry['unit']): string {
   return `${formatMsat(wireToMsat(bounds.min, unit), display)} to ${formatMsat(wireToMsat(bounds.max, unit), display)}`;

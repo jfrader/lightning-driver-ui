@@ -3,9 +3,10 @@ import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import type { NodeSummary, Operation, OperationKind } from '../../api/types';
 import { TABLE_MEDIA } from '../../config';
 import { useNow } from '../../lib/use-now';
-import { PasskeyError } from '../auth/PasskeyError';
+import { SignerError } from '../auth/SignerError';
+import { useAuthMethod } from '../auth/use-auth-method';
 import { confirmBlockReason } from './confirm-block';
-import { CONFIRM_LABEL } from './labels';
+import { confirmLabel } from './labels';
 import { FormLink } from './review/kind-links';
 
 /** The destructive kinds' primary action is danger-toned; there is no accent on those reviews. */
@@ -28,12 +29,14 @@ interface ConfirmPanelProps {
 }
 
 /**
- * Explicit confirmation of one awaiting review. Sensitive kinds require a passkey step-up. The
+ * Explicit confirmation of one awaiting review. Sensitive kinds require a step-up with the
+ * session's method: a passkey, or a Nostr signature. The
  * primary button is an ordinary focusable button: never autofocused, no shortcut, no hold gesture.
  */
 export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) {
   const now = useNow();
   const { confirm, isPending, error } = useConfirmOperation(operation);
+  const method = useAuthMethod();
   const blocked = confirmBlockReason(operation, node, now);
 
   if (blocked) {
@@ -51,11 +54,11 @@ export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) 
     <Flex direction="column" gap="sm">
       <Actions>
         <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" loading={isPending} onClick={confirm}>
-          {CONFIRM_LABEL[operation.request.kind]}
+          {confirmLabel(operation, method)}
         </Button>
         {secondary?.(isPending)}
       </Actions>
-      {error !== null && !(error instanceof UnansweredConfirmationError) && <PasskeyError error={error} />}
+      {error !== null && !(error instanceof UnansweredConfirmationError) && <SignerError error={error} />}
     </Flex>
   );
 }

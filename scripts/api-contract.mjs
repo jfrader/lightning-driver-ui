@@ -49,7 +49,39 @@ const VALIDATED_SCHEMAS = [
   'Operation',
   'OperationsPage',
   'ErrorResponse',
+  'NostrChallenge',
+  'NostrEvent',
+  'NostrIdentityResponse',
+  'NostrRemoved',
+  'NostrAuthorizationStart',
 ];
+
+// Success bodies the contract declares inline rather than as a named schema: validator name to
+// the operationId whose 200 JSON response it checks.
+const VALIDATED_RESPONSES = {
+  NostrIdentities: 'listNostrIdentities',
+};
+
+function operationResponseSchema(document, operationId) {
+  for (const item of Object.values(document.paths)) {
+    for (const operation of Object.values(item)) {
+      if (operation?.operationId === operationId) return operation.responses['200'].content['application/json'].schema;
+    }
+  }
+  throw new Error(`No operation ${operationId} in the contract`);
+}
+
+// A response schema compiled on its own resolves the contract's local refs against the contract.
+function withContractRefs(schema) {
+  if (Array.isArray(schema)) return schema.map(withContractRefs);
+  if (typeof schema !== 'object' || schema === null) return schema;
+  return Object.fromEntries(
+    Object.entries(schema).map(([key, value]) => [
+      key,
+      key === '$ref' && typeof value === 'string' && value.startsWith('#/') ? `${CONTRACT_ID}${value}` : withContractRefs(value),
+    ]),
+  );
+}
 
 async function readFrozen(url, expectedSha) {
   const bytes = await readFile(url);
@@ -103,14 +135,20 @@ async function generate() {
   ajv.addKeyword('discriminator');
   ajv.addKeyword('components');
   ajv.addSchema({ $id: CONTRACT_ID, components: { schemas: document.components.schemas } });
-  const refs = Object.fromEntries(
-    VALIDATED_SCHEMAS.map((name) => [name, `${CONTRACT_ID}#/components/schemas/${name}`]),
-  );
+  const responseRefs = Object.entries(VALIDATED_RESPONSES).map(([name, operationId]) => {
+    const id = `${CONTRACT_ID}/responses/${operationId}`;
+    ajv.addSchema({ $id: id, ...withContractRefs(operationResponseSchema(document, operationId)) });
+    return [name, id];
+  });
+  const refs = Object.fromEntries([
+    ...VALIDATED_SCHEMAS.map((name) => [name, `${CONTRACT_ID}#/components/schemas/${name}`]),
+    ...responseRefs,
+  ]);
   const validatorsJs = HEADER + (await bundleForBrowser(standaloneCode(ajv, refs)));
 
   const validatorsDts = [
     HEADER,
-    "import type { components } from './schema';",
+    "import type { components, operations } from './schema';",
     '',
     'export interface ContractValidator<T> {',
     '  (data: unknown): data is T;',
@@ -119,6 +157,10 @@ async function generate() {
     '',
     ...VALIDATED_SCHEMAS.map(
       (name) => `export declare const ${name}: ContractValidator<components['schemas']['${name}']>;`,
+    ),
+    ...Object.entries(VALIDATED_RESPONSES).map(
+      ([name, operationId]) =>
+        `export declare const ${name}: ContractValidator<operations['${operationId}']['responses'][200]['content']['application/json']>;`,
     ),
     '',
   ].join('\n');
