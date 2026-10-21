@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Flex, TextField } from '@jfrader/ui';
+import { Flex } from '@jfrader/ui';
+import { FormTextField } from '../../components/FormTextField';
 import { ExactNumberField } from '../../components/ExactNumberField';
 import { createFieldError } from '../forms/create-errors';
 import { ReviewSubmit } from '../forms/ReviewSubmit';
@@ -44,7 +45,7 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
   return (
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
-        <TextField
+        <FormTextField
           label="Node public key"
           description="Paste pubkey@host:port to fill all fields."
           value={form.pubkey}
@@ -54,7 +55,7 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
           error={show(pubkey) ?? createFieldError(submit.error, 'peer', FIELDS)}
           required
         />
-        <TextField
+        <FormTextField
           label="Host"
           value={form.host}
           onValueChange={(value) => setForm((current) => ({ ...current, host: value }))}

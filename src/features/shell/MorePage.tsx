@@ -53,7 +53,7 @@ function SessionFacts() {
 export function MorePage() {
   return (
     <Flex direction="column" gap="lg">
-      <PageHeader title="More" />
+      <PageHeader title="More" level={1} />
       <Section title="Theme">
         <ThemeChoice />
       </Section>

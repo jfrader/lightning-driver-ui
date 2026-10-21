@@ -10,7 +10,7 @@ export function FleetPage() {
   const navigate = route.useNavigate();
   return (
     <Flex direction="column" gap="md">
-      <PageHeader title="Fleet" />
+      <PageHeader title="Fleet" level={1} />
       <FleetList cursor={cursor} onPage={(next) => void navigate({ search: { cursor: next } })} />
     </Flex>
   );

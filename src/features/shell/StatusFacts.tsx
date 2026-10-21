@@ -37,6 +37,7 @@ const Marker = styled.span<{ online: boolean }>(({ theme, online }) => ({
   blockSize: '0.5rem',
   borderRadius: '1px',
   backgroundColor: online ? theme.color.success : theme.color.warning,
+  forcedColorAdjust: 'none',
 }));
 
 interface StatusFactsProps {

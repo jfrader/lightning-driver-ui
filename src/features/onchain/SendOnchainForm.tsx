@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Flex, TextField } from '@jfrader/ui';
+import { Flex } from '@jfrader/ui';
+import { FormTextField } from '../../components/FormTextField';
 import type { NodePolicy } from '../../api/types';
 import { msatToWireSat } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
@@ -48,7 +49,7 @@ export function SendOnchainForm({ nodeId, policy }: SendOnchainFormProps) {
   return (
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
-        <TextField
+        <FormTextField
           label="Address"
           value={form.address}
           onValueChange={(value) => setForm((current) => ({ ...current, address: value }))}

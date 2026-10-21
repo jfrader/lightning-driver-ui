@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { SortableDataTable, styled, type SortState } from '@jfrader/ui';
-import { TABLE_QUERY } from '../config';
+import { TABLE_QUERY, TOUCH_TARGET } from '../config';
 import { useMediaQuery } from '../lib/use-media-query';
 
 export interface ResourceColumn<T> {
@@ -27,11 +27,26 @@ interface ResourceListProps<T> {
 
 const Rows = styled.ul({ listStyle: 'none', margin: 0, padding: 0 });
 
+/** Phone row: the link marked with ROW_PRIMARY_LINK covers the whole row as one touch target. */
 const Row = styled.li(({ theme }) => ({
+  position: 'relative',
   paddingBlock: theme.space[3],
   borderBlockEnd: `1px solid ${theme.color.borderSubtle}`,
   minInlineSize: 0,
   '&:last-of-type': { borderBlockEnd: 'none' },
+  '& [data-row-primary]': { whiteSpace: 'nowrap' },
+  '& [data-row-primary]::after': { content: '""', position: 'absolute', inset: 0 },
+  // The focus ring follows the target: the whole row.
+  '&:has([data-row-primary]:focus-visible)': { outline: `2px solid ${theme.color.focusRing}`, outlineOffset: theme.space[1] },
+  // Any other link in the row stays reachable above the row target, at touch size. Inline-block keeps
+  // the spaces inside the link text, which a flex box would drop.
+  '& a:not([data-row-primary])': {
+    position: 'relative',
+    zIndex: 1,
+    display: 'inline-block',
+    minBlockSize: TOUCH_TARGET,
+    lineHeight: TOUCH_TARGET,
+  },
 }));
 
 const Fields = styled.dl(({ theme }) => ({
@@ -53,7 +68,14 @@ const Field = styled.div({ display: 'contents' });
  */
 const HEADER_NO_WRAP = {
   headerCell: { css: { whiteSpace: 'nowrap' as const } },
-  cell: { css: { overflowWrap: 'normal' as const, wordBreak: 'normal' as const } },
+  cell: {
+    css: {
+      overflowWrap: 'normal' as const,
+      wordBreak: 'normal' as const,
+      // A row's open link is a short, often shortened identifier (`channel-…pening`): one token.
+      '& [data-row-primary]': { whiteSpace: 'nowrap' as const },
+    },
+  },
 };
 
 function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {

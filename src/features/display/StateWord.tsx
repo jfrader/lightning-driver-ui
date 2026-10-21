@@ -23,7 +23,14 @@ const Label = styled.span<{ tone: StateTone }>(({ theme, tone }) => ({
   fontWeight: tone === 'quiet' ? theme.fontWeight.regular : theme.fontWeight.medium,
 }));
 
-const Marker = styled.span({ inlineSize: '0.5rem', blockSize: '0.5rem', borderRadius: '1px', backgroundColor: 'currentColor' });
+/** The marker keeps its shape in forced colors (backgrounds are dropped there); the word carries the state. */
+const Marker = styled.span({
+  inlineSize: '0.5rem',
+  blockSize: '0.5rem',
+  borderRadius: '1px',
+  backgroundColor: 'currentColor',
+  forcedColorAdjust: 'none',
+});
 
 /** A resource state as a word with a marker; colour is never the only signal. */
 export function StateWord({ state }: { state: StateLabel }) {

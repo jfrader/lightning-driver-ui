@@ -5,10 +5,11 @@ import { DetailList } from '../../components/DetailList';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { LoadingState } from '../../components/LoadingState';
 import { Section } from '../../components/Section';
-import { TextLink } from '../../components/TextLink';
+import { ButtonLink } from '../../components/ButtonLink';
 import { UtcTime } from '../../components/UtcTime';
 import { Amount } from '../display/Amount';
 import { FeeRatio } from '../display/FeeRatio';
+import { useControlSize } from '../shell/use-shell-layout';
 import { PaymentState } from './PaymentState';
 
 const Note = styled.p(({ theme }) => ({ margin: 0, fontSize: theme.textSize.sm, color: theme.color.textMuted }));
@@ -25,6 +26,7 @@ interface NodePaymentRecordProps {
 export function NodePaymentRecord({ nodeId, paymentHash }: NodePaymentRecordProps) {
   const payments = useQuery(paymentsQueryOptions(nodeId, {}));
   const record = payments.data?.items.find((item) => item.payment_hash === paymentHash);
+  const size = useControlSize();
   return (
     <Section title="Node payment record">
       {payments.isPending && <LoadingState label="Loading the node payment record" />}
@@ -45,9 +47,11 @@ export function NodePaymentRecord({ nodeId, paymentHash }: NodePaymentRecordProp
               { label: 'Recorded', value: <UtcTime value={record.created_at} /> },
             ]}
           />
-          <TextLink to="/nodes/$nodeId/payments" params={{ nodeId }} search={{ selected: paymentHash }}>
-            Open in Payments
-          </TextLink>
+          <div>
+            <ButtonLink to="/nodes/$nodeId/payments" params={{ nodeId }} search={{ selected: paymentHash }} size={size} variant="ghost">
+              Open in Payments
+            </ButtonLink>
+          </div>
         </>
       )}
     </Section>

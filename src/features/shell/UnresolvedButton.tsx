@@ -9,6 +9,7 @@ const Marker = styled.span(({ theme }) => ({
   blockSize: '0.5rem',
   borderRadius: '1px',
   backgroundColor: theme.color.warning,
+  forcedColorAdjust: 'none',
 }));
 
 /** Always present for a node: the count of operations whose outcome is not final, linked to them. */

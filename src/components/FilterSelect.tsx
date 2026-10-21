@@ -1,4 +1,5 @@
 import { Select } from '@jfrader/ui';
+import { useControlSize } from '../features/shell/use-shell-layout';
 import { isKeyOf, keysOf } from '../lib/guards';
 
 const ALL = 'all';
@@ -16,7 +17,7 @@ export function FilterSelect<T extends Record<string, string>>({ label, labels, 
   return (
     <Select
       label={label}
-      size="sm"
+      size={useControlSize()}
       options={options}
       value={value ?? ALL}
       onValueChange={(next) => onChange(isKeyOf(labels, next) ? next : undefined)}

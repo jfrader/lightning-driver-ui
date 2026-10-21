@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Accordion, CopyButton, styled } from '@jfrader/ui';
+import { CopyButton, styled } from '@jfrader/ui';
+import { Disclosure } from '../../components/Disclosure';
 import type { Invoice } from '../../api/types';
 import { DetailList, type DetailItem } from '../../components/DetailList';
 import { Section } from '../../components/Section';
@@ -82,7 +83,9 @@ export function InvoiceInspector({ invoice, now, close }: InvoiceInspectorProps)
         ) : (
           invoice.bolt11 === null && <Note>Invoice text not reported</Note>
         )}
-        <Accordion collapsible items={[{ value: 'technical', label: 'Technical details', panel: technical }]} />
+        <Disclosure value="technical" label="Technical details">
+          {technical}
+        </Disclosure>
       </Stack>
     </Section>
   );

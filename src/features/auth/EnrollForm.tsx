@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Flex, TextField } from '@jfrader/ui';
+import { Button, Flex } from '@jfrader/ui';
+import { FormTextField } from '../../components/FormTextField';
 import { useMutation } from '@tanstack/react-query';
 import type { Session } from '../../api/types';
 import { checkEnrollmentToken } from '../forms/validation';
@@ -50,7 +51,7 @@ export function EnrollForm({ onBack, onSession, autoFocus }: EnrollFormProps) {
   return (
     <form onSubmit={submit} noValidate>
       <Flex direction="column" gap="md">
-        <TextField
+        <FormTextField
           label="Enrollment token"
           type="text"
           description="Printed once by api-server auth enrollment on the host."
