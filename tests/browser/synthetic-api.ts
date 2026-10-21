@@ -117,6 +117,16 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
       const kind = typeof body === 'object' && body !== null && 'kind' in body ? body.kind : null;
       return isKind(kind) ? json(route, operation(kind), 201) : route.abort();
     }
+    if (sub === 'operations' && action === 'authorize' && request.method() === 'POST') {
+      // A recent-mode grant bound to this operation: the real step-up path, without a browser prompt.
+      const reviewed = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
+      if (!reviewed) return route.abort();
+      const grant = fixture('recent_authorize_start');
+      return json(route, {
+        ...grant,
+        authorization: { ...grant.authorization, operation_id: reviewed.id, node_id: reviewed.node_id, review_digest: reviewed.review.digest },
+      });
+    }
     if (sub === 'operations' && action === 'confirm') {
       const created = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
       return created ? json(route, { ...created, state: 'pending', stage: 'submitted' }, 202) : route.abort();

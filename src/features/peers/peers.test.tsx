@@ -34,7 +34,10 @@ describe('peers list', () => {
     renderApp(`/nodes/lnd-lab/peers?selected=${CONNECTED.pubkey}`);
     const inspector = await withinSection('Peer');
     expect(inspector.getByTitle(CONNECTED.pubkey)).toHaveTextContent(CONNECTED.pubkey);
-    expect(inspector.getByRole('link', { name: 'Open channel…' })).toHaveAttribute('href', '/nodes/lnd-lab/channels/new');
+    expect(inspector.getByRole('link', { name: 'Open channel…' })).toHaveAttribute(
+      'href',
+      `/nodes/lnd-lab/channels/new?peer=${CONNECTED.pubkey}`,
+    );
     expect(inspector.getByRole('button', { name: 'Disconnect peer…' })).toBeInTheDocument();
   });
 

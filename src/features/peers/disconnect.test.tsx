@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixture } from '../../test/fixtures';
@@ -28,22 +28,28 @@ beforeEach(() => {
   return () => server.events.removeAllListeners();
 });
 
-async function openDisconnectDialog(view: ReturnType<typeof renderApp>) {
+/** "Disconnect peer…" creates the review and opens it; the disconnect is confirmed there. */
+async function openDisconnectReview(view: ReturnType<typeof renderApp>) {
   await view.user.click(await screen.findByRole('button', { name: 'Disconnect peer…' }));
-  return within(await screen.findByRole('dialog'));
+  return within(await screen.findByRole('main'));
 }
 
+const CREATE_PATH = '/api/v1/nodes/lnd-lab/operations';
+
 describe('disconnect peer', () => {
-  it('disconnects after the short confirmation through one create and one low-risk confirm', async () => {
+  it('disconnects after the review through one create and one low-risk confirm', async () => {
     const calls = mockJournal({
       created: operation('disconnect_peer'),
       confirm: () => HttpResponse.json(operation('disconnect_peer', 'succeeded', 'completed', true)),
     });
     const view = renderApp(PEER_PATH('lnd-lab'));
-    const dialog = await openDisconnectDialog(view);
+    const review = await openDisconnectReview(view);
 
-    expect(dialog.getByText(PEER)).toBeInTheDocument();
-    await view.user.dblClick(dialog.getByRole('button', { name: 'Disconnect' }));
+    expect(await review.findByRole('heading', { name: 'Review disconnect' })).toBeInTheDocument();
+    expect(review.getByTitle(PEER)).toHaveTextContent(PEER);
+    expect(review.getByText('Channels with this peer are inactive while it is disconnected.')).toBeInTheDocument();
+    expect(calls.confirms).toEqual([]);
+    await view.user.dblClick(review.getByRole('button', { name: 'Disconnect' }));
 
     expect(await screen.findByText('Peer disconnected')).toBeInTheDocument();
     expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('disconnect_peer').id}`);
@@ -53,15 +59,15 @@ describe('disconnect peer', () => {
     ]);
   });
 
-  it('sends nothing when the confirmation is canceled', async () => {
+  it('confirms nothing when the review is left', async () => {
     mockJournal({ created: operation('disconnect_peer') });
     const view = renderApp(PEER_PATH('lnd-lab'));
-    const dialog = await openDisconnectDialog(view);
+    const review = await openDisconnectReview(view);
 
-    await view.user.click(dialog.getByRole('button', { name: 'Cancel' }));
+    await view.user.click(await review.findByRole('link', { name: '‹ Peers' }));
 
-    expect(posts).toEqual([]);
-    expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/peers');
+    await waitFor(() => expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/peers'));
+    expect(posts).toEqual([CREATE_PATH]);
   });
 
   it('offers no disconnect for a connected peer of a read-only node', async () => {

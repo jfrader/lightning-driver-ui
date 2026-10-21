@@ -52,12 +52,18 @@ export function PeerInspector({ peer, node, close }: PeerInspectorProps) {
         {peer.connected && (
           <Flex wrap gap="sm" align="start">
             <CapabilityAction node={node} capability="open_channel">
-              <ButtonLink to="/nodes/$nodeId/channels/new" params={{ nodeId: node.id }} size={size} variant="outline">
+              <ButtonLink
+                to="/nodes/$nodeId/channels/new"
+                params={{ nodeId: node.id }}
+                search={{ peer: peer.pubkey }}
+                size={size}
+                variant="outline"
+              >
                 Open channel…
               </ButtonLink>
             </CapabilityAction>
             <CapabilityAction node={node} capability="disconnect_peer">
-              <DisconnectPeerButton nodeId={node.id} nodeLabel={node.label} pubkey={peer.pubkey} />
+              <DisconnectPeerButton nodeId={node.id} pubkey={peer.pubkey} />
             </CapabilityAction>
           </Flex>
         )}

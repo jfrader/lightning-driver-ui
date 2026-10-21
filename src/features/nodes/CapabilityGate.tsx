@@ -1,28 +1,24 @@
 import type { ReactNode } from 'react';
 import { Alert, Flex } from '@jfrader/ui';
-import type { CapabilityKey, CapabilityReason, NodeSummary } from '../../api/types';
-import { ButtonLink } from '../../components/ButtonLink';
-import { CAPABILITY_REASON } from './labels';
+import type { CapabilityKey, NodeSummary } from '../../api/types';
+import { capabilityBlock, capabilityReasonText } from './labels';
 
 interface CapabilityGateProps {
   node: NodeSummary;
   capability: CapabilityKey;
+  /** The way back when the form cannot render, e.g. "Back to channels". */
+  back: ReactNode;
   children: ReactNode;
 }
 
-/** Guards a mutation flow route. Read-only and unavailable nodes never render the form. */
-export function CapabilityGate({ node, capability, children }: CapabilityGateProps) {
-  const state = node.capabilities[capability];
-  if (!node.read_only && state.enabled) return children;
-  const reason: CapabilityReason = node.read_only || state.enabled ? 'read_only' : state.reason;
+/** Guards a form route: a blocked action renders its reason and the way back, never any field. */
+export function CapabilityGate({ node, capability, back, children }: CapabilityGateProps) {
+  const reason = capabilityBlock(node, capability);
+  if (reason === null) return children;
   return (
     <Flex direction="column" gap="md" align="start">
-      <Alert tone={reason === 'read_only' ? 'info' : 'warning'} title={CAPABILITY_REASON[reason]}>
-        This action is not available for {node.label}.
-      </Alert>
-      <ButtonLink to="/nodes/$nodeId" params={{ nodeId: node.id }} variant="outline">
-        Back to node
-      </ButtonLink>
+      <Alert tone="info" title={capabilityReasonText(reason, node)} />
+      {back}
     </Flex>
   );
 }

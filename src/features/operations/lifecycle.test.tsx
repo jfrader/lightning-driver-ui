@@ -118,7 +118,7 @@ describe('leaving a review while its confirmation is in flight', () => {
     expect(calls.confirms).toEqual([]);
   });
 
-  it('does not confirm a low-risk review whose form was left while it was being created', async () => {
+  it('neither confirms nor opens a low-risk review whose form was left while it was being created', async () => {
     const calls = mockJournal({ created: operation('create_invoice') });
     const createGate = deferred<void>();
     server.use(
@@ -129,14 +129,15 @@ describe('leaving a review while its confirmation is in flight', () => {
     );
     const view = renderApp('/nodes/lnd-lab/invoices/new');
     await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
-    await view.user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await view.user.click(screen.getByRole('button', { name: 'Review invoice' }));
     const mutation = lastMutation(view);
 
     await view.router.navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: 'lnd-lab' } });
     createGate.resolve();
     await settled(mutation);
 
-    expect(mutation.state.status).toBe('error');
+    // The review was created on the server; the screen that asked for it is gone, so it is ignored.
+    expect(view.queryClient.getQueryData(nodeKeys.operation('lnd-lab', operation('create_invoice').id))).toBeUndefined();
     expect(calls.confirms).toEqual([]);
     expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/payments');
   });
@@ -164,8 +165,8 @@ describe('late answers after the session ends', () => {
       }),
     );
     const view = renderApp('/nodes/lnd-lab/payments/new');
-    await view.user.type(await screen.findByLabelText(/^Lightning invoice/), 'SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
-    await view.user.click(screen.getByRole('button', { name: 'Decode' }));
+    await view.user.type(await screen.findByLabelText(/^Invoice/), 'SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
+    await view.user.click(screen.getByRole('button', { name: 'Check invoice' }));
     await view.user.click(await screen.findByRole('button', { name: 'Review payment' }));
     const mutation = lastMutation(view);
 

@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import { Alert, Button, Flex, styled } from '@jfrader/ui';
-import type { NodeSummary, Operation } from '../../api/types';
+import type { NodeSummary, Operation, OperationKind } from '../../api/types';
 import { TABLE_MEDIA } from '../../config';
 import { useNow } from '../../lib/use-now';
 import { PasskeyError } from '../auth/PasskeyError';
 import { confirmBlockReason } from './confirm-block';
 import { CONFIRM_LABEL } from './labels';
-import { RestartLink } from './RestartLink';
+import { FormLink } from './review/kind-links';
+
+/** The destructive kinds' primary action is danger-toned; there is no accent on those reviews. */
+const DESTRUCTIVE: ReadonlySet<OperationKind> = new Set(['close_channel', 'disconnect_peer']);
 import { UnansweredConfirmationError } from './unanswered';
 import { useConfirmOperation } from './use-confirm-operation';
 
@@ -39,7 +42,7 @@ export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) 
         <Alert tone="warning" title={blocked}>
           Nothing was sent.
         </Alert>
-        {node && <RestartLink operation={operation} />}
+        {node && <FormLink operation={operation} label="Start a new review" />}
       </Flex>
     );
   }
@@ -47,7 +50,7 @@ export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) 
   return (
     <Flex direction="column" gap="sm">
       <Actions>
-        <Button tone="accent" variant="solid" size="lg" loading={isPending} onClick={confirm}>
+        <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" loading={isPending} onClick={confirm}>
           {CONFIRM_LABEL[operation.request.kind]}
         </Button>
         {secondary?.(isPending)}

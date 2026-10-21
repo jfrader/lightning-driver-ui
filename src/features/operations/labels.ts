@@ -88,7 +88,7 @@ export const CONFIRM_LABEL: Record<OperationKind, string> = {
   disconnect_peer: 'Disconnect',
   open_channel: 'Open channel with passkey',
   close_channel: 'Close channel with passkey',
-  new_address: 'Create address',
+  new_address: 'New address',
   send_onchain: 'Send with passkey',
 };
 

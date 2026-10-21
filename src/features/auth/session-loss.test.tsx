@@ -46,9 +46,16 @@ async function expectSignedOut(view: View) {
   expect(screen.queryByText('Open the review')).not.toBeInTheDocument();
 }
 
+/** The form only creates the review. */
 async function createInvoice(view: View) {
   await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
-  await view.user.click(screen.getByRole('button', { name: 'Create invoice' }));
+  await view.user.click(screen.getByRole('button', { name: 'Review invoice' }));
+}
+
+/** The low-risk confirm is the one explicit action on the invoice review. */
+async function createAndConfirmInvoice(view: View) {
+  await createInvoice(view);
+  await view.user.click(await screen.findByRole('button', { name: 'Create invoice' }));
 }
 
 describe('a 401 ends the current session wherever it arrives', () => {
@@ -56,7 +63,7 @@ describe('a 401 ends the current session wherever it arrives', () => {
     const calls = mockJournal({ created: operation('create_invoice'), confirm: unauthorized[label] });
     const view = renderApp('/nodes/lnd-lab/invoices/new');
 
-    await createInvoice(view);
+    await createAndConfirmInvoice(view);
 
     await expectSignedOut(view);
     expect(calls.creates).toHaveLength(1);
@@ -85,7 +92,7 @@ describe('a 401 ends the current session wherever it arrives', () => {
     await expectSignedOut(view);
   });
 
-  it('keeps showing a definite non-auth confirm error with the review link', async () => {
+  it('keeps showing a definite non-auth confirm error on the review, signed in', async () => {
     const calls = mockJournal({
       created: operation('create_invoice'),
       confirm: () =>
@@ -95,11 +102,11 @@ describe('a 401 ends the current session wherever it arrives', () => {
     });
     const view = renderApp('/nodes/lnd-lab/invoices/new');
 
-    await createInvoice(view);
+    await createAndConfirmInvoice(view);
 
     expect(await screen.findByText('Another operation holds this resource.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open the review' })).toBeInTheDocument();
-    expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/invoices/new');
+    expect(screen.getByRole('heading', { name: 'Review invoice' })).toBeInTheDocument();
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('create_invoice').id}`);
     expect(sessionCsrfToken()).toBe(FIRST_SESSION_CSRF);
     expect(calls.confirms).toHaveLength(1);
   });

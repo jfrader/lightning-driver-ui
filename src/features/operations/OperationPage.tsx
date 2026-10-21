@@ -1,19 +1,14 @@
-import { Flex } from '@jfrader/ui';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { operationQueryOptions } from '../../api/node-queries';
-import { ButtonLink } from '../../components/ButtonLink';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { LoadingState } from '../../components/LoadingState';
-import { PageHeader } from '../../components/PageHeader';
-import { Panel } from '../../components/Panel';
 import { publicPolicyQueryOptions } from '../auth/queries';
 import { useNodeLookup } from '../nodes/use-current-node';
 import { PaymentReview } from '../payments/review/PaymentReview';
-import { ConfirmPanel } from './ConfirmPanel';
-import { OPERATION_KIND, isInFlight } from './labels';
+import { isInFlight } from './labels';
 import { OperationDetail } from './OperationDetail';
-import { OperationReviewDetails } from './OperationReviewDetails';
+import { KindReview } from './review/KindReview';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations/$operationId');
 
@@ -45,21 +40,5 @@ export function OperationPage() {
   if (current.request.kind === 'pay_invoice') {
     return <PaymentReview key={current.id} operation={current} bolt11={current.request.params.bolt11} node={node} />;
   }
-  // The other kinds' reviews are rebuilt with their forms; until then they keep this layout.
-  return (
-    <Flex direction="column" gap="md">
-      <PageHeader
-        title={OPERATION_KIND[current.request.kind]}
-        actions={
-          <ButtonLink to="/nodes/$nodeId/operations" params={{ nodeId }} search={{}} variant="ghost">
-            All operations
-          </ButtonLink>
-        }
-      />
-      <Panel title="Review">
-        <OperationReviewDetails operation={current} />
-      </Panel>
-      <ConfirmPanel key={current.id} operation={current} node={node} />
-    </Flex>
-  );
+  return <KindReview key={current.id} operation={current} node={node} />;
 }
