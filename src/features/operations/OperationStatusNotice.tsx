@@ -1,39 +1,44 @@
-import { Alert } from '@jfrader/ui';
-import type { Operation } from '../../api/types';
+import { Alert, Flex, type AlertTone } from '@jfrader/ui';
+import type { Operation, OperationState } from '../../api/types';
+import { LastChecked } from './LastChecked';
+import { operationSentence } from './operation-sentence';
 
 interface OperationStatusNoticeProps {
   operation: Operation;
   unanswered: boolean;
 }
 
-/** What the operator may rely on right now. Unknown is never shown as a failure. */
+const TONE: Record<OperationState, AlertTone> = {
+  awaiting_confirmation: 'info',
+  dispatching: 'info',
+  pending: 'info',
+  unknown: 'warning',
+  succeeded: 'info',
+  failed: 'danger',
+  expired: 'info',
+};
+
+/**
+ * What the operator may rely on right now, with when the server last checked with the node. The
+ * state word lives in the page pill; this says what is known and what not to do. Unknown is never
+ * shown as a failure, and nothing here retries.
+ */
 export function OperationStatusNotice({ operation, unanswered }: OperationStatusNoticeProps) {
-  const { state, error } = operation;
-  if (unanswered && state === 'awaiting_confirmation') {
+  if (unanswered && operation.state === 'awaiting_confirmation') {
     return (
       <Alert tone="warning" title="No answer to the confirmation">
         Checking the status. Do not repeat this action until the status changes.
       </Alert>
     );
   }
-  if (state === 'unknown') {
-    return (
-      <Alert tone="warning" title="Outcome unknown">
-        The node may have acted. This page keeps checking. Do not repeat this action until it resolves.
-      </Alert>
-    );
-  }
-  if (state === 'dispatching' || state === 'pending') {
-    return <Alert tone="info" title="Pending">This page updates automatically.</Alert>;
-  }
-  if (state === 'failed') {
-    return <Alert tone="danger" title="Failed">{error?.message ?? 'The node reported a failure.'}</Alert>;
-  }
-  if (state === 'expired') {
-    return <Alert tone="info" title="Review expired">Nothing was sent.</Alert>;
-  }
-  if (state === 'succeeded' && operation.stage === 'broadcast') {
-    return <Alert tone="info" title="Broadcast">Not confirmed on chain yet.</Alert>;
-  }
-  return null;
+  const sentence = operationSentence(operation);
+  if (sentence === null) return null;
+  return (
+    <Alert tone={TONE[operation.state]}>
+      <Flex direction="column" gap="xs">
+        <span>{sentence}</span>
+        <LastChecked at={operation.last_reconciled_at} />
+      </Flex>
+    </Alert>
+  );
 }

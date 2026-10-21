@@ -12,9 +12,11 @@ const MUTATION_ENTRIES = [
   'Send on-chain',
   'Send',
   'Open channel',
+  'Open channel…',
   'Connect peer',
   'Disconnect',
   'Close',
+  'Close channel…',
 ];
 
 let operationPosts = 0;

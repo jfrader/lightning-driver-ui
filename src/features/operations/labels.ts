@@ -51,6 +51,25 @@ export const OPERATION_STAGE: Record<OperationStage, string> = {
   completed: 'Completed',
 };
 
+/** Operation screen title: `{noun} operation`. */
+export const OPERATION_NOUN: Record<OperationKind, string> = {
+  create_invoice: 'Invoice',
+  pay_invoice: 'Payment',
+  connect_peer: 'Connect peer',
+  disconnect_peer: 'Disconnect peer',
+  open_channel: 'Channel open',
+  close_channel: 'Channel close',
+  new_address: 'Address',
+  send_onchain: 'On-chain send',
+};
+
+export const AUTHORIZATION_STATUS: Record<Operation['authorization']['status'], string> = {
+  not_required: 'Not required',
+  required: 'Passkey required',
+  authorized: 'Passkey approved, not yet used',
+  consumed: 'Passkey approved and used',
+};
+
 const SUCCESS_LABEL: Record<OperationKind, string> = {
   create_invoice: 'Invoice created',
   pay_invoice: 'Paid',

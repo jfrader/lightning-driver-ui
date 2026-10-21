@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
-import { openTechnicalDetails, withinPanel } from '../../test/queries';
+import { openTechnicalDetails, withinSection } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, server, writableNode } from '../../test/server';
 
@@ -52,10 +52,11 @@ describe('history of a node that is no longer configured', () => {
     expect(await screen.findByText('This node is not configured')).toBeInTheDocument();
     await user.click(await screen.findByRole('link', { name: 'Pay invoice' }));
 
-    const review = await withinPanel('Review');
-    expect(review.getByText('Node').nextElementSibling).toHaveTextContent(FORMER_ID);
-    expect(review.getByText('Network').nextElementSibling).toHaveTextContent('Testnet');
-    expect(review.getByText('Node public key').nextElementSibling).toHaveTextContent(FORMER_PUBKEY);
+    const review = await withinSection('Reviewed payment');
+    expect(review.getByText('From').nextElementSibling).toHaveTextContent(FORMER_ID);
+    expect(review.getByText('From').nextElementSibling).toHaveTextContent('Testnet');
+    await openTechnicalDetails(user);
+    expect(screen.getByText('Node public key').nextElementSibling).toHaveTextContent(FORMER_PUBKEY);
     expect(screen.getAllByText('Outcome unknown').length).toBeGreaterThan(0);
   });
 

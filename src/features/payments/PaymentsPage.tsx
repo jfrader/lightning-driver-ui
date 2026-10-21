@@ -102,7 +102,7 @@ export function PaymentsPage() {
               now={now}
               close={
                 <TextLink from="/nodes/$nodeId/payments" search={(previous) => ({ ...previous, selected: undefined })}>
-                  Close
+                  Hide
                 </TextLink>
               }
             />

@@ -22,6 +22,13 @@ export function hashParam(value: unknown): string | undefined {
   return typeof value === 'string' && HASH32.test(value) ? value : undefined;
 }
 
+const RESOURCE_ID_MAX_LENGTH = 256;
+
+/** An opaque resource id from the server (channel id), or nothing. */
+export function resourceIdParam(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 && value.length <= RESOURCE_ID_MAX_LENGTH ? value : undefined;
+}
+
 export const SORT_DIRECTIONS = { asc: 'Ascending', desc: 'Descending' } as const;
 export type SortDirection = keyof typeof SORT_DIRECTIONS;
 

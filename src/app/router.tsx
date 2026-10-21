@@ -44,7 +44,7 @@ import { MorePage } from '../features/shell/MorePage';
 import { SHELL_QUERY } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
-import { enumParam, hashParam, pagedSearch, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
+import { enumParam, hashParam, pagedSearch, resourceIdParam, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -170,9 +170,10 @@ const peersRoute = createRoute({ ...node('/peers'), validateSearch: pagedSearch,
 const connectPeerRoute = createRoute({ ...node('/peers/new'), component: ConnectPeerPage });
 const channelsRoute = createRoute({
   ...node('/channels'),
-  validateSearch: (search: Record<string, unknown>): PagedSearch & { state?: ChannelState } => ({
+  validateSearch: (search: Record<string, unknown>): PagedSearch & { state?: ChannelState; selected?: string } => ({
     ...pagedSearch(search),
     state: enumParam(search.state, CHANNEL_STATE),
+    selected: resourceIdParam(search.selected),
   }),
   component: ChannelsPage,
 });

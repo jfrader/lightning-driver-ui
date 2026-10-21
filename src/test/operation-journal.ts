@@ -29,13 +29,20 @@ export function operation(kind: Kind, state: State = 'awaiting_confirmation', st
   };
 }
 
+/** A fixture operation whose nullable contract fields may carry values (a check time, an error). */
+export type JournalOperation = Omit<ReturnType<typeof operation>, 'last_reconciled_at' | 'error' | 'authorization'> & {
+  last_reconciled_at: string | null;
+  error: unknown;
+  authorization: { status: string; mode: string; expires_at: string | null };
+};
+
 interface JournalConfig {
   /** Operation returned by the create endpoint. */
-  created: ReturnType<typeof operation>;
+  created: JournalOperation;
   /** Response of the confirm endpoint. */
   confirm?: () => Response;
   /** Successive GET responses; the last one repeats. */
-  reads?: ReturnType<typeof operation>[];
+  reads?: JournalOperation[];
 }
 
 export interface JournalCalls {
