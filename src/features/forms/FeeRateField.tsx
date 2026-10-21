@@ -1,5 +1,5 @@
 import { Button, Flex, styled } from '@jfrader/ui';
-import { NumberInputField } from '../../components/NumberInputField';
+import { ExactNumberField } from '../../components/ExactNumberField';
 import { useQuery } from '@tanstack/react-query';
 import { feeEstimatesQueryOptions } from '../../api/node-queries';
 import type { AmountBounds, FeeEstimates } from '../../api/types';
@@ -26,8 +26,8 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
   const estimates = useQuery(feeEstimatesQueryOptions(nodeId));
   return (
     <Flex direction="column" gap="sm">
-      <NumberInputField
-        step={1}
+      <ExactNumberField
+        kind="whole"
         label="Fee rate (sat/vB)"
         value={value}
         onValueChange={onChange}

@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 project_source_bundled_for_ai.txt
+# Playwright
+test-results/
+playwright-report/

@@ -48,16 +48,24 @@ run `npm run api:generate`.
 | `npm run typecheck` | TypeScript project build, no emit |
 | `npm run test` | Vitest behavior tests (jsdom, MSW with contract fixtures, 2 workers) |
 | `npm run build` | Typecheck and production build |
+| `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build |
 | `npm run verify` | All of the above in order |
 
-Tests mock the network boundary with the frozen contract fixtures. They do not exercise the real
-backend, real passkeys or real nodes.
+`test:browser` needs a Chromium for Playwright: either `npx playwright install chromium`, or an
+existing binary through `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. It starts and stops
+its own preview server on `127.0.0.1:4317`.
+
+Tests serve the frozen contract fixtures at the network boundary (MSW in Vitest, `page.route` in
+Playwright). They do not exercise the real backend, real passkeys or real nodes.
+
+## Amount entry
+
+Amounts, fee rates, invoice expiry and ports are plain text fields. They accept ASCII digits and, for
+amounts, one decimal point (`1500.5`). Anything else (spaces, commas, grouping, signs, exponents,
+other numerals) stays as typed and is rejected. Amounts are displayed with the browser locale.
 
 ## Limitations
 
-- Amounts, fee rates, expiry and port are entered in `<input type="number">` with the display locale
-  as `lang`. Reading localized digits and separators is the browser's job and varies between
-  browsers; the app only accepts the canonical value the browser exposes.
 - Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
   backend need browser QA.
 - The bundle is one chunk (about 1 MB, 266 kB gzip), including the generated validators.

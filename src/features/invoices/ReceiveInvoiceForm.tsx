@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Flex, Textarea } from '@jfrader/ui';
 import type { NodePolicy } from '../../api/types';
-import { NumberInputField } from '../../components/NumberInputField';
+import { ExactNumberField } from '../../components/ExactNumberField';
 import { msatToWireMsat, parsePositiveIntegerInput } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
 import { AmountField, type AmountEntry } from '../forms/AmountField';
@@ -72,8 +72,8 @@ export function ReceiveInvoiceForm({ nodeId, policy }: ReceiveInvoiceFormProps) 
           maxLength={DESCRIPTION_MAX_LENGTH}
           onValueChange={(description) => setForm((current) => ({ ...current, description }))}
         />
-        <NumberInputField
-          step={1}
+        <ExactNumberField
+          kind="whole"
           label="Expires after (seconds)"
           value={form.expiry}
           onValueChange={(value) => setForm((current) => ({ ...current, expiry: value }))}
