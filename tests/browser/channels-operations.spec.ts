@@ -31,7 +31,7 @@ test('liquidity bars match the exact fixture ratios, remainder included, and non
   await page.goto('/nodes/lnd-lab/channels');
   const [plain, opening, withRemainder] = syntheticChannels();
   const cases = [
-    { name: /^Liquidity of channel Pending:/, channel: plain },
+    { name: /^Liquidity of channel cccccccc…:0:/, channel: plain },
     { name: /^Liquidity of channel 812x1x0:/, channel: withRemainder },
   ];
   await expect(page.getByRole('img', { name: /^Liquidity of channel/ })).toHaveCount(2);

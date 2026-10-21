@@ -39,7 +39,8 @@ describe('channels list', () => {
 
     const table = await screen.findByRole('table');
     expect(screen.getByRole('list', { name: 'Liquidity key' })).toHaveTextContent('LocalRemoteIn neither balance');
-    expect(within(table).getAllByText('Pending')).toHaveLength(2);
+    expect(within(table).getByText('cccccccc…:0')).toBeInTheDocument();
+    expect(within(table).getByText('channel-…pening')).toBeInTheDocument();
     expect(within(table).getByText('500,000.123 sat')).toBeInTheDocument();
     expect(within(table).getByText('499,999.877 sat')).toBeInTheDocument();
     expect(within(table).getByText(/· private/)).toBeInTheDocument();
@@ -78,7 +79,7 @@ describe('channels list', () => {
     server.use(http.get(api('/nodes/:nodeId/channels'), () => HttpResponse.json(page([OPENING]))));
     renderApp(`/nodes/lnd-lab/channels?selected=${OPENING.id}`);
 
-    const inspector = await withinSection('Channel Pending');
+    const inspector = await withinSection('Channel channel-…pening');
     expect(inspector.getAllByText('Balances not reported').length).toBeGreaterThan(0);
     expect(inspector.queryByRole('img')).not.toBeInTheDocument();
     expect(inspector.getByText('Funding outpoint', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not reported');
@@ -88,7 +89,7 @@ describe('channels list', () => {
   it('offers no close entry on a read-only node', async () => {
     server.use(http.get(api('/nodes/:nodeId/channels'), () => HttpResponse.json({ ...page([CHANNEL]), node_id: readOnlyNode.id, network: 'testnet' })));
     renderApp(`/nodes/${readOnlyNode.id}/channels?selected=${CHANNEL.id}`);
-    await withinSection('Channel Pending');
+    await withinSection('Channel cccccccc…:0');
     expect(screen.queryByRole('link', { name: 'Close channel…' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Close channel/ })).not.toBeInTheDocument();
   });
