@@ -13,7 +13,7 @@ import { build } from 'esbuild';
 
 // Frozen backend-owned API v1 (GURI-2908). The snapshot is a consumer copy; change it only by
 // copying a newly frozen revision and updating these hashes.
-const FROZEN_SHA256 = 'a92d6ceb9066d7b174972d279b1fc480adc26b866671305413ad1689ab32b50a';
+const FROZEN_SHA256 = 'a7bd38f4dbf398f47617b1aa08fb216bbae12b357619ab4215548577a750cad5';
 const FROZEN_EXAMPLES_SHA256 = '13adce818576f64d24303f99c0c86c54ee26d69ade4719142780ae2171f5ec66';
 const CONTRACT_URL = new URL('../contract/openapi.v1.json', import.meta.url);
 const EXAMPLES_URL = new URL('../contract/examples.v1.json', import.meta.url);
