@@ -134,7 +134,7 @@ describe.each(KINDS)('$kind review', ({ kind, title, confirm, sensitive, shows, 
     );
     renderApp(pathOf(kind));
 
-    expect(await screen.findByText('The node is syncing to chain.')).toBeInTheDocument();
+    expect(await screen.findByText('The node is syncing.')).toBeInTheDocument();
     expect(screen.getByText('Nothing was sent.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: confirm })).not.toBeInTheDocument();
     expect(calls.authorizes).toEqual([]);
