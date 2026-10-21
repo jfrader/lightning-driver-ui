@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { sessionCsrfToken } from '../../api/csrf';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
+import { setWideLayout } from '../../test/environment';
 import { renderApp } from '../../test/render-app';
 import { api, safeError, server } from '../../test/server';
 import { assertion } from '../../test/webauthn-mock';
@@ -124,6 +125,8 @@ describe('a 401 from a previous session', () => {
         return HttpResponse.json({ ...fixture('session'), csrf_token: SECOND_SESSION_CSRF });
       }),
     );
+    // Desktop: the sidebar's Sign out sits beside the in-flight form (on a phone it is under More).
+    setWideLayout(true);
     const view = renderApp('/nodes/lnd-lab/invoices/new');
     await createInvoice(view);
     const staleMutation = view.queryClient.getMutationCache().getAll().at(-1);

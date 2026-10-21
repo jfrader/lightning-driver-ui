@@ -1,4 +1,4 @@
-import { DISPLAY_LOCALE } from '../config';
+import { DISPLAY_LOCALE, DISPLAY_TIME_ZONE } from '../config';
 
 const RELATIVE_UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
   ['day', 86_400],
@@ -25,6 +25,13 @@ export function formatDateTime(iso: string, locale: Intl.LocalesArgument = DISPL
   const time = parseTime(iso);
   if (time === null) return null;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(time);
+}
+
+/** "14:05:09", 24-hour clock in the display time zone (UTC). */
+export function formatClockTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
+  const time = parseTime(iso);
+  if (time === null) return null;
+  return new Intl.DateTimeFormat(locale, { timeStyle: 'medium', hourCycle: 'h23', timeZone: DISPLAY_TIME_ZONE }).format(time);
 }
 
 export function isPast(iso: string, now: number): boolean {

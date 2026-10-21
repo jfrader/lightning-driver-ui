@@ -46,6 +46,18 @@ export const CAPABILITY_LABEL: Record<CapabilityKey, string> = {
   send_onchain: 'Send on-chain',
 };
 
+/**
+ * Plain-string node label for choosers (`LND lab · Regtest · read-only`): the installed Select
+ * renders an option's flattened text in its trigger, so flags must be text, not markup.
+ */
+export function nodeChoiceLabel(node: NodeSummary): string {
+  const flags = [
+    node.read_only ? 'read-only' : null,
+    node.status.status === 'online' ? null : NODE_STATUS[node.status.status].label.toLowerCase(),
+  ];
+  return [node.label, NETWORK_LABEL[node.network], ...flags.filter((flag) => flag !== null)].join(' · ');
+}
+
 export function syncLabel(synced: boolean | null): string {
   if (synced === null) return 'Not reported';
   return synced ? 'Synced' : 'Syncing';

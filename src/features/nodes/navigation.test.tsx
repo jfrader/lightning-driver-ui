@@ -67,6 +67,8 @@ describe('layout', () => {
 
 describe('display unit', () => {
   it('switches every amount between sats and BTC without losing precision', async () => {
+    // The desktop status strip carries the unit toggle; on a phone it lives under More.
+    setWideLayout(true);
     const { user } = renderApp('/nodes/lnd-lab');
     const balances = await withinPanel('Balances');
     expect(await balances.findByText('500,000.123 sat')).toBeInTheDocument();

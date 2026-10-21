@@ -40,6 +40,8 @@ import { PaymentsPage } from '../features/payments/PaymentsPage';
 import { ConnectPeerPage } from '../features/peers/ConnectPeerPage';
 import { PeersPage } from '../features/peers/PeersPage';
 import { AppShell } from '../features/shell/AppShell';
+import { MorePage } from '../features/shell/MorePage';
+import { SHELL_QUERY } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { enumParam, pagedSearch, stringParam, type PagedSearch } from './search';
 
@@ -99,6 +101,18 @@ const fleetRoute = createRoute({
   path: '/fleet',
   validateSearch: pagedSearch,
   component: FleetPage,
+});
+
+/** Phone only; the desktop shell carries the same controls, so a desktop visit opens the workspace. */
+const moreRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: '/more',
+  beforeLoad: () => {
+    if (!window.matchMedia(SHELL_QUERY).matches) return;
+    const nodeId = readRememberedNodeId();
+    throw nodeId ? redirect({ to: '/nodes/$nodeId', params: { nodeId } }) : redirect({ to: '/fleet' });
+  },
+  component: MorePage,
 });
 
 const nodeRoute = createRoute({
@@ -187,6 +201,7 @@ const routeTree = rootRoute.addChildren([
   authedRoute.addChildren([
     landingRoute,
     fleetRoute,
+    moreRoute,
     nodeRoute.addChildren([
       configuredNodeRoute.addChildren([
         nodeOverviewRoute,
