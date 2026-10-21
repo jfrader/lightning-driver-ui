@@ -17,7 +17,8 @@ export const READ_STALE_MS = 10_000;
 export const SESSION_RECHECK_MIN_MS = 1_000;
 
 /** Build-time app version (P-4); `null` when the build carries none. */
-export const APP_VERSION: string | null = __APP_VERSION__ || null;
+// The scaffold's 0.0.0 is a placeholder, not information; hide it until a real build version exists.
+export const APP_VERSION: string | null = __APP_VERSION__ && __APP_VERSION__ !== '0.0.0' ? __APP_VERSION__ : null;
 
 /** Overview shows at most this many of the newest payments; the full list is one link away. */
 export const RECENT_PAYMENTS_LIMIT = 5;

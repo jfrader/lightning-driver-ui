@@ -16,7 +16,7 @@ vi.mock('@simplewebauthn/browser', async (importOriginal) =>
 const fact = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling;
 
 describe('More (screens spec §5)', () => {
-  it('holds theme, unit, session, sign out and the app version, in that order and nothing else', async () => {
+  it('holds theme, unit, session and sign out, in that order and nothing else', async () => {
     renderApp('/more');
     await screen.findByRole('heading', { name: 'More' });
     const main = screen.getByRole('main');
@@ -32,7 +32,8 @@ describe('More (screens spec §5)', () => {
     expect(within(main).getAllByRole('radiogroup')).toHaveLength(2);
     expect(within(main).getAllByRole('button').map((button) => button.textContent)).toEqual(['Sign out']);
     expect(within(main).queryAllByRole('link')).toEqual([]);
-    expect(within(main).getByText('App version 0.0.0')).toBeInTheDocument();
+    // 0.0.0 is the scaffold placeholder; it must not be printed as a version.
+    expect(within(main).queryByText(/App version/)).not.toBeInTheDocument();
   });
 
   it('reads the session in UTC, with the absolute end relative to now', async () => {
@@ -78,6 +79,6 @@ describe('More (screens spec §5)', () => {
     window.localStorage.setItem(REMEMBERED_NODE_STORAGE_KEY, 'lnd-lab');
     const view = renderApp('/more');
     await waitFor(() => expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab'));
-    expect(screen.getByText('App version 0.0.0')).toBeInTheDocument();
+    expect(screen.queryByText(/App version/)).not.toBeInTheDocument();
   });
 });
