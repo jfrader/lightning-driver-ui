@@ -5,6 +5,7 @@ import {
   checkAddress,
   checkAmount,
   checkDescription,
+  checkEnrollmentToken,
   checkExpiry,
   checkFeeCap,
   checkFeeRate,
@@ -112,5 +113,18 @@ describe('peers and addresses', () => {
     expect(checkAddress('  bcrt1qexample ')).toEqual({ ok: true, value: 'bcrt1qexample' });
     expect(checkAddress('   ')).toEqual({ ok: false, error: 'Enter a Bitcoin address.' });
     expect(checkAddress('bcrt1 qexample')).toEqual({ ok: false, error: 'Enter a Bitcoin address.' });
+  });
+});
+
+describe('enrollment token', () => {
+  const MESSAGE = 'Enter the full token from the host.';
+
+  it.each(['', '   ', 'a'.repeat(31), 'a'.repeat(257)])('refuses %j', (text) => {
+    expect(checkEnrollmentToken(text)).toEqual({ ok: false, error: MESSAGE });
+  });
+
+  it('trims and accepts 32 to 256 characters', () => {
+    expect(checkEnrollmentToken(`  ${'a'.repeat(32)}  `)).toEqual({ ok: true, value: 'a'.repeat(32) });
+    expect(checkEnrollmentToken('b'.repeat(256))).toEqual({ ok: true, value: 'b'.repeat(256) });
   });
 });

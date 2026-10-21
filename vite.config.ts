@@ -1,6 +1,9 @@
 /// <reference types="vitest/config" />
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version?: string };
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
 const DEFAULT_DEV_API_ORIGIN = 'http://127.0.0.1:8080';
@@ -17,6 +20,7 @@ function devApiOrigin(): string {
 
 export default defineConfig(({ command }) => ({
   plugins: [react({ jsxImportSource: '@emotion/react' })],
+  define: { __APP_VERSION__: JSON.stringify(version ?? '') },
   server: {
     host: '127.0.0.1',
     strictPort: true,

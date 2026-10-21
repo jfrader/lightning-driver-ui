@@ -13,6 +13,11 @@ export const REQUEST_TIMEOUT_MS = 20_000;
 export const CONFIRM_TIMEOUT_MS = 30_000;
 export const NODE_REFRESH_MS = 30_000;
 export const READ_STALE_MS = 10_000;
+/** Floor between session re-checks, so a client clock ahead of the server cannot spin. */
+export const SESSION_RECHECK_MIN_MS = 1_000;
+
+/** Build-time app version (P-4); `null` when the build carries none. */
+export const APP_VERSION: string | null = __APP_VERSION__ || null;
 
 /** Overview shows at most this many of the newest payments; the full list is one link away. */
 export const RECENT_PAYMENTS_LIMIT = 5;
@@ -25,6 +30,7 @@ export const TABLE_MEDIA = `@media ${TABLE_QUERY}`;
 export const ASIDE_QUERY = '(min-width: 80rem)';
 export const ASIDE_MEDIA = `@media ${ASIDE_QUERY}`;
 export const READING_WIDTH = '42rem';
+export const AUTH_COLUMN_WIDTH = '24rem';
 export const ASIDE_WIDTH = '20rem';
 export const NARROW_LAYOUT_MEDIA = '@media (max-width: 30rem)';
 export const LIGHT_SCHEME_QUERY = '(prefers-color-scheme: light)';

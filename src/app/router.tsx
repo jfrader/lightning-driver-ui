@@ -12,7 +12,7 @@ import { isSessionLoss } from '../api/errors';
 import { nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
-import { EnrollPage } from '../features/auth/EnrollPage';
+import { LOGIN_NOTICE, type LoginNotice } from '../features/auth/login-state';
 import { LoginPage } from '../features/auth/LoginPage';
 import { publicPolicyQueryOptions, sessionQueryOptions } from '../features/auth/queries';
 import { CloseChannelPage } from '../features/channels/CloseChannelPage';
@@ -55,13 +55,21 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({ component: Outle
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; notice?: LoginNotice } => ({
     redirect: stringParam(search.redirect),
+    notice: enumParam(search.notice, LOGIN_NOTICE),
   }),
   component: LoginPage,
 });
 
-const enrollRoute = createRoute({ getParentRoute: () => rootRoute, path: '/enroll', component: EnrollPage });
+/** Enrollment is a state of `/login` (P-2); the old route only forwards there. */
+const enrollRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/enroll',
+  beforeLoad: () => {
+    throw redirect({ to: '/login', replace: true });
+  },
+});
 
 const authedRoute = createRoute({
   getParentRoute: () => rootRoute,

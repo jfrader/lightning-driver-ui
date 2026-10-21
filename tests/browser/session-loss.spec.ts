@@ -31,7 +31,7 @@ test('a 401 on the explicit low-risk confirm signs out instead of showing node d
   await page.getByRole('button', { name: 'Create invoice' }).click();
 
   await expect(page).toHaveURL(/\/login\?redirect=/);
-  await expect(page.getByRole('button', { name: 'Sign in with passkey' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue with passkey' })).toBeVisible();
   await expect(page.getByText('Open the review')).toHaveCount(0);
   await expect(page.getByText('LND lab')).toHaveCount(0);
   expect(requests.map((r) => r.path)).toEqual([

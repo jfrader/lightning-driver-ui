@@ -17,15 +17,18 @@ function durationFormat(): DurationFormatConstructor | null {
   return typeof candidate === 'function' ? (candidate as DurationFormatConstructor) : null;
 }
 
+/** A count of seconds with its unit: "1 second", "5,400 seconds". */
+export function formatSeconds(seconds: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
+  return new Intl.NumberFormat(locale, { style: 'unit', unit: 'second', unitDisplay: 'long' }).format(seconds);
+}
+
 /**
  * A whole number of seconds as a readable duration ("1 hour", "1 hour, 30 minutes"), through
  * `Intl.DurationFormat`; engines without it fall back to an `Intl` seconds count ("5,400 seconds").
  */
 export function formatDurationSeconds(totalSeconds: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
   const Format = durationFormat();
-  if (!Format) {
-    return new Intl.NumberFormat(locale, { style: 'unit', unit: 'second', unitDisplay: 'long' }).format(totalSeconds);
-  }
+  if (!Format) return formatSeconds(totalSeconds, locale);
   const parts: DurationParts = {
     hours: Math.floor(totalSeconds / 3600),
     minutes: Math.floor((totalSeconds % 3600) / 60),

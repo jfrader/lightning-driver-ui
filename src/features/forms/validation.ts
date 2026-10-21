@@ -100,6 +100,17 @@ export function checkAddress(text: string): Checked<string> {
     : fail('Enter a Bitcoin address.');
 }
 
+/** `enrollment_token` length bounds from the contract. */
+const ENROLLMENT_TOKEN_LENGTH = { min: 32, max: 256 } as const;
+
+/** A host-issued enrollment token, trimmed (§6.2). */
+export function checkEnrollmentToken(text: string): Checked<string> {
+  const token = text.trim();
+  return token.length >= ENROLLMENT_TOKEN_LENGTH.min && token.length <= ENROLLMENT_TOKEN_LENGTH.max
+    ? { ok: true, value: token }
+    : fail('Enter the full token from the host.');
+}
+
 /** The policy amount range as words, e.g. for a field description. */
 export function rangeText(bounds: AmountBounds, unit: WireUnit, display: AmountEntry['unit']): string {
   return `${formatMsat(wireToMsat(bounds.min, unit), display)} to ${formatMsat(wireToMsat(bounds.max, unit), display)}`;
