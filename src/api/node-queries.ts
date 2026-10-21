@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { NODE_REFRESH_MS } from '../config';
+import { errorCode } from './errors';
 import {
   getBalances,
   getFeeEstimates,
@@ -34,10 +35,18 @@ export const fleetQueryOptions = (cursor?: string) =>
     refetchInterval: NODE_REFRESH_MS,
   });
 
+/**
+ * The node's current registry entry, or `null` when the server no longer configures this ID.
+ * A former node keeps its read-only operation history; it never becomes writable here.
+ */
 export const nodeQueryOptions = (nodeId: string) =>
   queryOptions({
     queryKey: nodeKeys.summary(nodeId),
-    queryFn: ({ signal }) => getNode(nodeId, signal),
+    queryFn: ({ signal }) =>
+      getNode(nodeId, signal).catch((error: unknown) => {
+        if (errorCode(error) === 'not_found') return null;
+        throw error;
+      }),
     refetchInterval: NODE_REFRESH_MS,
   });
 

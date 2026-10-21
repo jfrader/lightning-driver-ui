@@ -11,10 +11,12 @@ import { useConfirmOperation } from './use-confirm-operation';
 
 interface ConfirmPanelProps {
   operation: Operation;
-  node: NodeSummary;
+  /** The node's current registry entry; `null` when the server no longer configures it. */
+  node: NodeSummary | null;
 }
 
-function blockReason(operation: Operation, node: NodeSummary, now: number): string | null {
+function blockReason(operation: Operation, node: NodeSummary | null, now: number): string | null {
+  if (!node) return 'This node is not configured anymore.';
   const { review } = operation;
   const capability = node.capabilities[operation.request.kind];
   if (node.read_only) return CAPABILITY_REASON.read_only;
@@ -38,7 +40,7 @@ export function ConfirmPanel({ operation, node }: ConfirmPanelProps) {
         <Alert tone="warning" title={blocked}>
           Nothing was sent.
         </Alert>
-        <RestartLink operation={operation} />
+        {node && <RestartLink operation={operation} />}
       </Flex>
     );
   }

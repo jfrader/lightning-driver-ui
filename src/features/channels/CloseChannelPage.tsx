@@ -2,7 +2,7 @@ import { getRouteApi } from '@tanstack/react-router';
 import { FlowFrame } from '../forms/FlowFrame';
 import { CloseChannelForm } from './CloseChannelForm';
 
-const route = getRouteApi('/_authed/nodes/$nodeId/channels/$channelId/close');
+const route = getRouteApi('/_authed/nodes/$nodeId/_configured/channels/$channelId/close');
 
 export function CloseChannelPage() {
   const { channelId } = route.useParams();

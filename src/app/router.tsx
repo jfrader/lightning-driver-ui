@@ -8,7 +8,7 @@ import {
   redirect,
   type RouterHistory,
 } from '@tanstack/react-router';
-import { errorCode, isSessionLoss } from '../api/errors';
+import { isSessionLoss } from '../api/errors';
 import { nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
@@ -86,10 +86,10 @@ const landingRoute = createRoute({
     if (!nodeId) return;
     const node = await context.queryClient.ensureQueryData(nodeQueryOptions(nodeId)).catch((error: unknown) => {
       if (isSessionLoss(error)) throw error;
-      forgetRememberedNodeId();
       return null;
     });
     if (node) throw redirect({ to: '/nodes/$nodeId', params: { nodeId: node.id } });
+    forgetRememberedNodeId();
   },
   component: NodeChooserPage,
 });
@@ -108,17 +108,25 @@ const nodeRoute = createRoute({
     if (!isNodeId(params.nodeId)) throw notFound();
   },
   loader: async ({ context, params }) => {
-    const node = await context.queryClient.ensureQueryData(nodeQueryOptions(params.nodeId)).catch((error: unknown) => {
-      if (errorCode(error) === 'not_found') throw notFound();
-      throw error;
-    });
-    rememberNodeId(node.id);
+    const node = await context.queryClient.ensureQueryData(nodeQueryOptions(params.nodeId));
+    if (node) rememberNodeId(node.id);
   },
   component: NodeLayout,
   notFoundComponent: NodeNotFound,
 });
 
-const node = <TPath extends string>(path: TPath) => ({ getParentRoute: () => nodeRoute, path });
+/** Workspace pages exist only for nodes the server configures now; history routes do not need it. */
+const configuredNodeRoute = createRoute({
+  getParentRoute: () => nodeRoute,
+  id: '_configured',
+  loader: async ({ context, params }) => {
+    if (!(await context.queryClient.ensureQueryData(nodeQueryOptions(params.nodeId)))) throw notFound();
+  },
+  notFoundComponent: NodeNotFound,
+});
+
+const node = <TPath extends string>(path: TPath) => ({ getParentRoute: () => configuredNodeRoute, path });
+const history = <TPath extends string>(path: TPath) => ({ getParentRoute: () => nodeRoute, path });
 
 const nodeOverviewRoute = createRoute({ ...node('/'), component: NodeOverviewPage });
 const invoicesRoute = createRoute({
@@ -155,7 +163,7 @@ const transactionsRoute = createRoute({ ...node('/onchain'), validateSearch: pag
 const receiveAddressRoute = createRoute({ ...node('/onchain/receive'), component: ReceiveAddressPage });
 const sendOnchainRoute = createRoute({ ...node('/onchain/send'), component: SendOnchainPage });
 const operationsRoute = createRoute({
-  ...node('/operations'),
+  ...history('/operations'),
   validateSearch: (
     search: Record<string, unknown>,
   ): PagedSearch & { state?: OperationListState; kind?: OperationKind } => ({
@@ -166,7 +174,7 @@ const operationsRoute = createRoute({
   component: OperationsPage,
 });
 const operationRoute = createRoute({
-  ...node('/operations/$operationId'),
+  ...history('/operations/$operationId'),
   validateSearch: (search: Record<string, unknown>): { confirmation?: 'unanswered' } => ({
     confirmation: search.confirmation === 'unanswered' ? 'unanswered' : undefined,
   }),
@@ -180,19 +188,21 @@ const routeTree = rootRoute.addChildren([
     landingRoute,
     fleetRoute,
     nodeRoute.addChildren([
-      nodeOverviewRoute,
-      invoicesRoute,
-      receiveInvoiceRoute,
-      paymentsRoute,
-      payInvoiceRoute,
-      peersRoute,
-      connectPeerRoute,
-      channelsRoute,
-      openChannelRoute,
-      closeChannelRoute,
-      transactionsRoute,
-      receiveAddressRoute,
-      sendOnchainRoute,
+      configuredNodeRoute.addChildren([
+        nodeOverviewRoute,
+        invoicesRoute,
+        receiveInvoiceRoute,
+        paymentsRoute,
+        payInvoiceRoute,
+        peersRoute,
+        connectPeerRoute,
+        channelsRoute,
+        openChannelRoute,
+        closeChannelRoute,
+        transactionsRoute,
+        receiveAddressRoute,
+        sendOnchainRoute,
+      ]),
       operationsRoute,
       operationRoute,
     ]),

@@ -14,7 +14,7 @@ import { Amount } from '../display/Amount';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 
-const route = getRouteApi('/_authed/nodes/$nodeId/onchain');
+const route = getRouteApi('/_authed/nodes/$nodeId/_configured/onchain');
 
 const DIRECTION: Record<Transaction['direction'], string> = {
   incoming: 'Received',

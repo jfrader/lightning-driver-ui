@@ -12,7 +12,7 @@ import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { DisconnectPeerButton } from './DisconnectPeerButton';
 
-const route = getRouteApi('/_authed/nodes/$nodeId/peers');
+const route = getRouteApi('/_authed/nodes/$nodeId/_configured/peers');
 
 function directionLabel(inbound: boolean | null): string {
   if (inbound === null) return 'Not reported';

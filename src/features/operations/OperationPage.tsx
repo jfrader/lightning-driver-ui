@@ -9,7 +9,7 @@ import { LoadingState } from '../../components/LoadingState';
 import { PageHeader } from '../../components/PageHeader';
 import { Panel } from '../../components/Panel';
 import { publicPolicyQueryOptions } from '../auth/queries';
-import { useCurrentNode } from '../nodes/use-current-node';
+import { useNodeLookup } from '../nodes/use-current-node';
 import { ConfirmPanel } from './ConfirmPanel';
 import { OPERATION_KIND, OPERATION_STAGE, isInFlight, outcomeLabel } from './labels';
 import { OperationResultDetails } from './OperationResultDetails';
@@ -24,7 +24,7 @@ const Stage = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSi
 export function OperationPage() {
   const { nodeId, operationId } = route.useParams();
   const unanswered = route.useSearch().confirmation === 'unanswered';
-  const node = useCurrentNode();
+  const { node } = useNodeLookup();
   const pollMs = useSuspenseQuery(publicPolicyQueryOptions).data.operation_poll_seconds * 1000;
   const operation = useQuery({
     ...operationQueryOptions(nodeId, operationId),
