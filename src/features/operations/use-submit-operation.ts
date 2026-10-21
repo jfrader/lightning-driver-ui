@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { isSessionLoss } from '../../api/errors';
 import { nodeKeys } from '../../api/node-queries';
 import { confirmOperation, createOperation } from '../../api/operation-api';
 import type { CreateOperationRequest, Operation } from '../../api/types';
@@ -47,6 +48,8 @@ export function useSubmitOperation(nodeId: string) {
         });
         return { operation: confirmed, confirmation: undefined, confirmError: null };
       } catch (error) {
+        // A 401 is not an operation result: let it reach the shared session-loss handling.
+        if (isSessionLoss(error)) throw error;
         if (isUnansweredConfirmation(error)) return { operation, confirmation: 'unanswered', confirmError: null };
         return { operation, confirmation: undefined, confirmError: error };
       }

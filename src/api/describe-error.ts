@@ -1,4 +1,4 @@
-import { ApiError, ContractError, TransportError } from './errors';
+import { ApiError, ContractError, SessionEndedError, TransportError } from './errors';
 
 export interface ErrorDescription {
   title: string;
@@ -8,7 +8,6 @@ export interface ErrorDescription {
 
 const STATUS_TITLE: Record<number, string> = {
   400: 'Request rejected',
-  401: 'Signed out',
   403: 'Not allowed',
   404: 'Not found',
   409: 'Conflict',
@@ -28,6 +27,9 @@ export function describeError(error: unknown): ErrorDescription {
       message: `${error.detail.message}${wait}`,
       requestId: error.detail.request_id,
     };
+  }
+  if (error instanceof SessionEndedError) {
+    return { title: 'Signed out', message: 'Sign in again.', requestId: error.detail?.request_id ?? null };
   }
   if (error instanceof TransportError) {
     return { title: 'No response', message: error.message, requestId: null };
