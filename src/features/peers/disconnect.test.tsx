@@ -73,8 +73,8 @@ describe('disconnect peer', () => {
     server.use(
       http.get(api('/nodes/lnd-lab'), () => {
         const node = fixture('node_lnd');
-        node.capabilities.disconnect_peer = { enabled: false, reason: 'permission_denied' };
-        return HttpResponse.json(node);
+        const disconnect_peer = { enabled: false, reason: 'permission_denied' };
+        return HttpResponse.json({ ...node, capabilities: { ...node.capabilities, disconnect_peer } });
       }),
     );
     renderApp('/nodes/lnd-lab/peers');
