@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Flex, TextField } from '@jfrader/ui';
+import { NumberInputField } from '../../components/NumberInputField';
 import { SubmitFeedback } from '../operations/SubmitFeedback';
 import { useSubmitOperation } from '../operations/use-submit-operation';
 import { DEFAULT_LIGHTNING_PORT, isPubkey, parsePort, splitPeerUri } from './peer-address';
@@ -60,9 +61,9 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
           error={form.submitted ? errors.host : undefined}
           required
         />
-        <TextField
+        <NumberInputField
+          step={1}
           label="Port"
-          inputMode="numeric"
           value={form.port}
           onValueChange={(value) => setForm((current) => ({ ...current, port: value }))}
           error={form.submitted ? errors.port : undefined}

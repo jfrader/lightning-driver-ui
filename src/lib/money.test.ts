@@ -5,18 +5,21 @@ import {
   formatMsatInput,
   msatToWireSat,
   parseAmountInput,
+  parsePositiveIntegerInput,
   parseWireDecimal,
   wireToMsat,
+  type DisplayUnit,
 } from './money';
 
 const EN = 'en-US';
-const DE = 'de-DE';
+const ABOVE_SAFE_MSAT = 9_007_199_254_740_993n;
+const I64_MAX = 9_223_372_036_854_775_807n;
 
 describe('wire amounts', () => {
   it('keeps values beyond Number.MAX_SAFE_INTEGER exact', () => {
-    expect(wireToMsat('9007199254740993', 'msat')).toBe(9_007_199_254_740_993n);
-    expect(formatMsat(9_007_199_254_740_993n, 'sat', EN)).toBe('9,007,199,254,740.993 sat');
-    expect(formatMsat(9_223_372_036_854_775_807n, 'btc', EN)).toBe('92,233,720.36854775807 BTC');
+    expect(wireToMsat('9007199254740993', 'msat')).toBe(ABOVE_SAFE_MSAT);
+    expect(formatMsat(ABOVE_SAFE_MSAT, 'sat', EN)).toBe('9,007,199,254,740.993 sat');
+    expect(formatMsat(I64_MAX, 'btc', EN)).toBe('92,233,720.36854775807 BTC');
   });
 
   it('shows sub-satoshi precision instead of rounding', () => {
@@ -39,39 +42,79 @@ describe('wire amounts', () => {
   });
 });
 
-describe('typed amounts', () => {
-  it('parses with the locale separators', () => {
-    expect(parseAmountInput('1,234.567', 'sat', { allowMsat: true, locale: EN })).toEqual({ ok: true, msat: 1_234_567n });
-    expect(parseAmountInput('1.234,567', 'sat', { allowMsat: true, locale: DE })).toEqual({ ok: true, msat: 1_234_567n });
-    expect(parseAmountInput('0.00000001', 'btc', { allowMsat: false, locale: EN })).toEqual({ ok: true, msat: 1_000n });
+describe('locale display', () => {
+  it.each([
+    ['en-US', '9,007,199,254,740.993 sat'],
+    ['de-DE', '9.007.199.254.740,993 sat'],
+    ['fr-FR', '9 007 199 254 740,993 sat'],
+    ['ar-EG', '٩٬٠٠٧٬١٩٩٬٢٥٤٬٧٤٠٫٩٩٣ sat'],
+    ['hi-IN-u-nu-deva', '९०,०७,१९,९२,५४,७४०.९९३ sat'],
+  ])('formats exactly in %s, including its own numerals', (locale, expected) => {
+    expect(formatMsat(ABOVE_SAFE_MSAT, 'sat', locale)).toBe(expected);
+  });
+});
+
+describe('amount input values', () => {
+  const units: DisplayUnit[] = ['sat', 'btc'];
+
+  it.each([1n, 999n, 1_000n, 123_456_789n, 100_000_000_000n, ABOVE_SAFE_MSAT, I64_MAX])(
+    'round-trips %s msat through the number input value in both units',
+    (msat) => {
+      for (const unit of units) {
+        expect(parseAmountInput(formatMsatInput(msat, unit), unit, { allowMsat: true })).toEqual({ ok: true, msat });
+      }
+    },
+  );
+
+  it('keeps the input value locale independent', () => {
+    expect(formatMsatInput(123_456_789n, 'btc')).toBe('0.00123456789');
+    expect(formatMsatInput(123_456_789n, 'sat')).toBe('123456.789');
   });
 
-  it('parses amounts beyond the safe integer range exactly', () => {
-    expect(parseAmountInput('9007199254740993', 'sat', { allowMsat: false, locale: EN })).toEqual({
+  it('switches units without changing the amount', () => {
+    const sats = parseAmountInput('150000', 'sat', { allowMsat: false });
+    expect(sats).toEqual({ ok: true, msat: 150_000_000n });
+    if (!sats.ok) return;
+    expect(formatMsatInput(sats.msat, 'btc')).toBe('0.0015');
+    expect(parseAmountInput('0.0015', 'btc', { allowMsat: false })).toEqual(sats);
+  });
+
+  it('parses canonical values beyond the safe integer range exactly', () => {
+    expect(parseAmountInput('9007199254740993', 'sat', { allowMsat: false })).toEqual({
       ok: true,
       msat: 9_007_199_254_740_993_000n,
     });
-  });
-
-  it('rejects sub-satoshi input where only whole sats are allowed', () => {
-    expect(parseAmountInput('1.5', 'sat', { allowMsat: false, locale: EN })).toEqual({
-      ok: false,
-      error: 'Use whole satoshis.',
-    });
+    expect(parseAmountInput('.5', 'sat', { allowMsat: true })).toEqual({ ok: true, msat: 500n });
   });
 
   it.each([
-    ['abc', 'Enter an amount using digits.'],
+    ['1 2', 'Enter a plain decimal amount.'],
+    ['1,2', 'Enter a plain decimal amount.'],
+    ['1,234.5', 'Enter a plain decimal amount.'],
+    ['1.234,5', 'Enter a plain decimal amount.'],
+    ['1.2.3', 'Enter a plain decimal amount.'],
+    ['١٢٣', 'Enter a plain decimal amount.'],
+    ['1e3', 'Enter a plain decimal amount.'],
+    ['-5', 'Enter a plain decimal amount.'],
+    ['+5', 'Enter a plain decimal amount.'],
+    [' 5', 'Enter a plain decimal amount.'],
+    ['.', 'Enter a plain decimal amount.'],
+    ['', 'Enter an amount.'],
     ['1.2345', 'Too many decimal places.'],
     ['0', 'Enter an amount greater than zero.'],
     ['9223372036854775.808', 'Amount is too large.'],
-    ['-5', 'Enter an amount using digits.'],
-  ])('reports %j', (text, error) => {
-    expect(parseAmountInput(text, 'sat', { allowMsat: true, locale: EN })).toEqual({ ok: false, error });
+  ])('rejects %j instead of guessing', (value, error) => {
+    expect(parseAmountInput(value, 'sat', { allowMsat: true })).toEqual({ ok: false, error });
   });
 
-  it('round-trips through editable text when the unit changes', () => {
-    expect(formatMsatInput(123_456_789n, 'btc', EN)).toBe('0.00123456789');
-    expect(formatMsatInput(123_456_789n, 'sat', DE)).toBe('123456,789');
+  it.each([
+    ['1.5', 'sat'],
+    ['0.000000015', 'btc'],
+  ] as const)('rejects sub-satoshi %j %s where only whole sats are allowed', (value, unit) => {
+    expect(parseAmountInput(value, unit, { allowMsat: false })).toEqual({ ok: false, error: 'Use whole satoshis.' });
+  });
+
+  it.each(['1.0', '1,000', '١', '-1', '1e2', ''])('rejects %j as a whole number', (value) => {
+    expect(parsePositiveIntegerInput(value).ok).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
-import { Button, Flex, TextField, styled } from '@jfrader/ui';
+import { Button, Flex, styled } from '@jfrader/ui';
+import { NumberInputField } from '../../components/NumberInputField';
 import { useQuery } from '@tanstack/react-query';
 import { feeEstimatesQueryOptions } from '../../api/node-queries';
 import type { AmountBounds, FeeEstimates } from '../../api/types';
@@ -25,10 +26,9 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
   const estimates = useQuery(feeEstimatesQueryOptions(nodeId));
   return (
     <Flex direction="column" gap="sm">
-      <TextField
+      <NumberInputField
+        step={1}
         label="Fee rate (sat/vB)"
-        inputMode="numeric"
-        autoComplete="off"
         value={value}
         onValueChange={onChange}
         description={`Allowed: ${bounds.min}–${bounds.max} sat/vB`}
