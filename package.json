@@ -12,7 +12,8 @@
     "test:browser": "playwright test",
     "api:generate": "node scripts/api-contract.mjs",
     "api:check": "node scripts/api-contract.mjs --check",
-    "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run test:browser",
+    "budget": "node scripts/bundle-budget.mjs",
+    "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run budget && npm run test:browser",
     "preview": "vite preview"
   },
   "dependencies": {
