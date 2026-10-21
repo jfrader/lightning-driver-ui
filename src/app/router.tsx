@@ -12,36 +12,39 @@ import { isSessionLoss } from '../api/errors';
 import { nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
+import { RoutePending } from '../components/RoutePending';
 import { LOGIN_NOTICE, type LoginNotice } from '../features/auth/login-state';
 import { LoginPage } from '../features/auth/LoginPage';
 import { publicPolicyQueryOptions, sessionQueryOptions } from '../features/auth/queries';
-import { CloseChannelPage } from '../features/channels/CloseChannelPage';
-import { ChannelsPage } from '../features/channels/ChannelsPage';
 import { CHANNEL_STATE } from '../features/channels/labels';
-import { OpenChannelPage } from '../features/channels/OpenChannelPage';
-import { InvoicesPage } from '../features/invoices/InvoicesPage';
 import { INVOICE_STATE } from '../features/invoices/labels';
-import { ReceiveInvoicePage } from '../features/invoices/ReceiveInvoicePage';
-import { FleetPage } from '../features/nodes/FleetPage';
 import { NodeChooserPage } from '../features/nodes/NodeChooserPage';
 import { NodeLayout } from '../features/nodes/NodeLayout';
 import { NodeNotFound } from '../features/nodes/NodeNotFound';
 import { NodeOverviewPage } from '../features/nodes/NodeOverviewPage';
 import { forgetRememberedNodeId, isNodeId, readRememberedNodeId, rememberNodeId } from '../features/nodes/remembered-node';
-import { ReceiveAddressPage } from '../features/onchain/ReceiveAddressPage';
-import { SendOnchainPage } from '../features/onchain/SendOnchainPage';
-import { TransactionsPage } from '../features/onchain/TransactionsPage';
 import { OPERATION_KIND, OPERATION_LIST_STATE } from '../features/operations/labels';
-import { OperationPage } from '../features/operations/OperationPage';
-import { OperationsPage } from '../features/operations/OperationsPage';
 import { PAYMENT_STATE } from '../features/payments/labels';
-import { PayInvoicePage } from '../features/payments/PayInvoicePage';
-import { PaymentsPage } from '../features/payments/PaymentsPage';
-import { ConnectPeerPage } from '../features/peers/ConnectPeerPage';
-import { PeersPage } from '../features/peers/PeersPage';
 import { AppShell } from '../features/shell/AppShell';
-import { MorePage } from '../features/shell/MorePage';
 import { SHELL_QUERY } from '../config';
+import {
+  ChannelsPage,
+  CloseChannelPage,
+  ConnectPeerPage,
+  FleetPage,
+  InvoicesPage,
+  MorePage,
+  OpenChannelPage,
+  OperationPage,
+  OperationsPage,
+  PayInvoicePage,
+  PaymentsPage,
+  PeersPage,
+  ReceiveAddressPage,
+  ReceiveInvoicePage,
+  SendOnchainPage,
+  TransactionsPage,
+} from './lazy-screens';
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
 import { enumParam, hashParam, pagedSearch, pubkeyParam, resourceIdParam, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
@@ -264,6 +267,7 @@ export function createAppRouter(queryClient: QueryClient, history?: RouterHistor
     context: { queryClient },
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
+    defaultPendingComponent: RoutePending,
     scrollRestoration: true,
   });
 }
