@@ -6,7 +6,6 @@ import {
   getNode,
   getNodeInfo,
   getNodePolicy,
-  getNodeStatus,
   listChannels,
   listInvoices,
   listNodes,
@@ -44,13 +43,6 @@ export const nodeQueryOptions = (nodeId: string) =>
 
 export const nodeInfoQueryOptions = (nodeId: string) =>
   queryOptions({ queryKey: nodeKeys.detail(nodeId, 'info'), queryFn: ({ signal }) => getNodeInfo(nodeId, signal) });
-
-export const nodeStatusQueryOptions = (nodeId: string) =>
-  queryOptions({
-    queryKey: nodeKeys.detail(nodeId, 'status'),
-    queryFn: ({ signal }) => getNodeStatus(nodeId, signal),
-    refetchInterval: NODE_REFRESH_MS,
-  });
 
 export const balancesQueryOptions = (nodeId: string) =>
   queryOptions({

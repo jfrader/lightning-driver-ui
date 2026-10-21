@@ -28,7 +28,6 @@ const VALIDATED_SCHEMAS = [
   'NodesPage',
   'NodeSummary',
   'NodeInfo',
-  'NodeStatus',
   'NodePolicy',
   'FeeEstimates',
   'Balances',

@@ -38,11 +38,3 @@ export function checkFeeRate(text: string, bounds: AmountBounds): Checked<bigint
   }
   return { ok: true, value: parsed.value };
 }
-
-/** The first error of several checks, for showing next to the submit button. */
-export function firstError(...checks: Checked<unknown>[]): string | null {
-  for (const check of checks) {
-    if (!check.ok) return check.error;
-  }
-  return null;
-}

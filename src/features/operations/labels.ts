@@ -73,12 +73,7 @@ export const CONFIRM_LABEL: Record<OperationKind, string> = {
   send_onchain: 'Send with passkey',
 };
 
-const NONTERMINAL: ReadonlySet<OperationState> = new Set(['awaiting_confirmation', 'dispatching', 'pending', 'unknown']);
 const IN_FLIGHT: ReadonlySet<OperationState> = new Set(['dispatching', 'pending', 'unknown']);
-
-export function isNonterminal(state: OperationState): boolean {
-  return NONTERMINAL.has(state);
-}
 
 /** Possibly sent to the node and not final: only status reads may follow. */
 export function isInFlight(state: OperationState): boolean {
