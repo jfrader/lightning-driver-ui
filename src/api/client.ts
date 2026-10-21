@@ -1,6 +1,6 @@
 import { API_BASE_PATH, REQUEST_TIMEOUT_MS } from '../config';
 import { sessionCsrfToken } from './csrf';
-import { ApiError, ContractError, TransportError } from './errors';
+import { ApiError, ContractError, SessionEndedError, TransportError } from './errors';
 import { ErrorResponse, type ContractValidator } from './generated/validators';
 
 export type CsrfSource = { kind: 'session' } | { kind: 'preauth'; token: string } | { kind: 'none' };
@@ -76,6 +76,7 @@ async function perform<TBody>(options: RequestOptions<TBody>): Promise<Response>
     throw new ContractError(path, `request ${describeErrors(bodyValidator)}`);
   }
 
+  const requestSession = sessionCsrfToken();
   const headers = new Headers({ Accept: 'application/json' });
   if (body !== undefined) headers.set('Content-Type', 'application/json');
   const token = csrfToken(options.csrf ?? (method === 'GET' ? { kind: 'none' } : { kind: 'session' }));
@@ -95,6 +96,10 @@ async function perform<TBody>(options: RequestOptions<TBody>): Promise<Response>
     options.timeoutMs ?? REQUEST_TIMEOUT_MS,
   );
 
+  if (response.status === 401) {
+    const errorBody = await response.json().catch(() => null);
+    throw new SessionEndedError(ErrorResponse(errorBody) ? errorBody.error : null, requestSession);
+  }
   if (!response.ok) {
     const errorBody = await readJson(response, path);
     if (!ErrorResponse(errorBody)) throw new ContractError(path, `error ${response.status} ${describeErrors(ErrorResponse)}`);

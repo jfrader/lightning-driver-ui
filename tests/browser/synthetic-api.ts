@@ -67,6 +67,7 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
     }
     const [, resource, nodeId, sub, operationId, action] = path.split('/');
 
+    if (path === '/auth/bootstrap') return json(route, fixture('bootstrap'));
     if (path === '/session') return json(route, fixture('session'));
     if (path === '/config') return json(route, fixture('public_policy'));
     if (path === '/nodes') return json(route, { ...fixture('nodes_page'), items: [node], next_cursor: null, truncated: false });
