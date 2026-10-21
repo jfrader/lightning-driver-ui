@@ -49,7 +49,7 @@ describe('operation detail', () => {
     const value = (label: string) => status.getByText(label).nextElementSibling;
     expect(value('State')).toHaveTextContent('Outcome unknown');
     expect(value('Stage')).toHaveTextContent('Checking with node');
-    expect(value('Authorization')).toHaveTextContent('Passkey approved and used');
+    expect(value('Authorization')).toHaveTextContent('Authorized and used');
     expect(value('Result')).toHaveTextContent('None reported');
     expect(screen.getAllByText('Outcome unknown').length).toBeLessThanOrEqual(3);
     expectNoActions();
@@ -63,7 +63,7 @@ describe('operation detail', () => {
     const steps = within(timeline).getAllByRole('listitem').map((step) => step.textContent);
     expect(steps).toEqual([
       'Review created12:00:00 UTC · 1 minute ago',
-      'Passkey authorizationPasskey approved and usedTime not recorded',
+      'AuthorizationAuthorized and usedTime not recorded',
       'Sent to nodeTime not recorded',
       'Last state changeChecking with node12:00:10 UTC · 50 seconds ago',
       'Last checked with the node12:00:30 UTC · 30 seconds ago',

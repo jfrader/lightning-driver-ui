@@ -66,9 +66,9 @@ export const OPERATION_NOUN: Record<OperationKind, string> = {
 
 export const AUTHORIZATION_STATUS: Record<Operation['authorization']['status'], string> = {
   not_required: 'Not required',
-  required: 'Passkey required',
-  authorized: 'Passkey approved, not yet used',
-  consumed: 'Passkey approved and used',
+  required: 'Authorization required',
+  authorized: 'Authorized, not yet used',
+  consumed: 'Authorized and used',
 };
 
 const SUCCESS_LABEL: Record<OperationKind, string> = {
