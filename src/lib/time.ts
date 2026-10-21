@@ -14,11 +14,25 @@ function parseTime(iso: string): number | null {
 
 /** "3 minutes ago"; `null` when the timestamp cannot be parsed. */
 export function formatAge(iso: string, now: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
+  return relativeAge(iso, now, locale, 'long');
+}
+
+/** "3 min ago": the compact form for dense table cells. */
+export function formatAgeShort(iso: string, now: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
+  return relativeAge(iso, now, locale, 'short');
+}
+
+function relativeAge(
+  iso: string,
+  now: number,
+  locale: Intl.LocalesArgument,
+  style: Intl.RelativeTimeFormatStyle,
+): string | null {
   const time = parseTime(iso);
   if (time === null) return null;
   const seconds = Math.round((time - now) / 1000);
   const [unit, size] = RELATIVE_UNITS.find(([, unitSeconds]) => Math.abs(seconds) >= unitSeconds) ?? ['second', 1];
-  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(Math.round(seconds / size), unit);
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style }).format(Math.round(seconds / size), unit);
 }
 
 export function formatDateTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {

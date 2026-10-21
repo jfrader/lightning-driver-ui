@@ -1,13 +1,16 @@
 import { styled } from '@jfrader/ui';
 import type { Invoice } from '../../api/types';
 import { ListTime } from '../../components/ListTime';
-import { formatAge } from '../../lib/time';
+import { formatAgeShort } from '../../lib/time';
 import { NotReported } from '../display/NotReported';
 import { invoiceExpiry } from './labels';
 
 const Passed = styled.span(({ theme }) => ({ color: theme.color.warning }));
 
 const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted }));
+
+/** Time and age on two lines: a dense cell otherwise breaks "in 59 minutes" mid-phrase. */
+const Stack = styled.span({ display: 'grid', justifyItems: 'start' });
 
 const Description = styled.span<{ lines: number }>(({ lines }) => ({
   display: '-webkit-box',
@@ -25,15 +28,19 @@ export function InvoiceExpiryText({ invoice, now }: { invoice: Invoice; now: num
       return <NotReported />;
     case 'remaining':
       return (
-        <span>
-          <ListTime at={expiry.at} now={now} /> <Muted>· {formatAge(expiry.at, now)}</Muted>
-        </span>
+        <Stack>
+          <ListTime at={expiry.at} now={now} />
+          <Muted>{formatAgeShort(expiry.at, now)}</Muted>
+        </Stack>
       );
     case 'passed':
       return (
-        <Passed>
-          Expiry passed · <ListTime at={expiry.at} now={now} />
-        </Passed>
+        <Stack>
+          <Passed>Expiry passed</Passed>
+          <Muted>
+            <ListTime at={expiry.at} now={now} />
+          </Muted>
+        </Stack>
       );
     case 'recorded':
       return <ListTime at={expiry.at} now={now} />;
