@@ -45,7 +45,7 @@ describe('receive', () => {
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '9007199254740.993');
     await user.click(screen.getByRole('button', { name: 'Create invoice' }));
 
-    await screen.findByRole('heading', { name: 'Create invoice' });
+    await screen.findByRole('heading', { name: 'Invoice operation' });
     expect(calls.creates[0]?.body).toEqual({
       kind: 'create_invoice',
       params: { amount_msat: '9007199254740993', description: '', expiry_seconds: 3600 },
@@ -84,7 +84,7 @@ describe('receive', () => {
     expect(screen.getByLabelText(/^Amount \(BTC\)/)).toHaveValue('0.0015');
     await user.click(screen.getByRole('button', { name: 'Create invoice' }));
 
-    await screen.findByRole('heading', { name: 'Create invoice' });
+    await screen.findByRole('heading', { name: 'Invoice operation' });
     expect(calls.creates[0]?.body).toMatchObject({ params: { amount_msat: '150000000' } });
   });
 
@@ -168,7 +168,7 @@ describe('channel and on-chain reviews', () => {
     });
     renderApp(`/nodes/lnd-lab/operations/${operation('send_onchain').id}`);
 
-    expect(await screen.findByText('Not confirmed on chain yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Broadcast by the node. Not yet in a block.')).toBeInTheDocument();
     expect(screen.queryByText('Confirmed on chain')).not.toBeInTheDocument();
   });
 });

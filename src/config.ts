@@ -16,8 +16,8 @@ export const READ_STALE_MS = 10_000;
 
 /** Overview shows at most this many of the newest payments; the full list is one link away. */
 export const RECENT_PAYMENTS_LIMIT = 5;
-/** Composition bar heights in px. */
-export const SHARE_BAR_HEIGHT = 8;
+/** Composition bar heights in px: inline in lists and groups, larger in an inspector. */
+export const SHARE_BAR_HEIGHT = { inline: 8, detail: 14 } as const;
 
 /** Breakpoints are single sources: lists become tables at 48rem, the aside sits beside content at 80rem. */
 export const TABLE_QUERY = '(min-width: 48rem)';

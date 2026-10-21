@@ -6,7 +6,7 @@ import { chartGeometry } from '../lib/ratio';
 
 const ShareBarChart = lazy(() => import('../charts/ShareBarChart'));
 
-const Frame = styled.div({ inlineSize: '100%', blockSize: SHARE_BAR_HEIGHT, minInlineSize: 0 });
+const Frame = styled.div<{ barHeight: number }>(({ barHeight }) => ({ inlineSize: '100%', blockSize: barHeight, minInlineSize: 0 }));
 
 export interface SharePart {
   id: string;
@@ -20,19 +20,21 @@ interface ShareBarProps {
   summary: string;
   totalMsat: bigint;
   parts: readonly SharePart[];
+  size?: keyof typeof SHARE_BAR_HEIGHT;
 }
 
 /**
- * Stacked composition bar. The frame reserves its height before the chart chunk loads, so nothing
- * shifts; it is one image whose name carries the same numbers printed beside it.
+ * Stacked composition bar over an explicit total. The frame reserves its height before the chart
+ * chunk loads, so nothing shifts; it is one image whose name carries the numbers printed beside it.
  */
-export function ShareBar({ label, summary, totalMsat, parts }: ShareBarProps) {
+export function ShareBar({ label, summary, totalMsat, parts, size = 'inline' }: ShareBarProps) {
   const colors = useChartColors();
+  const height = SHARE_BAR_HEIGHT[size];
   return (
-    <Frame role="img" aria-label={`${label}: ${summary}`}>
+    <Frame barHeight={height} role="img" aria-label={`${label}: ${summary}`}>
       <Suspense fallback={null}>
         <ShareBarChart
-          height={SHARE_BAR_HEIGHT}
+          height={height}
           total={chartGeometry(totalMsat)}
           separator={colors.separator}
           segments={parts.map((part) => ({ id: part.id, value: chartGeometry(part.msat), fill: colors[part.tone] }))}

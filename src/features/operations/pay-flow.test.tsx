@@ -75,7 +75,7 @@ describe('pay invoice', () => {
 
     await view.user.dblClick(await screen.findByRole('button', { name: 'Pay with passkey' }));
 
-    expect(await screen.findByText('This page updates automatically.')).toBeInTheDocument();
+    expect(await screen.findByText('In flight. The node has not reported a final outcome.')).toBeInTheDocument();
     expect(calls.authorizes).toEqual([{ nodeId: 'lnd-lab', operationId: OPERATION_ID, body: { review_digest: DIGEST } }]);
     expect(calls.finishes).toEqual([
       {
@@ -103,7 +103,7 @@ describe('pay invoice', () => {
 
     await view.user.click(await screen.findByRole('button', { name: 'Pay with passkey' }));
 
-    await screen.findByText('This page updates automatically.');
+    await screen.findByText('In flight. The node has not reported a final outcome.');
     expect(webauthn.startAuthentication).not.toHaveBeenCalled();
     expect(calls.confirms.map((call) => call.body)).toEqual([
       { review_digest: DIGEST, authorization_id: 'authorization' in grant ? grant.authorization.authorization_id : null },
@@ -203,7 +203,7 @@ describe('review binding', () => {
 
     view.history.back();
     await view.user.click(await screen.findByRole('button', { name: 'Pay with passkey' }));
-    await screen.findByText('This page updates automatically.');
+    await screen.findByText('In flight. The node has not reported a final outcome.');
     expect(calls.confirms.map((call) => call.nodeId)).toEqual(['lnd-lab']);
     expect(calls.authorizes.map((call) => call.nodeId)).toEqual(['lnd-lab']);
   });

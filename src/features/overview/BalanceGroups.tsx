@@ -9,7 +9,7 @@ import { TABLE_MEDIA } from '../../config';
 import { Amount } from '../display/Amount';
 import { type WireUnit } from '../../lib/money';
 import { BalanceComposition } from './BalanceComposition';
-import { ShareSwatch } from './ShareSwatch';
+import { ShareSwatch } from '../display/ShareSwatch';
 
 const Grid = styled.div(({ theme }) => ({
   display: 'grid',

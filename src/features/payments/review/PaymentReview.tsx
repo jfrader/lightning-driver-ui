@@ -13,7 +13,7 @@ import { confirmBlockReason } from '../../operations/confirm-block';
 import { useControlSize, useDesktopShell } from '../../shell/use-shell-layout';
 import { ConsentBlock } from './ConsentBlock';
 import { ReviewAside } from './ReviewAside';
-import { ReviewDetails } from './ReviewDetails';
+import { ReviewDetails } from '../../operations/ReviewDetails';
 
 const Head = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1] }));
 

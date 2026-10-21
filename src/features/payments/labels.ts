@@ -1,9 +1,8 @@
 import type { PaymentState } from '../../api/types';
+import { labelsOf } from '../display/state-labels';
+import type { StateLabel } from '../display/StateWord';
 
-/** quiet: settled or terminal-normal; info: in progress; warning: needs a look; danger: failure. */
-export type StateTone = 'quiet' | 'info' | 'warning' | 'danger';
-
-export const PAYMENT_STATE: Record<PaymentState, { label: string; tone: StateTone }> = {
+export const PAYMENT_STATE: Record<PaymentState, StateLabel> = {
   pending: { label: 'Pending', tone: 'info' },
   succeeded: { label: 'Succeeded', tone: 'quiet' },
   failed: { label: 'Failed', tone: 'danger' },
@@ -11,9 +10,4 @@ export const PAYMENT_STATE: Record<PaymentState, { label: string; tone: StateTon
 };
 
 /** Filter labels, from the same vocabulary. */
-export const PAYMENT_STATE_LABEL: Record<PaymentState, string> = {
-  pending: PAYMENT_STATE.pending.label,
-  succeeded: PAYMENT_STATE.succeeded.label,
-  failed: PAYMENT_STATE.failed.label,
-  unknown: PAYMENT_STATE.unknown.label,
-};
+export const PAYMENT_STATE_LABEL = labelsOf(PAYMENT_STATE);

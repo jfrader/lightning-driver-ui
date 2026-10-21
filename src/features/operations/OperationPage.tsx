@@ -1,10 +1,9 @@
-import { Flex, Pill, styled } from '@jfrader/ui';
+import { Flex } from '@jfrader/ui';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { operationQueryOptions } from '../../api/node-queries';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { Freshness } from '../../components/Freshness';
 import { LoadingState } from '../../components/LoadingState';
 import { PageHeader } from '../../components/PageHeader';
 import { Panel } from '../../components/Panel';
@@ -12,16 +11,16 @@ import { publicPolicyQueryOptions } from '../auth/queries';
 import { useNodeLookup } from '../nodes/use-current-node';
 import { PaymentReview } from '../payments/review/PaymentReview';
 import { ConfirmPanel } from './ConfirmPanel';
-import { OPERATION_KIND, OPERATION_STAGE, isInFlight, outcomeLabel } from './labels';
-import { OperationResultDetails } from './OperationResultDetails';
+import { OPERATION_KIND, isInFlight } from './labels';
+import { OperationDetail } from './OperationDetail';
 import { OperationReviewDetails } from './OperationReviewDetails';
-import { OperationStatusNotice } from './OperationStatusNotice';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations/$operationId');
 
-const Stage = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
-
-/** Review, confirmation and status of one journaled operation, bound to the node in the URL. */
+/**
+ * One journaled operation, bound to the node in the URL: its review while it awaits confirmation,
+ * and afterwards (or once a confirm got no answer) what happened to it.
+ */
 export function OperationPage() {
   const { nodeId, operationId } = route.useParams();
   const unanswered = route.useSearch().confirmation === 'unanswered';
@@ -40,10 +39,13 @@ export function OperationPage() {
   if (operation.isError) return <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} />;
 
   const current = operation.data;
-  if (current.request.kind === 'pay_invoice' && current.state === 'awaiting_confirmation' && !unanswered) {
+  if (current.state !== 'awaiting_confirmation' || unanswered) {
+    return <OperationDetail operation={current} node={node} unanswered={unanswered} />;
+  }
+  if (current.request.kind === 'pay_invoice') {
     return <PaymentReview key={current.id} operation={current} bolt11={current.request.params.bolt11} node={node} />;
   }
-  const outcome = outcomeLabel(current);
+  // The other kinds' reviews are rebuilt with their forms; until then they keep this layout.
   return (
     <Flex direction="column" gap="md">
       <PageHeader
@@ -54,23 +56,10 @@ export function OperationPage() {
           </ButtonLink>
         }
       />
-      <Flex wrap gap="sm" align="center">
-        <Pill tone={outcome.tone}>{outcome.label}</Pill>
-        <Stage>{OPERATION_STAGE[current.stage]}</Stage>
-      </Flex>
-      <OperationStatusNotice operation={current} unanswered={unanswered} />
       <Panel title="Review">
         <OperationReviewDetails operation={current} />
       </Panel>
-      {current.state === 'awaiting_confirmation' && !unanswered && (
-        <ConfirmPanel key={current.id} operation={current} node={node} />
-      )}
-      {current.result && (
-        <Panel title="Result">
-          <OperationResultDetails result={current.result} />
-        </Panel>
-      )}
-      <Freshness observedAt={current.last_reconciled_at ?? current.updated_at} stale={false} />
+      <ConfirmPanel key={current.id} operation={current} node={node} />
     </Flex>
   );
 }

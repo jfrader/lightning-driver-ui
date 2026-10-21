@@ -39,6 +39,34 @@ export function operation(kind: Kind, state = 'awaiting_confirmation', stage = '
   };
 }
 
+/** An unresolved payment of the synthetic node, with its own id so it never shadows a fresh review. */
+export const UNRESOLVED_OPERATION_ID = '00000000-0000-4000-8000-000000000801';
+
+export function unresolvedOperation() {
+  const unknown = operation('pay_invoice', 'unknown', 'reconciling');
+  return {
+    ...unknown,
+    id: UNRESOLVED_OPERATION_ID,
+    review: { ...unknown.review, operation_id: UNRESOLVED_OPERATION_ID },
+    authorization: { status: 'consumed', mode: 'every_operation', expires_at: null },
+    updated_at: '2026-10-21T12:00:10Z',
+    last_reconciled_at: '2026-10-21T12:00:30Z',
+  };
+}
+
+/**
+ * The contract's channel, plus two built from it: an opening channel without reported balances,
+ * and one whose balances leave 100,000 sat of capacity in neither.
+ */
+export function syntheticChannels() {
+  const channel = fixture('channels_page').items[0];
+  return [
+    channel,
+    { ...channel, id: 'channel-synthetic-opening', state: 'opening', private: false, local_msat: null, remote_msat: null, funding_outpoint: null },
+    { ...channel, id: 'channel-synthetic-remainder', short_channel_id: '812x1x0', private: null, local_msat: '300000000', remote_msat: '600000000', spendable_msat: '290000000' },
+  ];
+}
+
 export interface RecordedRequest {
   method: string;
   path: string;
@@ -54,7 +82,8 @@ const json = (route: Route, body: unknown, status = 200) =>
  */
 export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]> {
   const mutations: RecordedRequest[] = [];
-  const node = fixture('node_lnd');
+  // Counts the one unresolved operation the journal list serves.
+  const node = { ...fixture('node_lnd'), unresolved_operation_count: '1' };
   const page$ = (nodeId: string) => ({ node_id: nodeId, network: node.network, observed_at: '2026-10-21T12:00:00Z' });
 
   await page.clock.setFixedTime(FIXTURE_NOW);
@@ -80,7 +109,7 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
     if (sub === 'invoices') return json(route, { ...fixture('invoices_page'), ...page$(nodeId) });
     if (sub === 'payments') return json(route, { ...fixture('payments_page'), ...page$(nodeId) });
     if (sub === 'peers') return json(route, { ...fixture('peers_page'), ...page$(nodeId) });
-    if (sub === 'channels') return json(route, { ...fixture('channels_page'), ...page$(nodeId) });
+    if (sub === 'channels') return json(route, { ...fixture('channels_page'), ...page$(nodeId), items: syntheticChannels() });
     if (sub === 'transactions') return json(route, { ...fixture('transactions_page'), ...page$(nodeId) });
     if (sub === 'decode' && request.method() === 'POST') return json(route, fixture('decode'));
     if (sub === 'operations' && request.method() === 'POST' && operationId === undefined) {
@@ -92,14 +121,14 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
       const created = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
       return created ? json(route, { ...created, state: 'pending', stage: 'submitted' }, 202) : route.abort();
     }
+    if (sub === 'operations' && operationId === UNRESOLVED_OPERATION_ID) return json(route, unresolvedOperation());
     if (sub === 'operations' && operationId) {
       const found = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
       return found ? json(route, found) : route.abort();
     }
     if (sub === 'operations') {
       // One unresolved operation of this node, so the overview has an attention item.
-      const unresolved = { ...operation('send_onchain', 'unknown', 'reconciling'), last_reconciled_at: '2026-10-21T12:00:30Z' };
-      return json(route, { ...fixture('operations_page'), ...page$(nodeId), items: [unresolved] });
+      return json(route, { ...fixture('operations_page'), ...page$(nodeId), items: [unresolvedOperation()] });
     }
     return route.abort();
   });

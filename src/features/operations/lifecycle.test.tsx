@@ -148,7 +148,7 @@ describe('leaving a review while its confirmation is in flight', () => {
 
     await view.user.click(await screen.findByRole('button', { name: 'Pay with passkey' }));
 
-    await screen.findByText('This page updates automatically.');
+    await screen.findByText('In flight. The node has not reported a final outcome.');
     expect(calls.confirms).toHaveLength(1);
   });
 });
