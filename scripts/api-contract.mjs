@@ -3,9 +3,13 @@
 // files drift. Never edit contract/openapi.v1.json or src/api/generated/* by hand.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import openapiTS, { astToString } from 'openapi-typescript';
+import { _ } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
 import standaloneCode from 'ajv/dist/standalone/index.js';
+import addFormats from 'ajv-formats';
+import { build } from 'esbuild';
 
 // Frozen backend-owned API v1 (GURI-2908). The snapshot is a consumer copy; change it only by
 // copying a newly frozen revision and updating these hashes.
@@ -13,7 +17,8 @@ const FROZEN_SHA256 = 'a92d6ceb9066d7b174972d279b1fc480adc26b866671305413ad1689a
 const FROZEN_EXAMPLES_SHA256 = '13adce818576f64d24303f99c0c86c54ee26d69ade4719142780ae2171f5ec66';
 const CONTRACT_URL = new URL('../contract/openapi.v1.json', import.meta.url);
 const EXAMPLES_URL = new URL('../contract/examples.v1.json', import.meta.url);
-const CONTRACT_ID = 'https://contract.lightning-driver.invalid/openapi.v1.json';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const CONTRACT_ID ='https://contract.lightning-driver.invalid/openapi.v1.json';
 const SCHEMA_OUT = new URL('../src/api/generated/schema.ts', import.meta.url);
 const VALIDATORS_OUT = new URL('../src/api/generated/validators.js', import.meta.url);
 const VALIDATORS_TYPES_OUT = new URL('../src/api/generated/validators.d.ts', import.meta.url);
@@ -53,6 +58,28 @@ async function readFrozen(url, expectedSha) {
   return bytes;
 }
 
+async function bundleForBrowser(moduleCode) {
+  const result = await build({
+    stdin: { contents: moduleCode, resolveDir: ROOT, sourcefile: 'validators.js', loader: 'js' },
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2022',
+    legalComments: 'none',
+    write: false,
+    metafile: true,
+    logLevel: 'error',
+  });
+  const [output] = result.outputFiles;
+  // esbuild keeps output imports, or a `typeof require` shim with `__require("…")` calls, only
+  // for modules it could not bundle; a browser cannot load either.
+  const imports = Object.values(result.metafile.outputs).flatMap((file) => file.imports);
+  if (imports.length > 0 || /typeof require\b|\b__require\("/.test(output.text)) {
+    throw new Error(`Validators are not self-contained: ${JSON.stringify(imports)}`);
+  }
+  return output.text;
+}
+
 async function generate() {
   const bytes = await readFrozen(CONTRACT_URL, FROZEN_SHA256);
   await readFrozen(EXAMPLES_URL, FROZEN_EXAMPLES_SHA256);
@@ -60,19 +87,18 @@ async function generate() {
 
   const schemaTs = HEADER + astToString(await openapiTS(document));
 
-  // Browser bundle validates structure, enums, required fields and every decimal pattern.
-  // String formats (date-time/uri/uuid) are checked where values are parsed, keeping the
-  // generated module free of runtime imports.
+  // Full JSON Schema semantics: string formats via ajv-formats and code-point string lengths.
+  // Ajv's standalone output refers to its runtime helpers with require(); esbuild bundles those
+  // helpers into one self-contained browser ES module, as the Ajv standalone docs recommend.
   const ajv = new Ajv2020({
-    code: { source: true, esm: true, lines: false },
+    code: { source: true, esm: true, lines: false, formats: _`require("ajv-formats/dist/formats").fullFormats` },
     allErrors: false,
     inlineRefs: false,
-    validateFormats: false,
-    unicode: false,
     strictSchema: true,
     strictTypes: false,
     strictRequired: false,
   });
+  addFormats(ajv);
   ajv.addKeyword('example');
   ajv.addKeyword('discriminator');
   ajv.addKeyword('components');
@@ -80,7 +106,7 @@ async function generate() {
   const refs = Object.fromEntries(
     VALIDATED_SCHEMAS.map((name) => [name, `${CONTRACT_ID}#/components/schemas/${name}`]),
   );
-  const validatorsJs = HEADER + standaloneCode(ajv, refs);
+  const validatorsJs = HEADER + (await bundleForBrowser(standaloneCode(ajv, refs)));
 
   const validatorsDts = [
     HEADER,
