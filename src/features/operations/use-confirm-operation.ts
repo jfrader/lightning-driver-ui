@@ -11,6 +11,7 @@ import {
 import type { Operation } from '../../api/types';
 import { throwIfAbandoned, useAttempt, type Attempt } from '../../lib/use-attempt';
 import { requestPasskeyAssertion } from '../auth/passkey';
+import { invalidateAffectedReads } from './affected-reads';
 import { markConfirmAnswered, markConfirmSent } from './confirming';
 import { UnansweredConfirmationError, isUnansweredConfirmation } from './unanswered';
 
@@ -83,9 +84,10 @@ export function useConfirmOperation(operation: Operation) {
       }
     },
     onSuccess: (confirmed, { attempt }) => {
+      // The node accepted it whether or not this screen is still open: what it changes is stale.
+      void invalidateAffectedReads(queryClient, confirmed);
       if (!attempt.isCurrent()) return;
       queryClient.setQueryData(nodeKeys.operation(nodeId, operationId), confirmed);
-      void queryClient.invalidateQueries({ queryKey: nodeKeys.summary(nodeId) });
     },
     onError: (error, { attempt }) => {
       if (!attempt.isCurrent()) return;

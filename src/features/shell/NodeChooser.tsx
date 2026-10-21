@@ -24,7 +24,9 @@ export function NodeChooser() {
   const { nodeId, node, destination, pathname } = useShellNode();
   const fleet = useQuery(fleetQueryOptions());
 
-  const nodes = fleet.data?.items ?? (node ? [node] : []);
+  // The open node reads from its own summary, the read the header shows and refetches with every
+  // observation; the fleet page may predate that observation.
+  const nodes = (fleet.data?.items ?? (node ? [node] : [])).map((item) => (node && item.id === node.id ? node : item));
   const options = nodes.map((item) => ({ value: item.id, label: nodeChoiceLabel(item) }));
   if (nodeId && !options.some((option) => option.value === nodeId)) {
     options.unshift({ value: nodeId, label: node ? nodeChoiceLabel(node) : nodeId });
