@@ -48,7 +48,8 @@ run `npm run api:generate`.
 | `npm run typecheck` | TypeScript project build, no emit |
 | `npm run test` | Vitest behavior tests (jsdom, MSW with contract fixtures, 2 workers) |
 | `npm run build` | Typecheck and production build |
-| `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build |
+| `npm run budget` | Builds and fails if the first-load JS or the lazy chart chunk exceeds `bundle-budget.json` |
+| `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build, including 44 px targets, forced colors, 200% zoom, reduced motion and the phone tab-bar clearance |
 | `npm run verify` | All of the above in order |
 
 `test:browser` needs a Chromium for Playwright: either `npx playwright install chromium`, or an
