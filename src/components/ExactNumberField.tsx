@@ -1,4 +1,5 @@
-import { TextField, type TextFieldProps } from '@jfrader/ui';
+import type { TextFieldProps } from '@jfrader/ui';
+import { FormTextField } from './FormTextField';
 
 interface ExactNumberFieldProps extends Omit<TextFieldProps, 'type' | 'inputMode' | 'onChange'> {
   /** `decimal` allows one decimal point; `whole` is digits only. Only sets the phone keyboard. */
@@ -11,7 +12,7 @@ interface ExactNumberFieldProps extends Omit<TextFieldProps, 'type' | 'inputMode
  */
 export function ExactNumberField({ kind, ...props }: ExactNumberFieldProps) {
   return (
-    <TextField
+    <FormTextField
       {...props}
       type="text"
       inputMode={kind === 'decimal' ? 'decimal' : 'numeric'}

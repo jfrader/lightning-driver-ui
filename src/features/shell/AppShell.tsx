@@ -1,7 +1,7 @@
 import { styled } from '@jfrader/ui';
 import { Outlet } from '@tanstack/react-router';
 import { Wordmark } from '../../components/Wordmark';
-import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT } from '../../config';
+import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT, TOUCH_TARGET } from '../../config';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { LogoutButton } from '../auth/LogoutButton';
 import { useSessionExpiry } from '../auth/use-session-expiry';
@@ -25,6 +25,10 @@ const SkipLink = styled.a(({ theme }) => ({
   insetInlineStart: theme.space[2],
   insetBlockStart: theme.space[2],
   zIndex: 3,
+  display: 'inline-flex',
+  alignItems: 'center',
+  minBlockSize: TOUCH_TARGET,
+  boxSizing: 'border-box',
   paddingBlock: theme.space[2],
   paddingInline: theme.space[3],
   borderRadius: theme.radius.md,

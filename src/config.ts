@@ -42,6 +42,8 @@ export const SHELL_QUERY = '(min-width: 64rem)';
 export const SIDEBAR_WIDTH = '15rem';
 export const STRIP_HEIGHT = '3.25rem';
 export const TAB_BAR_HEIGHT = '3.5rem';
+/** Smallest touch target on the phone layout: 44px at the default root size. */
+export const TOUCH_TARGET = '2.75rem';
 
 /** Every collection request asks for this many rows; the API allows up to 200. */
 export const PAGE_LIMIT = 100;

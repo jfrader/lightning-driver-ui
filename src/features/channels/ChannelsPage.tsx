@@ -9,6 +9,7 @@ import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { InspectorLayout } from '../../components/InspectorLayout';
 import { Amount } from '../display/Amount';
@@ -90,6 +91,7 @@ export function ChannelsPage() {
       from="/nodes/$nodeId/channels"
       search={(previous) => ({ ...previous, selected: channel.id })}
       aria-label={`Open channel ${channelName(channel)} with ${channel.peer_pubkey.slice(0, 8)}`}
+      {...ROW_PRIMARY_LINK}
     >
       {label}
     </TextLink>
@@ -141,9 +143,14 @@ export function ChannelsPage() {
               channel={selected}
               node={node}
               close={
-                <TextLink from="/nodes/$nodeId/channels" search={(previous) => ({ ...previous, selected: undefined })}>
+                <ButtonLink
+                  variant="ghost"
+                  size={size}
+                  from="/nodes/$nodeId/channels"
+                  search={(previous) => ({ ...previous, selected: undefined })}
+                >
                   Hide
-                </TextLink>
+                </ButtonLink>
               }
             />
           )

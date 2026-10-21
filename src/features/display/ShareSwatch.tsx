@@ -9,6 +9,8 @@ const Mark = styled.span<{ swatch: string }>(({ swatch }) => ({
   marginInlineEnd: '0.4rem',
   borderRadius: '1px',
   backgroundColor: swatch,
+  // Forced colors drops backgrounds; the key must keep matching the bar it explains.
+  forcedColorAdjust: 'none',
 }));
 
 /** Colour key beside the label it explains, so the composition bar needs no separate legend. */

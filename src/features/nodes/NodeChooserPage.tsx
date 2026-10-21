@@ -11,7 +11,7 @@ export function NodeChooserPage() {
   const navigate = route.useNavigate();
   return (
     <Flex direction="column" gap="md">
-      <PageHeader title="Choose a node" />
+      <PageHeader title="Choose a node" level={1} />
       <FleetList cursor={cursor} onPage={(next) => void navigate({ search: { cursor: next } })} />
     </Flex>
   );

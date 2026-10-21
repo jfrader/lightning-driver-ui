@@ -9,6 +9,7 @@ import { InspectorLayout } from '../../components/InspectorLayout';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { ShortIdentifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
@@ -85,6 +86,7 @@ export function PeersPage() {
       from="/nodes/$nodeId/peers"
       search={(previous) => ({ ...previous, selected: peer.pubkey })}
       aria-label={`Open peer ${peer.pubkey.slice(0, 8)}`}
+      {...ROW_PRIMARY_LINK}
     >
       {label}
     </TextLink>
@@ -125,9 +127,14 @@ export function PeersPage() {
               peer={selected}
               node={node}
               close={
-                <TextLink from="/nodes/$nodeId/peers" search={(previous) => ({ ...previous, selected: undefined })}>
+                <ButtonLink
+                  variant="ghost"
+                  size={size}
+                  from="/nodes/$nodeId/peers"
+                  search={(previous) => ({ ...previous, selected: undefined })}
+                >
                   Hide
-                </TextLink>
+                </ButtonLink>
               }
             />
           )

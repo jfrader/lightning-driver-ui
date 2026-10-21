@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
 import { ListTime } from '../../components/ListTime';
+import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { useNow } from '../../lib/use-now';
 import { OPERATION_KIND, OPERATION_LIST_STATE, OPERATION_STAGE, outcomeLabel } from './labels';
@@ -30,7 +31,11 @@ const Line = styled.div(({ theme }) => ({
 
 function ActionLink({ operation }: { operation: Operation }) {
   return (
-    <TextLink to="/nodes/$nodeId/operations/$operationId" params={{ nodeId: operation.node_id, operationId: operation.id }}>
+    <TextLink
+      to="/nodes/$nodeId/operations/$operationId"
+      params={{ nodeId: operation.node_id, operationId: operation.id }}
+      {...ROW_PRIMARY_LINK}
+    >
       {OPERATION_KIND[operation.request.kind]}
     </TextLink>
   );

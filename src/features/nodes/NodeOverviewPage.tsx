@@ -1,4 +1,4 @@
-import { Accordion } from '@jfrader/ui';
+import { Disclosure } from '../../components/Disclosure';
 import { Section } from '../../components/Section';
 import { WorkLayout } from '../../components/WorkLayout';
 import { ASIDE_QUERY } from '../../config';
@@ -32,7 +32,9 @@ export function NodeOverviewPage() {
         besideContent ? (
           context
         ) : (
-          <Accordion collapsible items={[{ value: 'node', label: 'Node details and policy', panel: context }]} />
+          <Disclosure value="node" label="Node details and policy">
+            {context}
+          </Disclosure>
         )
       }
     />

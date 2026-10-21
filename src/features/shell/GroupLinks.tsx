@@ -1,5 +1,6 @@
 import { styled } from '@jfrader/ui';
 import { createLink } from '@tanstack/react-router';
+import { TOUCH_TARGET } from '../../config';
 import { groupOf, NODE_DESTINATIONS } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
@@ -14,7 +15,7 @@ const Row = styled.nav(({ theme }) => ({
 const ItemAnchor = styled.a(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  minBlockSize: '2.75rem',
+  minBlockSize: TOUCH_TARGET,
   paddingInline: theme.space[3],
   borderBlockEnd: '2px solid transparent',
   marginBlockEnd: '-1px',

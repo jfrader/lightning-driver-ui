@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Flex, SegmentedControl, TextField } from '@jfrader/ui';
+import { Flex, SegmentedControl } from '@jfrader/ui';
+import { FormTextField } from '../../components/FormTextField';
 import { useQuery } from '@tanstack/react-query';
 import { peersQueryOptions } from '../../api/node-queries';
 import type { NodePolicy } from '../../api/types';
@@ -80,7 +81,7 @@ export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChanne
   return (
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
-        <TextField
+        <FormTextField
           label="Peer public key"
           description={connection ?? undefined}
           value={form.peer}

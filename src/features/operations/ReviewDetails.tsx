@@ -1,4 +1,5 @@
-import { Accordion, styled } from '@jfrader/ui';
+import { styled } from '@jfrader/ui';
+import { Disclosure } from '../../components/Disclosure';
 import type { DecodedInvoice, Operation } from '../../api/types';
 import { DetailList, type DetailItem } from '../../components/DetailList';
 import { UtcTime } from '../../components/UtcTime';
@@ -35,5 +36,9 @@ export function ReviewDetails({ operation, decoded = null }: ReviewDetailsProps)
     },
   ];
   const facts = <DetailList items={items.filter((item): item is DetailItem => item !== false)} />;
-  return <Accordion collapsible items={[{ value: 'technical', label: 'Technical details', panel: facts }]} />;
+  return (
+    <Disclosure value="technical" label="Technical details">
+      {facts}
+    </Disclosure>
+  );
 }

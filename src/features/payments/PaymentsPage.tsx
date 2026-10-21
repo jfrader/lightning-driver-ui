@@ -8,6 +8,7 @@ import { ButtonLink } from '../../components/ButtonLink';
 import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
+import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { InspectorLayout } from '../../components/InspectorLayout';
 import { isKeyOf } from '../../lib/guards';
@@ -36,6 +37,7 @@ export function PaymentsPage() {
       from="/nodes/$nodeId/payments"
       search={(previous) => ({ ...previous, selected: payment.payment_hash })}
       aria-label={`Open payment ${payment.payment_hash.slice(0, 8)}`}
+      {...ROW_PRIMARY_LINK}
     >
       {label}
     </TextLink>
@@ -99,9 +101,14 @@ export function PaymentsPage() {
               payment={selected}
               now={now}
               close={
-                <TextLink from="/nodes/$nodeId/payments" search={(previous) => ({ ...previous, selected: undefined })}>
+                <ButtonLink
+                  variant="ghost"
+                  size={size}
+                  from="/nodes/$nodeId/payments"
+                  search={(previous) => ({ ...previous, selected: undefined })}
+                >
                   Hide
-                </TextLink>
+                </ButtonLink>
               }
             />
           )

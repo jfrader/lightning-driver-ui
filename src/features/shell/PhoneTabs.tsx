@@ -1,6 +1,6 @@
 import { styled } from '@jfrader/ui';
 import { createLink } from '@tanstack/react-router';
-import { TAB_BAR_HEIGHT } from '../../config';
+import { TAB_BAR_HEIGHT, TOUCH_TARGET } from '../../config';
 import { groupOf, NODE_DESTINATIONS, PHONE_TABS, type PhoneTab } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
@@ -22,7 +22,7 @@ const TabAnchor = styled.a(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  minBlockSize: '2.75rem',
+  minBlockSize: TOUCH_TARGET,
   borderBlockStart: '2px solid transparent',
   color: theme.color.textMuted,
   fontSize: theme.textSize.sm,

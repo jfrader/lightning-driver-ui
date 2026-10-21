@@ -5,6 +5,7 @@ import type { NodeSummary } from '../../api/types';
 import { ListTime } from '../../components/ListTime';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { useNow } from '../../lib/use-now';
@@ -43,7 +44,7 @@ const Meta = styled.span(({ theme }) => ({
 
 function NodeLink({ node }: { node: NodeSummary }) {
   return (
-    <TextLink to="/nodes/$nodeId" params={{ nodeId: node.id }}>
+    <TextLink to="/nodes/$nodeId" params={{ nodeId: node.id }} {...ROW_PRIMARY_LINK}>
       {node.label}
     </TextLink>
   );
