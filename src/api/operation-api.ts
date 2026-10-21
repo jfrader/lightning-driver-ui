@@ -39,12 +39,19 @@ export async function getOperation(nodeId: string, operationId: string, signal?:
   return expectOperation(path, nodeId, operationId, operation);
 }
 
-export function startOperationAuthorization(nodeId: string, operationId: string, reviewDigest: string) {
+/** Starts step-up for a reviewed operation. Never dispatches; abortable while the screen is open. */
+export function startOperationAuthorization(
+  nodeId: string,
+  operationId: string,
+  reviewDigest: string,
+  signal?: AbortSignal,
+) {
   return apiRequest({
     method: 'POST',
     path: nodePath(nodeId, 'operations', operationId, 'authorize'),
     body: { review_digest: reviewDigest },
     response: AuthorizationStart,
+    signal,
   });
 }
 
@@ -52,12 +59,14 @@ export function finishOperationAuthorization(
   nodeId: string,
   operationId: string,
   body: { challenge_id: string; review_digest: string; credential: AuthenticationCredential },
+  signal?: AbortSignal,
 ) {
   return apiRequest({
     method: 'POST',
     path: nodePath(nodeId, 'operations', operationId, 'authorize', 'finish'),
     body,
     response: OperationAuthorization,
+    signal,
   });
 }
 

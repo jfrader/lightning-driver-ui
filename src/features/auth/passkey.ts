@@ -1,4 +1,5 @@
 import {
+  WebAuthnAbortService,
   WebAuthnError,
   browserSupportsWebAuthn,
   startAuthentication,
@@ -25,11 +26,17 @@ function descriptor(credential: { id: string; transports?: string[] }): PublicKe
   return { id: credential.id, type: 'public-key', transports: credential.transports };
 }
 
-/** Runs a user-verified passkey assertion for server-issued options. */
+/**
+ * Runs a user-verified passkey assertion for server-issued options. Aborting `signal` cancels an
+ * open browser prompt through the helper's abort service.
+ */
 export async function requestPasskeyAssertion(
   options: AuthenticationChallenge['options'],
+  signal?: AbortSignal,
 ): Promise<AuthenticationCredential> {
   const { challenge, rpId, timeout, allowCredentials, userVerification, extensions } = options.publicKey;
+  const cancelPrompt = () => WebAuthnAbortService.cancelCeremony();
+  signal?.addEventListener('abort', cancelPrompt, { once: true });
   const result = await startAuthentication({
     optionsJSON: {
       challenge,
@@ -39,7 +46,7 @@ export async function requestPasskeyAssertion(
       allowCredentials: allowCredentials?.map(descriptor),
       extensions: isExtensionInputs(extensions) ? extensions : undefined,
     },
-  });
+  }).finally(() => signal?.removeEventListener('abort', cancelPrompt));
   return {
     id: result.id,
     rawId: result.rawId,
