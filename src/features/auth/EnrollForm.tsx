@@ -6,7 +6,7 @@ import { checkEnrollmentToken } from '../forms/validation';
 import { useControlSize } from '../shell/use-shell-layout';
 import { enrollPasskey } from './ceremonies';
 import { SignInNotice } from './SignInNotice';
-import { signInProblem } from './sign-in-problem';
+import { signUpProblem } from './sign-in-problem';
 import { useCooldown } from './use-cooldown';
 
 interface EnrollFormProps {
@@ -29,7 +29,7 @@ export function EnrollForm({ onBack, onSession, autoFocus }: EnrollFormProps) {
     mutationFn: enrollPasskey,
     onSuccess: onSession,
     onError: (error) => {
-      const problem = signInProblem(error);
+      const problem = signUpProblem(error);
       if (problem.kind === 'rate_limited') cooldown.start(problem.seconds);
     },
   });
@@ -73,7 +73,7 @@ export function EnrollForm({ onBack, onSession, autoFocus }: EnrollFormProps) {
         <Button type="submit" tone="accent" size="lg" loading={enroll.isPending} disabled={cooldown.active}>
           Create passkey
         </Button>
-        {enroll.isError && <SignInNotice problem={signInProblem(enroll.error)} />}
+        {enroll.isError && <SignInNotice problem={signUpProblem(enroll.error)} />}
         {onBack && (
           <Button variant="ghost" size={size} onClick={onBack} disabled={enroll.isPending}>
             Back to sign in

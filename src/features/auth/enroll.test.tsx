@@ -126,7 +126,7 @@ describe('passkey enrollment', () => {
 
     await submitToken(view);
 
-    expect(await screen.findByText('Enrollment is disabled on this host.')).toBeInTheDocument();
+    expect(await screen.findByText('Enrollment is not available.')).toBeInTheDocument();
     expect(screen.getByLabelText(/^Enrollment token/)).toHaveValue('');
     expect(webauthn.startRegistration).not.toHaveBeenCalled();
     expect(finishes).toEqual([]);

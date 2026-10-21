@@ -11,8 +11,9 @@ export const SIGN_IN_COPY = {
   canceled: 'Passkey request canceled.',
   notEnrolled: 'This passkey is not enrolled on this server.',
   expired: 'The sign-in request expired. Continue with passkey again.',
+  enrollmentExpired: 'The enrollment request expired. Start again.',
   rejected: 'Sign-in was rejected by the server. Reload this page.',
-  enrollmentDisabled: 'Enrollment is disabled on this host.',
+  enrollmentDisabled: 'Enrollment is not available.',
   noPasskey: 'No passkey is enrolled.',
   unsupported: PASSKEY_FAILURE_MESSAGE.unsupported,
 } as const;
@@ -47,4 +48,13 @@ export function signInProblem(error: unknown): SignInProblem {
   }
   const text = CODE_TEXT[code];
   return text ? { kind: 'text', tone: 'warning', text } : { kind: 'server', error };
+}
+
+/** Enrollment uses the sign-in sentences except where the wording names the wrong ceremony. */
+export function signUpProblem(error: unknown): SignInProblem {
+  const code = errorCode(error);
+  if (code === 'challenge_expired' || code === 'challenge_invalid') {
+    return { kind: 'text', tone: 'warning', text: SIGN_IN_COPY.enrollmentExpired };
+  }
+  return signInProblem(error);
 }

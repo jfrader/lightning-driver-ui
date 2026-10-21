@@ -211,7 +211,7 @@ describe('enrollment form (screens spec §6.2)', () => {
     await view.user.type(field, TOKEN);
     await view.user.click(screen.getByRole('button', { name: 'Create passkey' }));
 
-    expect(await screen.findByText('Enrollment is disabled on this host.')).toBeInTheDocument();
+    expect(await screen.findByText('Enrollment is not available.')).toBeInTheDocument();
     expect(pane()).toHaveTextContent(`Run ${HOST_COMMAND} on the host for a new token.`);
     expect(screen.getByLabelText(/^Enrollment token/)).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Create passkey' })).toBeEnabled();

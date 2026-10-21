@@ -2,7 +2,7 @@ import { WebAuthnError } from '@simplewebauthn/browser';
 import { describe, expect, it } from 'vitest';
 import { ApiError, SessionEndedError, TransportError } from '../../api/errors';
 import type { ErrorCode } from '../../api/types';
-import { rateLimitedText, signInProblem } from './sign-in-problem';
+import { rateLimitedText, signInProblem, signUpProblem } from './sign-in-problem';
 
 const apiError = (code: ErrorCode, retryAfter: number | null = null, status = 400) =>
   new ApiError(status, { code, message: `server says ${code}`, request_id: '00000000-0000-4000-8000-000000000999', operation_id: null, outcome: 'not_applicable' }, retryAfter);
@@ -38,6 +38,14 @@ describe('sign-in problems (screens spec §6.3)', () => {
   it('keeps the sentence when the refusal comes back as a 401', () => {
     const refusal = new SessionEndedError(apiError('authentication_failed').detail, null);
     expect(signInProblem(refusal)).toEqual({ kind: 'text', tone: 'warning', text: 'This passkey is not enrolled on this server.' });
+  });
+
+  it('names the enrollment ceremony when its request expired', () => {
+    expect(signUpProblem(apiError('challenge_expired'))).toEqual({
+      kind: 'text',
+      tone: 'warning',
+      text: 'The enrollment request expired. Start again.',
+    });
   });
 
   it('reads enrollment_unavailable as the host-only wording', () => {
