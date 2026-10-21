@@ -1,10 +1,7 @@
-import { Flex, styled } from '@jfrader/ui';
+import { Flex, Pill, styled } from '@jfrader/ui';
 import type { NodeSummary } from '../../api/types';
-import { Freshness } from '../../components/Freshness';
 import { InlineCode } from '../../components/InlineCode';
-import { BACKEND_LABEL } from './labels';
-import { NodeStatusPills } from './NodeStatusPills';
-import { NodeSwitcher } from './NodeSwitcher';
+import { BACKEND_LABEL, NETWORK_LABEL } from './labels';
 
 const Title = styled.h1(({ theme }) => ({
   margin: 0,
@@ -15,19 +12,16 @@ const Title = styled.h1(({ theme }) => ({
 
 const Meta = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
 
+/** Node identity at the top of its screens. Live state (access, connection, freshness) is in the shell. */
 export function NodeHeader({ node }: { node: NodeSummary }) {
   return (
-    <Flex wrap gap="md" align="end" justify="between">
-      <Flex direction="column" gap="xs">
-        <Title>{node.label}</Title>
-        <Flex wrap gap="sm" align="center">
-          <InlineCode>{node.id}</InlineCode>
-          <Meta>{BACKEND_LABEL[node.backend]}</Meta>
-        </Flex>
-        <NodeStatusPills node={node} />
-        <Freshness observedAt={node.status.observed_at} stale={node.status.stale} />
+    <Flex direction="column" gap="xs">
+      <Title>{node.label}</Title>
+      <Flex wrap gap="sm" align="center">
+        <Pill tone={node.network === 'unknown' ? 'warning' : 'neutral'}>{NETWORK_LABEL[node.network]}</Pill>
+        <InlineCode>{node.id}</InlineCode>
+        <Meta>{BACKEND_LABEL[node.backend]}</Meta>
       </Flex>
-      <NodeSwitcher node={node} />
     </Flex>
   );
 }
