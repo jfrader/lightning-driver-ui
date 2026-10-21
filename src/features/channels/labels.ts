@@ -21,9 +21,15 @@ export function isClosable(channel: Channel): boolean {
   return CLOSABLE.has(channel.state);
 }
 
-/** A channel's short name: its short channel id, or `Pending` before it has one. */
+/** A channel's short name: short channel id, truncated funding outpoint, or truncated channel id. */
 export function channelName(channel: Channel): string {
-  return channel.short_channel_id ?? 'Pending';
+  if (channel.short_channel_id) return channel.short_channel_id;
+  if (channel.funding_outpoint) {
+    const [txid, index] = channel.funding_outpoint.split(':');
+    return `${txid.slice(0, 8)}…:${index ?? '0'}`;
+  }
+  const { id } = channel;
+  return id.length <= 18 ? id : `${id.slice(0, 8)}…${id.slice(-6)}`;
 }
 
 export const CLOSE_TYPE: Record<NonNullable<Channel['close_type']>, string> = {
