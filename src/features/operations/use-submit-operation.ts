@@ -1,0 +1,55 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { nodeKeys } from '../../api/node-queries';
+import { confirmOperation, createOperation } from '../../api/operation-api';
+import type { CreateOperationRequest, Operation } from '../../api/types';
+import { isUnansweredConfirmation } from './unanswered';
+import { useIntentKey } from './use-intent-key';
+
+export interface SubmitResult {
+  operation: Operation;
+  /** Set when a low-risk confirm got no trustworthy answer. */
+  confirmation: 'unanswered' | undefined;
+  /** A definite error from the low-risk confirm; the review still exists. */
+  confirmError: unknown;
+}
+
+/**
+ * The one entry into the operation pipeline for every kind. It creates the immutable server
+ * review; only low-risk kinds (server `review.sensitive === false`) are confirmed in the same
+ * explicit action. Sensitive kinds open the review page and wait for a passkey confirmation.
+ */
+export function useSubmitOperation(nodeId: string) {
+  const keyFor = useIntentKey();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: CreateOperationRequest): Promise<SubmitResult> => {
+      const operation = await createOperation(nodeId, request, keyFor(request));
+      if (operation.review.sensitive || operation.state !== 'awaiting_confirmation') {
+        return { operation, confirmation: undefined, confirmError: null };
+      }
+      try {
+        const confirmed = await confirmOperation(nodeId, operation.id, {
+          review_digest: operation.review.digest,
+          authorization_id: null,
+        });
+        return { operation: confirmed, confirmation: undefined, confirmError: null };
+      } catch (error) {
+        if (isUnansweredConfirmation(error)) return { operation, confirmation: 'unanswered', confirmError: null };
+        return { operation, confirmation: undefined, confirmError: error };
+      }
+    },
+    onSuccess: ({ operation, confirmation, confirmError }) => {
+      queryClient.setQueryData(nodeKeys.operation(nodeId, operation.id), operation);
+      void queryClient.invalidateQueries({ queryKey: nodeKeys.summary(nodeId) });
+      if (confirmError) return;
+      void navigate({
+        to: '/nodes/$nodeId/operations/$operationId',
+        params: { nodeId, operationId: operation.id },
+        search: { confirmation },
+      });
+    },
+  });
+}

@@ -1,0 +1,13 @@
+:root,
+[data-theme='dark'],
+[data-theme='light'] {
+  --ui-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+}

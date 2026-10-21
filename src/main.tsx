@@ -1,18 +1,21 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import '@jfrader/tokens/tokens.css';
+import '@jfrader/tokens/base.css';
+import './app.css';
+import { App } from './app/App';
+import { createApp } from './app/create-app';
+import { followSystemTheme } from './lib/system-theme';
 
-import "./index.css";
-import "@fontsource/roboto/300.css";
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/600.css";
-import "@fontsource/roboto/700.css";
-import "@fontsource/roboto/900.css";
+followSystemTheme(document.documentElement);
 
-import App from "./App.tsx";
+const root = document.getElementById('root');
+if (!root) throw new Error('Missing #root element');
 
-createRoot(document.getElementById("root")!).render(
+const { queryClient, router } = createApp();
+
+createRoot(root).render(
   <StrictMode>
-    <App />
-  </StrictMode>
+    <App queryClient={queryClient} router={router} />
+  </StrictMode>,
 );
