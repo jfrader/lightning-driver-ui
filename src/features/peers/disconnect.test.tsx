@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
+import { withinSection } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, readOnlyNode, server } from '../../test/server';
 
@@ -14,6 +15,8 @@ vi.mock('@simplewebauthn/browser', async (importOriginal) =>
 );
 
 const PEER = fixture('peers_page').items[0]?.pubkey ?? '';
+/** Disconnect lives in the peer's inspector; this opens it. */
+const PEER_PATH = (nodeId: string) => `/nodes/${nodeId}/peers?selected=${PEER}`;
 
 let posts: string[] = [];
 
@@ -26,7 +29,7 @@ beforeEach(() => {
 });
 
 async function openDisconnectDialog(view: ReturnType<typeof renderApp>) {
-  await view.user.click(await screen.findByRole('button', { name: 'Disconnect' }));
+  await view.user.click(await screen.findByRole('button', { name: 'Disconnect peer…' }));
   return within(await screen.findByRole('dialog'));
 }
 
@@ -36,7 +39,7 @@ describe('disconnect peer', () => {
       created: operation('disconnect_peer'),
       confirm: () => HttpResponse.json(operation('disconnect_peer', 'succeeded', 'completed', true)),
     });
-    const view = renderApp('/nodes/lnd-lab/peers');
+    const view = renderApp(PEER_PATH('lnd-lab'));
     const dialog = await openDisconnectDialog(view);
 
     expect(dialog.getByText(PEER)).toBeInTheDocument();
@@ -52,7 +55,7 @@ describe('disconnect peer', () => {
 
   it('sends nothing when the confirmation is canceled', async () => {
     mockJournal({ created: operation('disconnect_peer') });
-    const view = renderApp('/nodes/lnd-lab/peers');
+    const view = renderApp(PEER_PATH('lnd-lab'));
     const dialog = await openDisconnectDialog(view);
 
     await view.user.click(dialog.getByRole('button', { name: 'Cancel' }));
@@ -62,10 +65,10 @@ describe('disconnect peer', () => {
   });
 
   it('offers no disconnect for a connected peer of a read-only node', async () => {
-    renderApp(`/nodes/${readOnlyNode.id}/peers`);
+    renderApp(PEER_PATH(readOnlyNode.id));
 
-    expect(await screen.findByText(PEER)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Disconnect' })).not.toBeInTheDocument();
+    expect((await withinSection('Peer')).getByTitle(PEER)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Disconnect/ })).not.toBeInTheDocument();
     expect(posts).toEqual([]);
   });
 
@@ -77,7 +80,7 @@ describe('disconnect peer', () => {
         return HttpResponse.json({ ...node, capabilities: { ...node.capabilities, disconnect_peer } });
       }),
     );
-    renderApp('/nodes/lnd-lab/peers');
+    renderApp(PEER_PATH('lnd-lab'));
 
     expect(await screen.findByText('The node credentials do not allow this action.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Disconnect peer' })).toBeDisabled();

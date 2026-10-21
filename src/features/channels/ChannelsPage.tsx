@@ -10,7 +10,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
 import { TextLink } from '../../components/TextLink';
-import { WorkLayout } from '../../components/WorkLayout';
+import { InspectorLayout } from '../../components/InspectorLayout';
 import { Amount } from '../display/Amount';
 import { ShortIdentifier } from '../display/Identifier';
 import { ShareKey } from '../display/ShareKey';
@@ -132,13 +132,11 @@ export function ChannelsPage() {
           </CapabilityAction>
         }
       />
-      {selected === undefined || channels.isPending ? (
-        list
-      ) : (
-        <WorkLayout
-          main={list}
-          asideLabel="Selected channel"
-          aside={
+      <InspectorLayout
+        list={list}
+        inspectorLabel="Selected channel"
+        inspector={
+          selected === undefined || channels.isPending ? null : (
             <ChannelInspector
               channel={selected}
               node={node}
@@ -148,9 +146,9 @@ export function ChannelsPage() {
                 </TextLink>
               }
             />
-          }
-        />
-      )}
+          )
+        }
+      />
     </Flex>
   );
 }

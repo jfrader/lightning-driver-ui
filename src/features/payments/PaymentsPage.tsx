@@ -9,7 +9,7 @@ import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import { TextLink } from '../../components/TextLink';
-import { WorkLayout } from '../../components/WorkLayout';
+import { InspectorLayout } from '../../components/InspectorLayout';
 import { isKeyOf } from '../../lib/guards';
 import { useNow } from '../../lib/use-now';
 import { CapabilityAction } from '../nodes/CapabilityAction';
@@ -90,13 +90,11 @@ export function PaymentsPage() {
           </CapabilityAction>
         }
       />
-      {selected === undefined || payments.isPending ? (
-        list
-      ) : (
-        <WorkLayout
-          main={list}
-          asideLabel="Selected payment"
-          aside={
+      <InspectorLayout
+        list={list}
+        inspectorLabel="Selected payment"
+        inspector={
+          selected === undefined || payments.isPending ? null : (
             <PaymentInspector
               payment={selected}
               now={now}
@@ -106,9 +104,9 @@ export function PaymentsPage() {
                 </TextLink>
               }
             />
-          }
-        />
-      )}
+          )
+        }
+      />
     </Flex>
   );
 }

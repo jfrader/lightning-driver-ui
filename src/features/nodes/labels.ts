@@ -1,15 +1,41 @@
-import type { PillTone } from '@jfrader/ui';
 import type { CapabilityKey, CapabilityReason, Network, NodeStatus, NodeSummary, PublicPolicy } from '../../api/types';
+import { keysOf } from '../../lib/guards';
+import type { StateLabel } from '../display/StateWord';
 
-export const NODE_STATUS: Record<NodeStatus['status'], { label: string; tone: PillTone }> = {
-  connecting: { label: 'Connecting', tone: 'neutral' },
-  online: { label: 'Online', tone: 'success' },
-  offline: { label: 'Offline', tone: 'danger' },
+/** Node status words (screens spec §4.2). */
+export const NODE_STATUS: Record<NodeStatus['status'], StateLabel> = {
+  online: { label: 'Online', tone: 'quiet' },
+  connecting: { label: 'Connecting', tone: 'info' },
+  offline: { label: 'Offline', tone: 'warning' },
   auth_error: { label: 'Credentials rejected', tone: 'danger' },
   config_error: { label: 'Configuration error', tone: 'danger' },
-  unsupported: { label: 'Unsupported node version', tone: 'warning' },
+  unsupported: { label: 'Unsupported node', tone: 'danger' },
   identity_mismatch: { label: 'Identity mismatch', tone: 'danger' },
 };
+
+/** Short reason words for a whole node's actions (Fleet row summary, §7.0.4). */
+export const CAPABILITY_REASON_WORD: Record<CapabilityReason, string> = {
+  read_only: 'Read-only',
+  unsupported: 'Unsupported',
+  node_offline: 'Offline',
+  unverified: 'Unverified',
+  not_configured: 'Not configured',
+  permission_denied: 'No permission',
+  syncing: 'Syncing',
+};
+
+/**
+ * One line for what a node allows (§4.3): all actions, a single shared reason, or a mixed state.
+ * Built only from `capabilities`; limits come from the node's policy, not the fleet list.
+ */
+export function capabilitySummary(node: NodeSummary): string {
+  const states = keysOf(node.capabilities).map((key) => node.capabilities[key]);
+  if (states.every((state) => state.enabled)) return 'All actions';
+  const reasons = new Set(states.map((state) => (state.enabled ? null : state.reason)));
+  const [only] = reasons;
+  if (reasons.size === 1 && only) return CAPABILITY_REASON_WORD[only];
+  return 'Some actions unavailable';
+}
 
 export const NETWORK_LABEL: Record<Network, string> = {
   mainnet: 'Mainnet',

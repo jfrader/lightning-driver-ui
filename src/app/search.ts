@@ -22,6 +22,13 @@ export function hashParam(value: unknown): string | undefined {
   return typeof value === 'string' && HASH32.test(value) ? value : undefined;
 }
 
+const PUBKEY = /^0[23][0-9a-f]{64}$/;
+
+/** A compressed node public key (peer), or nothing. */
+export function pubkeyParam(value: unknown): string | undefined {
+  return typeof value === 'string' && PUBKEY.test(value) ? value : undefined;
+}
+
 const RESOURCE_ID_MAX_LENGTH = 256;
 
 /** An opaque resource id from the server (channel id), or nothing. */

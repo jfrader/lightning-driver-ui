@@ -36,7 +36,8 @@ describe('payment review', () => {
     mockJournal({ created: review() });
     const { user } = renderApp(PATH);
 
-    expect(await screen.findByRole('button', { name: 'Pay with passkey' })).toBeInTheDocument();
+    // First test in the file: allow for cold module loading when the whole suite runs in parallel.
+    expect(await screen.findByRole('button', { name: 'Pay with passkey' }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByText('Not sent')).toBeInTheDocument();
     expect(screen.getByText(/^expires/)).toHaveTextContent('expires 12:05:00 UTC');
     expect(screen.getByText('Pay Lightning invoice').nextElementSibling).toHaveTextContent('2,500 sat');
