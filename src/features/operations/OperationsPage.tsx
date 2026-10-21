@@ -10,7 +10,6 @@ import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
 import { TextLink } from '../../components/TextLink';
 import { Amount } from '../display/Amount';
-import { useCurrentNode } from '../nodes/use-current-node';
 import { OPERATION_KIND, OPERATION_LIST_STATE, outcomeLabel } from './labels';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations');
@@ -47,13 +46,13 @@ const COLUMNS: readonly ResourceColumn<Operation>[] = [
   { id: 'amount', header: 'Amount', numeric: true, cell: amountCell },
 ];
 
-/** The durable journal: survives restarts and re-login, and stays readable on read-only nodes. */
+/** The durable journal: survives restarts and re-login, and stays readable on read-only and former nodes. */
 export function OperationsPage() {
-  const node = useCurrentNode();
+  const { nodeId } = route.useParams();
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const operations = useQuery(
-    operationsQueryOptions(node.id, { state: search.state, kind: search.kind, cursor: search.cursor }),
+    operationsQueryOptions(nodeId, { state: search.state, kind: search.kind, cursor: search.cursor }),
   );
   return (
     <Flex direction="column" gap="md">

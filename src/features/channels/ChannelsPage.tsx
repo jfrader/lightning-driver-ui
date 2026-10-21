@@ -14,7 +14,7 @@ import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { CHANNEL_STATE, CLOSE_TYPE, isClosable } from './labels';
 
-const route = getRouteApi('/_authed/nodes/$nodeId/channels');
+const route = getRouteApi('/_authed/nodes/$nodeId/_configured/channels');
 
 function channelColumns(node: NodeSummary): ResourceColumn<Channel>[] {
   return [

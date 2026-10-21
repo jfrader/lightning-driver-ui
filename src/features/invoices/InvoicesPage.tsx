@@ -15,7 +15,7 @@ import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { INVOICE_STATE } from './labels';
 
-const route = getRouteApi('/_authed/nodes/$nodeId/invoices');
+const route = getRouteApi('/_authed/nodes/$nodeId/_configured/invoices');
 
 const COLUMNS: readonly ResourceColumn<Invoice>[] = [
   { id: 'created', header: 'Created', cell: (invoice) => <DateTimeText value={invoice.created_at} /> },
