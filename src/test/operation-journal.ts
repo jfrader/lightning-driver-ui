@@ -2,7 +2,15 @@ import { HttpResponse, http } from 'msw';
 import { fixture } from './fixtures';
 import { api, server } from './server';
 
-type Kind = 'create_invoice' | 'pay_invoice' | 'open_channel' | 'send_onchain' | 'new_address' | 'close_channel';
+type Kind =
+  | 'create_invoice'
+  | 'pay_invoice'
+  | 'connect_peer'
+  | 'disconnect_peer'
+  | 'open_channel'
+  | 'send_onchain'
+  | 'new_address'
+  | 'close_channel';
 type State = 'awaiting_confirmation' | 'dispatching' | 'pending' | 'unknown' | 'succeeded' | 'failed' | 'expired';
 
 /** A contract-shaped operation for `kind`, assembled from the frozen fixtures. */
