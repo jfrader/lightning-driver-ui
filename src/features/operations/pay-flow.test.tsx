@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
-import { withinPanel } from '../../test/queries';
+import { openTechnicalDetails } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, safeError, server } from '../../test/server';
 import { assertion, canceledPasskey } from '../../test/webauthn-mock';
@@ -41,11 +41,12 @@ describe('pay invoice', () => {
 
     expect(await screen.findByRole('button', { name: 'Pay with passkey' })).toBeInTheDocument();
     expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${OPERATION_ID}`);
-    const reviewPanel = await withinPanel('Review');
-    expect(reviewPanel.getByText('Amount').nextElementSibling).toHaveTextContent('2,500.001 sat');
-    expect(reviewPanel.getByText('Network').nextElementSibling).toHaveTextContent('Regtest');
-    expect(reviewPanel.getByText('Node').nextElementSibling).toHaveTextContent('lnd-lab');
-    expect(reviewPanel.getByText(DIGEST)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Review payment' })).toBeInTheDocument();
+    expect(screen.getByText('Pay Lightning invoice').nextElementSibling).toHaveTextContent('2,500.001 sat');
+    expect(screen.getByText('From').nextElementSibling).toHaveTextContent('Regtest');
+    expect(screen.getByText('From').nextElementSibling).toHaveTextContent('lnd-lab');
+    await openTechnicalDetails(view.user);
+    expect(screen.getByText('Review digest').nextElementSibling).toHaveTextContent(DIGEST);
     expect(calls.creates).toEqual([
       {
         nodeId: 'lnd-lab',

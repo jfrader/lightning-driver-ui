@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { SortableDataTable, styled } from '@jfrader/ui';
-import { WIDE_LAYOUT_QUERY } from '../config';
+import { SortableDataTable, styled, type SortState } from '@jfrader/ui';
+import { TABLE_QUERY } from '../config';
 import { useMediaQuery } from '../lib/use-media-query';
 
 export interface ResourceColumn<T> {
@@ -8,6 +8,9 @@ export interface ResourceColumn<T> {
   header: string;
   cell: (row: T) => ReactNode;
   numeric?: boolean;
+  width?: string;
+  /** Orders the loaded snapshot; columns without it are not sortable. */
+  compare?: (a: T, b: T) => number;
 }
 
 interface ResourceListProps<T> {
@@ -15,21 +18,20 @@ interface ResourceListProps<T> {
   rows: readonly T[];
   columns: readonly ResourceColumn<T>[];
   getRowId: (row: T) => string;
+  /** Client-side order of the loaded snapshot (from the URL); it never implies a server order. */
+  sort?: SortState | null;
+  onSort?: (sort: SortState | null) => void;
+  /** Phone row: a 2–3 line hierarchy. Defaults to labelled fields. */
+  renderRow?: (row: T) => ReactNode;
 }
 
-const Rows = styled.ul(({ theme }) => ({
-  listStyle: 'none',
-  margin: 0,
-  padding: 0,
-  display: 'grid',
-  gap: theme.space[3],
-}));
+const Rows = styled.ul({ listStyle: 'none', margin: 0, padding: 0 });
 
 const Row = styled.li(({ theme }) => ({
-  border: `1px solid ${theme.color.border}`,
-  borderRadius: theme.radius.md,
-  backgroundColor: theme.color.surface,
-  padding: theme.space[3],
+  paddingBlock: theme.space[3],
+  borderBlockEnd: `1px solid ${theme.color.borderSubtle}`,
+  minInlineSize: 0,
+  '&:last-of-type': { borderBlockEnd: 'none' },
 }));
 
 const Fields = styled.dl(({ theme }) => ({
@@ -42,35 +44,50 @@ const Fields = styled.dl(({ theme }) => ({
 
 const Term = styled.dt(({ theme }) => ({ color: theme.color.textMuted }));
 const Detail = styled.dd({ margin: 0, minInlineSize: 0, overflowWrap: 'anywhere' });
-
 const Field = styled.div({ display: 'contents' });
 
-/** A table on wide screens and labelled rows on narrow ones, from one column definition. */
-export function ResourceList<T>({ caption, rows, columns, getRowId }: ResourceListProps<T>) {
-  const wide = useMediaQuery(WIDE_LAYOUT_QUERY);
-  if (wide) {
+function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {
+  const compare = sort && columns.find((column) => column.id === sort.columnId)?.compare;
+  if (!sort || !compare) return rows;
+  const sign = sort.direction === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => sign * compare(a, b));
+}
+
+/** A table from 48rem and rows below it, from one column definition and one sort. */
+export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null, onSort, renderRow }: ResourceListProps<T>) {
+  const table = useMediaQuery(TABLE_QUERY);
+  const ordered = sortedRows(rows, columns, sort);
+  if (table) {
     return (
       <SortableDataTable
         caption={caption}
         captionHidden
-        rows={rows}
+        size="sm"
+        rows={ordered}
         getRowId={getRowId}
-        columns={columns.map((column) => ({ ...column, sortable: false }))}
+        sortMode="manual"
+        value={sort}
+        onValueChange={onSort}
+        columns={columns.map((column) => ({ ...column, sortable: Boolean(column.compare && onSort) }))}
       />
     );
   }
   return (
     <Rows aria-label={caption}>
-      {rows.map((row) => (
+      {ordered.map((row) => (
         <Row key={getRowId(row)}>
-          <Fields>
-            {columns.map((column) => (
-              <Field key={column.id}>
-                <Term>{column.header}</Term>
-                <Detail>{column.cell(row)}</Detail>
-              </Field>
-            ))}
-          </Fields>
+          {renderRow ? (
+            renderRow(row)
+          ) : (
+            <Fields>
+              {columns.map((column) => (
+                <Field key={column.id}>
+                  <Term>{column.header}</Term>
+                  <Detail>{column.cell(row)}</Detail>
+                </Field>
+              ))}
+            </Fields>
+          )}
         </Row>
       ))}
     </Rows>

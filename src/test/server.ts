@@ -62,9 +62,12 @@ export const handlers = [
   http.get(api('/nodes/:nodeId/transactions'), ({ params }) =>
     HttpResponse.json({ ...fixture('transactions_page'), ...pageFor(String(params.nodeId)) }),
   ),
-  http.get(api('/nodes/:nodeId/operations'), ({ params }) =>
-    HttpResponse.json({ ...fixture('operations_page'), ...pageFor(String(params.nodeId)) }),
-  ),
+  // The journal fixture holds one operation of the read-only node; other nodes have none.
+  http.get(api('/nodes/:nodeId/operations'), ({ params }) => {
+    const journal = fixture('operations_page');
+    const items = journal.items.filter((item) => item.node_id === params.nodeId);
+    return HttpResponse.json({ ...journal, ...pageFor(String(params.nodeId)), items });
+  }),
   http.post(api('/nodes/:nodeId/decode'), () => HttpResponse.json(fixture('decode'))),
 ];
 

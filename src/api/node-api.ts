@@ -63,8 +63,16 @@ export const listChannels = (nodeId: string, query: Query, signal?: AbortSignal)
   getNodeResource(nodeId, 'channels', ChannelsPage, signal, query);
 export const listTransactions = (nodeId: string, query: Query, signal?: AbortSignal) =>
   getNodeResource(nodeId, 'transactions', TransactionsPage, signal, query);
-export const listOperations = (nodeId: string, query: Query, signal?: AbortSignal) =>
-  getNodeResource(nodeId, 'operations', OperationsPage, signal, query);
+/** Journal page of this node; an operation of any other node in it rejects the whole page. */
+export async function listOperations(nodeId: string, query: Query, signal?: AbortSignal) {
+  const page = await getNodeResource(nodeId, 'operations', OperationsPage, signal, query);
+  const path = nodePath(nodeId, 'operations');
+  for (const operation of page.items) {
+    expectNode(path, nodeId, operation.node_id, operation);
+    expectNode(path, nodeId, operation.review.node.node_id, operation);
+  }
+  return page;
+}
 
 /** Local BOLT11 decode. Works on read-only nodes and never touches the node. */
 export function decodeInvoice(nodeId: string, bolt11: string) {

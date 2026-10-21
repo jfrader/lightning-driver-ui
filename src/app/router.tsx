@@ -43,7 +43,8 @@ import { AppShell } from '../features/shell/AppShell';
 import { MorePage } from '../features/shell/MorePage';
 import { SHELL_QUERY } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
-import { enumParam, pagedSearch, stringParam, type PagedSearch } from './search';
+import { PAYMENT_SORT } from '../features/payments/payment-columns';
+import { enumParam, hashParam, pagedSearch, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -154,9 +155,13 @@ const invoicesRoute = createRoute({
 const receiveInvoiceRoute = createRoute({ ...node('/invoices/new'), component: ReceiveInvoicePage });
 const paymentsRoute = createRoute({
   ...node('/payments'),
-  validateSearch: (search: Record<string, unknown>): PagedSearch & { status?: PaymentState } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): PagedSearch & SortSearch<keyof typeof PAYMENT_SORT> & { status?: PaymentState; selected?: string } => ({
     ...pagedSearch(search),
+    ...sortSearch(search, PAYMENT_SORT),
     status: enumParam(search.status, PAYMENT_STATE),
+    selected: hashParam(search.selected),
   }),
   component: PaymentsPage,
 });

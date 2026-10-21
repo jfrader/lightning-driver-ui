@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { keysOf } from '../../lib/guards';
 import { nodeChoiceLabel } from '../nodes/labels';
+import { useConfirmInFlight } from '../operations/confirming';
 import { FORM_DESTINATIONS, NODE_DESTINATIONS } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
@@ -20,6 +21,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
   const navigate = useNavigate();
   const { nodeId, node } = useShellNode();
   const fleet = useQuery(fleetQueryOptions());
+  const switchLocked = useConfirmInFlight();
 
   const items: CommandPaletteItemRecord[] = [];
   if (nodeId !== null) {
@@ -54,10 +56,17 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       value: `node-${other.id}`,
       label: nodeChoiceLabel(other),
       group: 'Switch node',
+      disabled: switchLocked,
       onSelect: () => void navigate({ to: '/nodes/$nodeId', params: { nodeId: other.id } }),
     });
   }
-  items.push({ value: 'node-all', label: 'All nodes', group: 'Switch node', onSelect: () => void navigate({ to: '/fleet' }) });
+  items.push({
+    value: 'node-all',
+    label: 'All nodes',
+    group: 'Switch node',
+    disabled: switchLocked,
+    onSelect: () => void navigate({ to: '/fleet' }),
+  });
 
   return (
     <CommandPalette

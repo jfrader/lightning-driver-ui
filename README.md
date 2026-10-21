@@ -68,4 +68,5 @@ other numerals) stays as typed and is rejected. Amounts are displayed with the b
 
 - Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
   backend need browser QA.
-- The bundle is one chunk (about 1 MB, 266 kB gzip), including the generated validators.
+- The initial route is one chunk (about 1 MB, 281 kB gzip), including the generated validators.
+  Recharts lives only in the lazy `src/charts/` chunk (about 88 kB gzip), loaded on the first chart.

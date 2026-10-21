@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
-import { withinPanel } from '../../test/queries';
+import { openTechnicalDetails, withinPanel } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, server, writableNode } from '../../test/server';
 
@@ -105,11 +105,11 @@ describe('history of a configured node whose identity changed', () => {
 
   it('shows the original reviewed identity and blocks confirming it against the new one', async () => {
     mockJournal({ created: operation('pay_invoice') });
-    renderApp(`/nodes/${writableNode.id}/operations/${operation('pay_invoice').id}`);
+    const { user } = renderApp(`/nodes/${writableNode.id}/operations/${operation('pay_invoice').id}`);
 
     expect(await screen.findByText('The node identity or network changed after this review.')).toBeInTheDocument();
-    const review = await withinPanel('Review');
-    expect(review.getByText('Node public key').nextElementSibling).toHaveTextContent(
+    await openTechnicalDetails(user);
+    expect(screen.getByText('Node public key').nextElementSibling).toHaveTextContent(
       operation('pay_invoice').review.node.identity_pubkey,
     );
     expect(screen.queryByRole('button', { name: 'Pay with passkey' })).not.toBeInTheDocument();

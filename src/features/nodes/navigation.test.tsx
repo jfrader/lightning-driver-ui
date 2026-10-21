@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { REMEMBERED_NODE_STORAGE_KEY } from '../../config';
 import { setWideLayout } from '../../test/environment';
-import { withinPanel } from '../../test/queries';
+import { withinSection } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 
 describe('landing and node selection', () => {
@@ -50,10 +50,11 @@ describe('landing and node selection', () => {
 });
 
 describe('layout', () => {
-  it('renders lists as labelled rows on a phone', async () => {
+  it('renders lists as rows on a phone', async () => {
     renderApp('/nodes/lnd-lab/payments');
     const list = await screen.findByRole('list', { name: 'Payments' });
-    expect(within(list).getAllByText('Amount').length).toBeGreaterThan(0);
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(list).getByText('2,500 sat')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
@@ -70,7 +71,7 @@ describe('display unit', () => {
     // The desktop status strip carries the unit toggle; on a phone it lives under More.
     setWideLayout(true);
     const { user } = renderApp('/nodes/lnd-lab');
-    const balances = await withinPanel('Balances');
+    const balances = await withinSection('Balances');
     expect(await balances.findByText('500,000.123 sat')).toBeInTheDocument();
 
     await user.click(within(screen.getByRole('radiogroup', { name: 'Display unit' })).getByRole('radio', { name: 'BTC' }));

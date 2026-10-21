@@ -1,5 +1,5 @@
 import type { PillTone } from '@jfrader/ui';
-import type { CapabilityKey, CapabilityReason, Network, NodeStatus, NodeSummary } from '../../api/types';
+import type { CapabilityKey, CapabilityReason, Network, NodeStatus, NodeSummary, PublicPolicy } from '../../api/types';
 
 export const NODE_STATUS: Record<NodeStatus['status'], { label: string; tone: PillTone }> = {
   connecting: { label: 'Connecting', tone: 'neutral' },
@@ -57,6 +57,11 @@ export function nodeChoiceLabel(node: NodeSummary): string {
   ];
   return [node.label, NETWORK_LABEL[node.network], ...flags.filter((flag) => flag !== null)].join(' · ');
 }
+
+export const REAUTH_LABEL: Record<PublicPolicy['reauth']['mode'], string> = {
+  every_operation: 'Passkey for every payment',
+  recent: 'Passkey if not used recently',
+};
 
 export function syncLabel(synced: boolean | null): string {
   if (synced === null) return 'Not reported';

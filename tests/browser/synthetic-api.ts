@@ -82,6 +82,7 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
     if (sub === 'peers') return json(route, { ...fixture('peers_page'), ...page$(nodeId) });
     if (sub === 'channels') return json(route, { ...fixture('channels_page'), ...page$(nodeId) });
     if (sub === 'transactions') return json(route, { ...fixture('transactions_page'), ...page$(nodeId) });
+    if (sub === 'decode' && request.method() === 'POST') return json(route, fixture('decode'));
     if (sub === 'operations' && request.method() === 'POST' && operationId === undefined) {
       const body: unknown = request.postDataJSON();
       const kind = typeof body === 'object' && body !== null && 'kind' in body ? body.kind : null;
@@ -95,7 +96,11 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
       const found = OPERATION_KINDS.map((kind) => operation(kind)).find((op) => op.id === operationId);
       return found ? json(route, found) : route.abort();
     }
-    if (sub === 'operations') return json(route, { ...fixture('operations_page'), ...page$(nodeId) });
+    if (sub === 'operations') {
+      // One unresolved operation of this node, so the overview has an attention item.
+      const unresolved = { ...operation('send_onchain', 'unknown', 'reconciling'), last_reconciled_at: '2026-10-21T12:00:30Z' };
+      return json(route, { ...fixture('operations_page'), ...page$(nodeId), items: [unresolved] });
+    }
     return route.abort();
   });
   return mutations;

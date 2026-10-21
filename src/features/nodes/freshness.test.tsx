@@ -2,11 +2,11 @@ import { screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../test/fixtures';
-import { withinPanel } from '../../test/queries';
+import { withinSection } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, readOnlyNode, safeError, server, writableNode } from '../../test/server';
 
-const balancesPanel = () => withinPanel('Balances');
+const balancesPanel = () => withinSection('Balances');
 
 describe('node data freshness', () => {
   it('marks a cached observation from an offline node as stale with its age', async () => {
@@ -16,15 +16,20 @@ describe('node data freshness', () => {
     expect(panel.getByText('Observed 6 minutes ago')).toBeInTheDocument();
   });
 
-  it('shows missing balances as unavailable, never as zero', async () => {
+  it('shows missing balances as not reported, never as zero, and draws no bar for them', async () => {
     renderApp(`/nodes/${readOnlyNode.id}`);
     const panel = await balancesPanel();
     expect(await panel.findByText('120,000 sat')).toBeInTheDocument();
-    expect(panel.getAllByText('Unavailable')).toHaveLength(4);
-    for (const label of ['On-chain spendable', 'Channels local', 'Channels remote', 'Channels spendable']) {
-      expect(panel.getByText(label).nextElementSibling).toHaveTextContent('Unavailable');
+    expect(panel.getAllByText('Not reported')).toHaveLength(4);
+    const onchain = await withinSection('On-chain');
+    const channels = await withinSection('Lightning channels');
+    expect(onchain.getByText('Spendable').nextElementSibling).toHaveTextContent('Not reported');
+    for (const label of ['Local balance', 'Remote balance', 'Spendable']) {
+      expect(channels.getByText(label).nextElementSibling).toHaveTextContent('Not reported');
     }
-    expect(panel.getByText('On-chain unconfirmed').nextElementSibling).toHaveTextContent('0 sat');
+    expect(onchain.getByText('Unconfirmed').nextElementSibling).toHaveTextContent('0 sat');
+    expect(channels.queryByRole('img')).not.toBeInTheDocument();
+    expect(onchain.getByText('Confirmed 100.0% · Unconfirmed 0.0%')).toBeInTheDocument();
   });
 
   it('shows an offline node without an observation as unavailable instead of empty balances', async () => {

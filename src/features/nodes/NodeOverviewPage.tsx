@@ -1,27 +1,40 @@
-import { styled } from '@jfrader/ui';
-import { WIDE_LAYOUT_MEDIA } from '../../config';
-import { BalancesPanel } from './BalancesPanel';
-import { CapabilitiesPanel } from './CapabilitiesPanel';
-import { NodeActions } from './NodeActions';
-import { NodeInfoPanel } from './NodeInfoPanel';
+import { Accordion } from '@jfrader/ui';
+import { Section } from '../../components/Section';
+import { WorkLayout } from '../../components/WorkLayout';
+import { ASIDE_QUERY } from '../../config';
+import { useMediaQuery } from '../../lib/use-media-query';
+import { AttentionList } from '../overview/AttentionList';
+import { BalanceGroups } from '../overview/BalanceGroups';
+import { NodeContext } from '../overview/NodeContext';
+import { QuickActions } from '../overview/QuickActions';
+import { RecentPayments } from '../overview/RecentPayments';
 import { useCurrentNode } from './use-current-node';
 
-const Grid = styled.div(({ theme }) => ({
-  display: 'grid',
-  gap: theme.space[4],
-  [WIDE_LAYOUT_MEDIA]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', alignItems: 'start' },
-}));
-
+/** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
 export function NodeOverviewPage() {
   const node = useCurrentNode();
+  const besideContent = useMediaQuery(ASIDE_QUERY);
+  const context = <NodeContext node={node} />;
   return (
-    <>
-      <NodeActions node={node} />
-      <Grid>
-        <BalancesPanel nodeId={node.id} />
-        <NodeInfoPanel node={node} />
-        <CapabilitiesPanel node={node} />
-      </Grid>
-    </>
+    <WorkLayout
+      asideLabel="Node details"
+      main={
+        <>
+          <AttentionList nodeId={node.id} />
+          <Section title="Balances">
+            <BalanceGroups nodeId={node.id} />
+          </Section>
+          <QuickActions node={node} />
+          <RecentPayments nodeId={node.id} />
+        </>
+      }
+      aside={
+        besideContent ? (
+          context
+        ) : (
+          <Accordion collapsible items={[{ value: 'node', label: 'Node details and policy', panel: context }]} />
+        )
+      }
+    />
   );
 }

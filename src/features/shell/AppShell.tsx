@@ -50,7 +50,7 @@ const Rail = styled.aside(({ theme }) => ({
 
 const RailHead = styled.div(({ theme }) => ({
   boxSizing: 'border-box',
-  blockSize: STRIP_HEIGHT,
+  minBlockSize: STRIP_HEIGHT,
   display: 'flex',
   alignItems: 'center',
   paddingInline: theme.space[3],
