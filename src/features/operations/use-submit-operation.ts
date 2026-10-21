@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { nodeKeys } from '../../api/node-queries';
 import { confirmOperation, createOperation } from '../../api/operation-api';
 import type { CreateOperationRequest, Operation } from '../../api/types';
-import { throwIfAbandoned, useAttemptSignal } from '../../lib/use-attempt-signal';
+import { throwIfAbandoned, useAttempt, type Attempt } from '../../lib/use-attempt';
 import { isUnansweredConfirmation } from './unanswered';
 import { useIntentKey } from './use-intent-key';
 
@@ -17,28 +17,29 @@ export interface SubmitResult {
 
 interface Submission {
   request: CreateOperationRequest;
-  signal: AbortSignal;
+  attempt: Attempt;
 }
 
 /**
  * The one entry into the operation pipeline for every kind. It creates the immutable server
  * review; only low-risk kinds (server `review.sensitive === false`) are confirmed in the same
- * explicit action, and only while the form is still open. Sensitive kinds open the review page
- * and wait for a passkey confirmation.
+ * explicit action, and only while the form and its session are current. Sensitive kinds open the
+ * review page and wait for a passkey confirmation. Late answers for an ended screen or session
+ * neither write the cache nor navigate.
  */
 export function useSubmitOperation(nodeId: string) {
   const keyFor = useIntentKey();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const startAttempt = useAttemptSignal();
+  const startAttempt = useAttempt();
 
   const mutation = useMutation({
-    mutationFn: async ({ request, signal }: Submission): Promise<SubmitResult> => {
+    mutationFn: async ({ request, attempt }: Submission): Promise<SubmitResult> => {
       const operation = await createOperation(nodeId, request, keyFor(request));
       if (operation.review.sensitive || operation.state !== 'awaiting_confirmation') {
         return { operation, confirmation: undefined, confirmError: null };
       }
-      throwIfAbandoned(signal);
+      throwIfAbandoned(attempt);
       try {
         const confirmed = await confirmOperation(nodeId, operation.id, {
           review_digest: operation.review.digest,
@@ -50,10 +51,11 @@ export function useSubmitOperation(nodeId: string) {
         return { operation, confirmation: undefined, confirmError: error };
       }
     },
-    onSuccess: ({ operation, confirmation, confirmError }, { signal }) => {
+    onSuccess: ({ operation, confirmation, confirmError }, { attempt }) => {
+      if (!attempt.isCurrent()) return;
       queryClient.setQueryData(nodeKeys.operation(nodeId, operation.id), operation);
       void queryClient.invalidateQueries({ queryKey: nodeKeys.summary(nodeId) });
-      if (confirmError || signal.aborted) return;
+      if (confirmError) return;
       void navigate({
         to: '/nodes/$nodeId/operations/$operationId',
         params: { nodeId, operationId: operation.id },
@@ -63,7 +65,7 @@ export function useSubmitOperation(nodeId: string) {
   });
 
   return {
-    mutate: (request: CreateOperationRequest) => mutation.mutate({ request, signal: startAttempt() }),
+    mutate: (request: CreateOperationRequest) => mutation.mutate({ request, attempt: startAttempt() }),
     isPending: mutation.isPending,
     error: mutation.error,
     data: mutation.data,
