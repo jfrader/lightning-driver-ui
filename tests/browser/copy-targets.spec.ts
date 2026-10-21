@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { installSyntheticApi, operation } from './synthetic-api';
 
 const MIN_TARGET_PX = 32;
@@ -26,8 +27,10 @@ test('copy buttons beside long values keep their full target on the payment revi
   await expectCopyTargets(page);
 });
 
-test('copy buttons beside long invoices keep their full target in the invoice list', async ({ page }) => {
+test('copy buttons beside long invoices keep their full target in the invoice inspector', async ({ page }) => {
   await installSyntheticApi(page);
-  await page.goto('/nodes/lnd-lab/invoices');
+  // Copy lives in the inspector; the technical details hold the long hash and invoice text.
+  await page.goto(`/nodes/lnd-lab/invoices?selected=${examples.fixtures.invoices_page.value.items[0].payment_hash}`);
+  await page.getByRole('button', { name: 'Technical details' }).click();
   await expectCopyTargets(page);
 });

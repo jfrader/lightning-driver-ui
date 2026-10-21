@@ -23,25 +23,27 @@ const Groups = styled.span<{ prominent: boolean }>(({ theme, prominent }) => ({
   color: prominent ? theme.color.text : theme.color.textMuted,
 }));
 
+const Whole = styled.span({ overflowWrap: 'anywhere', minInlineSize: 0 });
+
 interface IdentifierProps {
   value: string;
   /** Names the value for the copy button, e.g. "Recipient node". */
   label: string;
   prominent?: boolean;
+  /** Group hex keys, hashes and addresses; a value with its own structure (`host:port`) stays whole. */
+  grouped?: boolean;
 }
 
 /**
  * A full identifier in 6-character groups that wrap only between groups, with a copy button.
  * The groups are adjacent spans, so selecting the text still copies the exact string.
  */
-export function Identifier({ value, label, prominent = false }: IdentifierProps) {
+export function Identifier({ value, label, prominent = false, grouped = true }: IdentifierProps) {
   const size = useControlSize();
   return (
     <Row>
       <Groups prominent={prominent} title={value}>
-        {(value.match(GROUPS) ?? []).map((group, index) => (
-          <span key={index}>{group}</span>
-        ))}
+        {grouped ? (value.match(GROUPS) ?? []).map((group, index) => <span key={index}>{group}</span>) : <Whole>{value}</Whole>}
       </Groups>
       <CopyButton
         iconOnly

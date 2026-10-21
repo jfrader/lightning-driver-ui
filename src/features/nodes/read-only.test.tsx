@@ -14,7 +14,9 @@ const MUTATION_ENTRIES = [
   'Open channel',
   'Open channel…',
   'Connect peer',
+  'Create invoice',
   'Disconnect',
+  'Disconnect peer…',
   'Close',
   'Close channel…',
 ];

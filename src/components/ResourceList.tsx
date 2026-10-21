@@ -46,6 +46,16 @@ const Term = styled.dt(({ theme }) => ({ color: theme.color.textMuted }));
 const Detail = styled.dd({ margin: 0, minInlineSize: 0, overflowWrap: 'anywhere' });
 const Field = styled.div({ display: 'contents' });
 
+/**
+ * Headers and cells never break inside a word: each column is at least as wide as its header and
+ * its longest word, and a table wider than its column (an open inspector, many columns at 48rem)
+ * scrolls inside the table's own scroller, never the page. Long values truncate or clamp themselves.
+ */
+const HEADER_NO_WRAP = {
+  headerCell: { css: { whiteSpace: 'nowrap' as const } },
+  cell: { css: { overflowWrap: 'normal' as const, wordBreak: 'normal' as const } },
+};
+
 function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {
   const compare = sort && columns.find((column) => column.id === sort.columnId)?.compare;
   if (!sort || !compare) return rows;
@@ -69,6 +79,7 @@ export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null,
         value={sort}
         onValueChange={onSort}
         columns={columns.map((column) => ({ ...column, sortable: Boolean(column.compare && onSort) }))}
+        slotProps={HEADER_NO_WRAP}
       />
     );
   }

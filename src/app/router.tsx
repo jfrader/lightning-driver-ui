@@ -44,7 +44,7 @@ import { MorePage } from '../features/shell/MorePage';
 import { SHELL_QUERY } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
-import { enumParam, hashParam, pagedSearch, resourceIdParam, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
+import { enumParam, hashParam, pagedSearch, pubkeyParam, resourceIdParam, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -146,9 +146,10 @@ const history = <TPath extends string>(path: TPath) => ({ getParentRoute: () => 
 const nodeOverviewRoute = createRoute({ ...node('/'), component: NodeOverviewPage });
 const invoicesRoute = createRoute({
   ...node('/invoices'),
-  validateSearch: (search: Record<string, unknown>): PagedSearch & { status?: InvoiceState } => ({
+  validateSearch: (search: Record<string, unknown>): PagedSearch & { status?: InvoiceState; selected?: string } => ({
     ...pagedSearch(search),
     status: enumParam(search.status, INVOICE_STATE),
+    selected: hashParam(search.selected),
   }),
   component: InvoicesPage,
 });
@@ -166,7 +167,14 @@ const paymentsRoute = createRoute({
   component: PaymentsPage,
 });
 const payInvoiceRoute = createRoute({ ...node('/payments/new'), component: PayInvoicePage });
-const peersRoute = createRoute({ ...node('/peers'), validateSearch: pagedSearch, component: PeersPage });
+const peersRoute = createRoute({
+  ...node('/peers'),
+  validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
+    ...pagedSearch(search),
+    selected: pubkeyParam(search.selected),
+  }),
+  component: PeersPage,
+});
 const connectPeerRoute = createRoute({ ...node('/peers/new'), component: ConnectPeerPage });
 const channelsRoute = createRoute({
   ...node('/channels'),
@@ -179,7 +187,14 @@ const channelsRoute = createRoute({
 });
 const openChannelRoute = createRoute({ ...node('/channels/new'), component: OpenChannelPage });
 const closeChannelRoute = createRoute({ ...node('/channels/$channelId/close'), component: CloseChannelPage });
-const transactionsRoute = createRoute({ ...node('/onchain'), validateSearch: pagedSearch, component: TransactionsPage });
+const transactionsRoute = createRoute({
+  ...node('/onchain'),
+  validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
+    ...pagedSearch(search),
+    selected: hashParam(search.selected),
+  }),
+  component: TransactionsPage,
+});
 const receiveAddressRoute = createRoute({ ...node('/onchain/receive'), component: ReceiveAddressPage });
 const sendOnchainRoute = createRoute({ ...node('/onchain/send'), component: SendOnchainPage });
 const operationsRoute = createRoute({

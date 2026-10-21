@@ -7,20 +7,13 @@ import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { ListTime } from '../../components/ListTime';
 import { TextLink } from '../../components/TextLink';
-import { formatListTime } from '../../lib/time';
 import { useNow } from '../../lib/use-now';
 import { OPERATION_KIND, OPERATION_LIST_STATE, OPERATION_STAGE, outcomeLabel } from './labels';
 import { OperationAmount } from './OperationAmount';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations');
-
-const Mono = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontSize: theme.textSize.sm,
-  fontVariantNumeric: 'tabular-nums',
-  whiteSpace: 'nowrap',
-}));
 
 const Stage = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
 
@@ -54,7 +47,7 @@ function columns(now: number): ResourceColumn<Operation>[] {
       id: 'created',
       header: 'Created (UTC)',
       width: '9rem',
-      cell: (operation) => <Mono title={operation.created_at}>{formatListTime(operation.created_at, now)}</Mono>,
+      cell: (operation) => <ListTime at={operation.created_at} now={now} />,
     },
     { id: 'kind', header: 'Action', cell: (operation) => <ActionLink operation={operation} /> },
     { id: 'state', header: 'State', cell: (operation) => <OutcomePill operation={operation} /> },
@@ -72,7 +65,7 @@ function OperationRow({ operation, now }: { operation: Operation; now: number })
       </Line>
       <Line>
         <OperationAmount operation={operation} />
-        <Mono title={operation.created_at}>{formatListTime(operation.created_at, now)}</Mono>
+        <ListTime at={operation.created_at} now={now} />
       </Line>
       <Stage>{OPERATION_STAGE[operation.stage]}</Stage>
     </RowBody>
