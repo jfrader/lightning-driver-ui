@@ -75,27 +75,16 @@ export function formatMsat(msat: bigint, unit: DisplayUnit, locale: Intl.Locales
   return `${number} ${UNIT_LABEL[unit]}`;
 }
 
-/** Exact amount as editable input text: locale decimal separator, no grouping, no unit label. */
-export function formatMsatInput(msat: bigint, unit: DisplayUnit, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
-  const decimal = toDecimal(msat, unit);
-  const digits = fractionLength(decimal);
-  return new Intl.NumberFormat(locale, {
-    useGrouping: false,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(decimal);
+/**
+ * Exact amount as the canonical value of an `<input type="number">` ("0.0015"). The browser shows
+ * it with the field's locale; the value itself is never localized.
+ */
+export function formatMsatInput(msat: bigint, unit: DisplayUnit): string {
+  return toDecimal(msat, unit);
 }
 
 export function formatInteger(value: bigint, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
   return new Intl.NumberFormat(locale).format(value);
-}
-
-function separators(locale: Intl.LocalesArgument): { group: string; decimal: string } {
-  const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
-  return {
-    group: parts.find((part) => part.type === 'group')?.value ?? '',
-    decimal: parts.find((part) => part.type === 'decimal')?.value ?? '.',
-  };
 }
 
 export type AmountInputResult = { ok: true; msat: bigint } | { ok: false; error: string };
@@ -103,23 +92,28 @@ export type AmountInputResult = { ok: true; msat: bigint } | { ok: false; error:
 interface AmountInputOptions {
   /** Accept millisatoshi precision; otherwise only whole satoshis. */
   allowMsat: boolean;
-  locale?: Intl.LocalesArgument;
 }
 
-/** Parses a typed amount in the display unit to exact millisatoshis, using the locale's separators. */
-export function parseAmountInput(text: string, unit: DisplayUnit, options: AmountInputOptions): AmountInputResult {
-  const { group, decimal } = separators(options.locale ?? DISPLAY_LOCALE);
-  let normalized = text.trim().replace(/\s/g, '');
-  if (group) normalized = normalized.split(group).join('');
-  normalized = normalized.split(decimal).join('.');
+/**
+ * HTML "valid floating-point number" without sign or exponent. `<input type="number">` turns the
+ * operator's localized entry into this canonical string, or into "" when it cannot read it.
+ */
+const CANONICAL_INPUT = /^(?:([0-9]+)(?:\.([0-9]+))?|\.([0-9]+))$/;
 
-  const match = /^([0-9]+)(?:\.([0-9]+))?$/.exec(normalized);
-  if (!match) return { ok: false, error: 'Enter an amount using digits.' };
-  const [, whole, fraction = ''] = match;
+/**
+ * Parses the canonical value of a number input in the display unit to exact millisatoshis.
+ * Localized text ("1,2", "1 2", Arabic-Indic digits) is the browser's job and is rejected here,
+ * never reinterpreted.
+ */
+export function parseAmountInput(value: string, unit: DisplayUnit, options: AmountInputOptions): AmountInputResult {
+  const match = CANONICAL_INPUT.exec(value);
+  if (!match) return { ok: false, error: value === '' ? 'Enter an amount.' : 'Enter a plain decimal amount.' };
+  const whole = match[1] ?? '0';
+  const fraction = match[2] ?? match[3] ?? '';
 
   const scale = UNIT_SCALE[unit];
   if (fraction.length > scale) return { ok: false, error: 'Too many decimal places.' };
-  const msat = BigInt(whole) * 10n ** BigInt(scale) + BigInt(fraction.padEnd(scale, '0') || '0');
+  const msat = BigInt(whole) * 10n ** BigInt(scale) + BigInt(fraction.padEnd(scale, '0'));
 
   if (!options.allowMsat && msat % MSAT_PER_SAT !== 0n) return { ok: false, error: 'Use whole satoshis.' };
   if (msat > I64_MAX) return { ok: false, error: 'Amount is too large.' };
@@ -129,11 +123,10 @@ export function parseAmountInput(text: string, unit: DisplayUnit, options: Amoun
 
 export type IntegerInputResult = { ok: true; value: bigint } | { ok: false; error: string };
 
-/** Parses a positive whole number such as a fee rate in sat/vB. */
-export function parsePositiveIntegerInput(text: string): IntegerInputResult {
-  const trimmed = text.trim();
-  if (!/^[0-9]+$/.test(trimmed)) return { ok: false, error: 'Enter a whole number.' };
-  const value = BigInt(trimmed);
+/** Parses the canonical value of a whole-number input, such as a fee rate in sat/vB. */
+export function parsePositiveIntegerInput(input: string): IntegerInputResult {
+  if (!/^[0-9]+$/.test(input)) return { ok: false, error: 'Enter a whole number.' };
+  const value = BigInt(input);
   if (value === 0n) return { ok: false, error: 'Enter a number greater than zero.' };
   if (value > I64_MAX) return { ok: false, error: 'Number is too large.' };
   return { ok: true, value };

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { mockJournal, operation } from '../../test/operation-journal';
@@ -42,7 +42,9 @@ describe('receive', () => {
     const calls = mockJournal({ created: operation('create_invoice') });
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
 
-    await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '9007199254740.993');
+    // The browser hands the number input's canonical string over unchanged; user-event's jsdom
+    // workaround would round it through Number(), so the value is set directly here.
+    fireEvent.change(await screen.findByLabelText(/^Amount \(sat\)/), { target: { value: '9007199254740.993' } });
     await user.click(screen.getByRole('button', { name: 'Create invoice' }));
 
     await screen.findByRole('heading', { name: 'Create invoice' });
@@ -52,13 +54,32 @@ describe('receive', () => {
     });
   });
 
+  it('enters amounts through a localized number input of the display locale', async () => {
+    renderApp('/nodes/lnd-lab/invoices/new');
+    const amount = await screen.findByLabelText(/^Amount \(sat\)/);
+    expect(amount).toHaveAttribute('type', 'number');
+    expect(amount).toHaveAttribute('step', 'any');
+    expect(amount).toHaveAttribute('lang', new Intl.NumberFormat().resolvedOptions().locale);
+  });
+
+  it.each(['1 2', '1,2', '١٢'])('does not create an invoice from the unreadable entry %j', async (text) => {
+    const calls = mockJournal({ created: operation('create_invoice') });
+    const { user } = renderApp('/nodes/lnd-lab/invoices/new');
+
+    fireEvent.change(await screen.findByLabelText(/^Amount \(sat\)/), { target: { value: text } });
+    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+
+    expect(await screen.findByText(/^Enter an amount/)).toBeInTheDocument();
+    expect(calls.creates).toEqual([]);
+  });
+
   it('keeps typed digits worth the same amount when the unit changes', async () => {
     const calls = mockJournal({ created: operation('create_invoice') });
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
 
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '150000');
     await user.click(within(screen.getByRole('radiogroup', { name: 'Amount unit' })).getByRole('radio', { name: 'BTC' }));
-    expect(screen.getByLabelText(/^Amount \(BTC\)/)).toHaveValue('0.0015');
+    expect(screen.getByLabelText(/^Amount \(BTC\)/)).toHaveProperty('value', '0.0015');
     await user.click(screen.getByRole('button', { name: 'Create invoice' }));
 
     await screen.findByRole('heading', { name: 'Create invoice' });

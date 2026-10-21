@@ -7,9 +7,10 @@ export function isPubkey(value: string): boolean {
   return PUBKEY_PATTERN.test(value);
 }
 
-export function parsePort(text: string): number | null {
-  if (!/^[0-9]{1,5}$/.test(text.trim())) return null;
-  const port = Number(text);
+/** Port from the canonical value of a whole-number input. */
+export function parsePort(input: string): number | null {
+  if (!/^[0-9]{1,5}$/.test(input)) return null;
+  const port = Number(input);
   return port >= 1 && port <= MAX_PORT ? port : null;
 }
 

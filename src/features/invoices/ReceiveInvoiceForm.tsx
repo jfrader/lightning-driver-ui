@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Flex, TextField, Textarea } from '@jfrader/ui';
+import { Button, Flex, Textarea } from '@jfrader/ui';
 import type { NodePolicy } from '../../api/types';
-import { msatToWireMsat } from '../../lib/money';
+import { NumberInputField } from '../../components/NumberInputField';
+import { msatToWireMsat, parsePositiveIntegerInput } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
 import { AmountField, type AmountEntry } from '../forms/AmountField';
 import { checkAmount, type Checked } from '../forms/validation';
@@ -22,12 +23,13 @@ interface FormState {
   submitted: boolean;
 }
 
-function checkExpiry(text: string, bounds: NodePolicy['invoice_expiry_seconds']): Checked<number> {
-  const value = Number(text);
-  if (!/^[0-9]+$/.test(text.trim()) || value < bounds.min || value > bounds.max) {
+function checkExpiry(input: string, bounds: NodePolicy['invoice_expiry_seconds']): Checked<number> {
+  const parsed = parsePositiveIntegerInput(input);
+  const seconds = parsed.ok ? Number(parsed.value) : Number.NaN;
+  if (!(seconds >= bounds.min && seconds <= bounds.max)) {
     return { ok: false, error: `Enter between ${bounds.min} and ${bounds.max} seconds.` };
   }
-  return { ok: true, value };
+  return { ok: true, value: seconds };
 }
 
 export function ReceiveInvoiceForm({ nodeId, policy }: ReceiveInvoiceFormProps) {
@@ -70,9 +72,9 @@ export function ReceiveInvoiceForm({ nodeId, policy }: ReceiveInvoiceFormProps) 
           maxLength={DESCRIPTION_MAX_LENGTH}
           onValueChange={(description) => setForm((current) => ({ ...current, description }))}
         />
-        <TextField
+        <NumberInputField
+          step={1}
           label="Expires after (seconds)"
-          inputMode="numeric"
           value={form.expiry}
           onValueChange={(value) => setForm((current) => ({ ...current, expiry: value }))}
           error={show(expiry)}
