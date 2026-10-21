@@ -42,7 +42,7 @@ describe('invoices list', () => {
     expect(within(table).getAllByText('Unpaid')).toHaveLength(2);
     expect(within(table).getByText('Paid')).toBeInTheDocument();
     expect(within(table).getByText('No description')).toBeInTheDocument();
-    expect(within(table).getByText(/in 59 minutes/)).toBeInTheDocument();
+    expect(within(table).getByText(/in 59 min/)).toBeInTheDocument();
     expect(within(table).getByText(/Expiry passed/)).toBeInTheDocument();
     expect(within(table).queryByText('Expired')).not.toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: /Copy/ })).not.toBeInTheDocument();
