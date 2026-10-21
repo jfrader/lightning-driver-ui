@@ -1,7 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, beforeEach, expect, it, vi } from 'vitest';
 import { fixture } from '../../../test/fixtures';
+import { setWideLayout } from '../../../test/environment';
 import { mockJournal, operation } from '../../../test/operation-journal';
 import { openTechnicalDetails } from '../../../test/queries';
 import { renderApp } from '../../../test/render-app';
@@ -26,6 +27,11 @@ function deferred() {
 }
 
 describe('payment review', () => {
+  beforeEach(() => {
+    // Discard only exists beside the primary action on desktop; the phone back link discards.
+    setWideLayout(true);
+  });
+
   it('shows what the passkey approves from the server review', async () => {
     mockJournal({ created: review() });
     const { user } = renderApp(PATH);

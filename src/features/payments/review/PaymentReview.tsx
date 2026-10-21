@@ -10,7 +10,7 @@ import { formatClockTime, isPast } from '../../../lib/time';
 import { useNow } from '../../../lib/use-now';
 import { ConfirmPanel } from '../../operations/ConfirmPanel';
 import { confirmBlockReason } from '../../operations/confirm-block';
-import { useControlSize } from '../../shell/use-shell-layout';
+import { useControlSize, useDesktopShell } from '../../shell/use-shell-layout';
 import { ConsentBlock } from './ConsentBlock';
 import { ReviewAside } from './ReviewAside';
 import { ReviewDetails } from './ReviewDetails';
@@ -52,6 +52,7 @@ interface PaymentReviewProps {
  */
 export function PaymentReview({ operation, bolt11, node }: PaymentReviewProps) {
   const now = useNow();
+  const desktop = useDesktopShell();
   const size = useControlSize();
   const nodeId = operation.node_id;
   const blocked = confirmBlockReason(operation, node, now);
@@ -59,20 +60,21 @@ export function PaymentReview({ operation, bolt11, node }: PaymentReviewProps) {
   const decoded = decode.data && decode.data.payment_hash === operation.review.payment_hash ? decode.data : null;
   const expired = isPast(operation.review.expires_at, now);
 
-  const discard = (disabled: boolean) => (
-    <ButtonLink
-      to="/nodes/$nodeId/payments/new"
-      params={{ nodeId }}
-      size={size === 'lg' ? 'lg' : 'md'}
-      variant="ghost"
-      aria-disabled={disabled || undefined}
-      onClick={(event) => {
-        if (disabled) event.preventDefault();
-      }}
-    >
-      Discard review
-    </ButtonLink>
-  );
+  const discard = (disabled: boolean) =>
+    desktop ? (
+      <ButtonLink
+        to="/nodes/$nodeId/payments/new"
+        params={{ nodeId }}
+        size={size === 'lg' ? 'lg' : 'md'}
+        variant="ghost"
+        aria-disabled={disabled || undefined}
+        onClick={(event) => {
+          if (disabled) event.preventDefault();
+        }}
+      >
+        Discard review
+      </ButtonLink>
+    ) : null;
 
   let confirmation;
   if (blocked !== null) {
