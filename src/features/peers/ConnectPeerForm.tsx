@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Flex, TextField } from '@jfrader/ui';
+import { Flex, TextField } from '@jfrader/ui';
 import { ExactNumberField } from '../../components/ExactNumberField';
-import { SubmitFeedback } from '../operations/SubmitFeedback';
+import { createFieldError } from '../forms/create-errors';
+import { ReviewSubmit } from '../forms/ReviewSubmit';
+import { checkHost, checkPort, checkPubkey, type Checked } from '../forms/validation';
 import { useSubmitOperation } from '../operations/use-submit-operation';
-import { DEFAULT_LIGHTNING_PORT, isPubkey, parsePort, splitPeerUri } from './peer-address';
+import { splitPeerUri } from './peer-address';
 
-const HOST_MAX_LENGTH = 253;
+const FIELDS = ['peer'] as const;
 
 interface FormState {
   pubkey: string;
@@ -14,18 +16,18 @@ interface FormState {
   submitted: boolean;
 }
 
+/**
+ * Public key, host and port; pasting `pubkey@host:port` fills all three visibly and submits nothing.
+ * There is no default port (§7.3). Submitting creates the connection review.
+ */
 export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
-  const [form, setForm] = useState<FormState>({ pubkey: '', host: '', port: String(DEFAULT_LIGHTNING_PORT), submitted: false });
+  const [form, setForm] = useState<FormState>({ pubkey: '', host: '', port: '', submitted: false });
   const submit = useSubmitOperation(nodeId);
 
-  const pubkey = form.pubkey.trim().toLowerCase();
-  const host = form.host.trim();
-  const port = parsePort(form.port);
-  const errors = {
-    pubkey: isPubkey(pubkey) ? undefined : 'Enter a 66-character hex public key starting with 02 or 03.',
-    host: host && host.length <= HOST_MAX_LENGTH && !/[\s/@]/.test(host) ? undefined : 'Enter a host name or IP address.',
-    port: port === null ? 'Enter a port from 1 to 65535.' : undefined,
-  };
+  const pubkey = checkPubkey(form.pubkey);
+  const host = checkHost(form.host);
+  const port = checkPort(form.port);
+  const show = (check: Checked<unknown>) => (form.submitted && !check.ok ? check.error : undefined);
 
   const onPubkeyChange = (value: string) => {
     const uri = splitPeerUri(value);
@@ -35,21 +37,21 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     setForm((current) => ({ ...current, submitted: true }));
-    if (errors.pubkey || errors.host || port === null || submit.isPending) return;
-    submit.mutate({ kind: 'connect_peer', params: { pubkey, host, port } });
+    if (!pubkey.ok || !host.ok || !port.ok || submit.isPending) return;
+    submit.mutate({ kind: 'connect_peer', params: { pubkey: pubkey.value, host: host.value, port: port.value } });
   };
 
   return (
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
         <TextField
-          label="Public key"
+          label="Node public key"
           description="Paste pubkey@host:port to fill all fields."
           value={form.pubkey}
           onValueChange={onPubkeyChange}
           autoComplete="off"
           spellCheck={false}
-          error={form.submitted ? errors.pubkey : undefined}
+          error={show(pubkey) ?? createFieldError(submit.error, 'peer', FIELDS)}
           required
         />
         <TextField
@@ -58,7 +60,7 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
           onValueChange={(value) => setForm((current) => ({ ...current, host: value }))}
           autoComplete="off"
           spellCheck={false}
-          error={form.submitted ? errors.host : undefined}
+          error={show(host)}
           required
         />
         <ExactNumberField
@@ -66,15 +68,10 @@ export function ConnectPeerForm({ nodeId }: { nodeId: string }) {
           label="Port"
           value={form.port}
           onValueChange={(value) => setForm((current) => ({ ...current, port: value }))}
-          error={form.submitted ? errors.port : undefined}
+          error={show(port)}
           required
         />
-        <Flex>
-          <Button type="submit" tone="accent" loading={submit.isPending}>
-            Connect
-          </Button>
-        </Flex>
-        <SubmitFeedback error={submit.error} result={submit.data} />
+        <ReviewSubmit label="Review connection" pending={submit.isPending} error={submit.error} nodeId={nodeId} fields={FIELDS} />
       </Flex>
     </form>
   );

@@ -11,7 +11,7 @@ import { ConsentBlock } from '../payments/review/ConsentBlock';
 import { useControlSize } from '../shell/use-shell-layout';
 import { AUTHORIZATION_STATUS, OPERATION_NOUN, OPERATION_STAGE, OPERATION_STATE, outcomeLabel } from './labels';
 import { OperationResultDetails } from './OperationResultDetails';
-import { OperationReviewDetails } from './OperationReviewDetails';
+import { KindConsent } from './review/KindConsent';
 import { OperationStatusNotice } from './OperationStatusNotice';
 import { OperationTimeline } from './OperationTimeline';
 import { ReviewDetails } from './ReviewDetails';
@@ -82,7 +82,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
           {isPayment ? (
             <ConsentBlock operation={operation} node={node} decoded={null} />
           ) : (
-            <OperationReviewDetails operation={operation} />
+            <KindConsent operation={operation} node={node} />
           )}
         </Section>
       </Anchor>

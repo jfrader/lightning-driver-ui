@@ -1,57 +1,77 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Checkbox, Flex, TextField } from '@jfrader/ui';
+import { Flex, SegmentedControl, TextField } from '@jfrader/ui';
+import { useQuery } from '@tanstack/react-query';
+import { peersQueryOptions } from '../../api/node-queries';
 import type { NodePolicy } from '../../api/types';
 import { msatToWireSat } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
 import { AmountField, type AmountEntry } from '../forms/AmountField';
+import { createFieldError } from '../forms/create-errors';
 import { FeeRateField } from '../forms/FeeRateField';
-import { checkAmount, checkFeeRate, type Checked } from '../forms/validation';
-import { SubmitFeedback } from '../operations/SubmitFeedback';
+import { ReviewSubmit } from '../forms/ReviewSubmit';
+import { checkAmount, checkFeeRate, checkPubkey, rangeText, type Checked } from '../forms/validation';
 import { useSubmitOperation } from '../operations/use-submit-operation';
-import { isPubkey } from '../peers/peer-address';
+import { useControlSize } from '../shell/use-shell-layout';
+
+const FIELDS = ['peer', 'amount'] as const;
+const VISIBILITY = [
+  { value: 'public', label: 'Public' },
+  { value: 'private', label: 'Private' },
+];
 
 interface OpenChannelFormProps {
   nodeId: string;
   policy: NodePolicy;
+  /** A peer key carried from the Peers inspector. */
+  initialPeer?: string;
 }
 
 interface FormState {
   peer: string;
   amount: AmountEntry;
   feeRate: string;
-  private: boolean;
+  visibility: 'public' | 'private';
   submitted: boolean;
 }
 
-export function OpenChannelForm({ nodeId, policy }: OpenChannelFormProps) {
+/** The peer's connection as the loaded peers page shows it; a hint, never a block (G-8). */
+function useConnectionHint(nodeId: string, pubkey: string | null): string | null {
+  const peers = useQuery(peersQueryOptions(nodeId, {}));
+  if (!pubkey || !peers.data) return null;
+  const peer = peers.data.items.find((item) => item.pubkey === pubkey);
+  if (!peer) return 'Not on the loaded peers page.';
+  return peer.connected ? 'Connected' : 'Not connected to this peer.';
+}
+
+/** Peer, channel size, visibility and fee rate; submitting creates the channel-open review (§7.5). */
+export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChannelFormProps) {
   const { unit } = useDisplayUnit();
+  const size = useControlSize();
   const [form, setForm] = useState<FormState>({
-    peer: '',
+    peer: initialPeer,
     amount: { text: '', unit },
     feeRate: '',
-    private: false,
+    visibility: 'public',
     submitted: false,
   });
   const submit = useSubmitOperation(nodeId);
 
-  const peer = form.peer.trim().toLowerCase();
-  const peerCheck: Checked<string> = isPubkey(peer)
-    ? { ok: true, value: peer }
-    : { ok: false, error: 'Enter the peer public key (66 hex characters).' };
+  const peer = checkPubkey(form.peer);
   const amount = checkAmount(form.amount, { allowMsat: false, bounds: policy.open_channel_sat, boundsUnit: 'sat' });
   const feeRate = checkFeeRate(form.feeRate, policy.fee_rate_sat_vbyte);
   const show = (check: Checked<unknown>) => (form.submitted && !check.ok ? check.error : undefined);
+  const connection = useConnectionHint(nodeId, peer.ok ? peer.value : null);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     setForm((current) => ({ ...current, submitted: true }));
-    if (!peerCheck.ok || !amount.ok || !feeRate.ok || submit.isPending) return;
+    if (!peer.ok || !amount.ok || !feeRate.ok || submit.isPending) return;
     submit.mutate({
       kind: 'open_channel',
       params: {
-        peer_pubkey: peerCheck.value,
+        peer_pubkey: peer.value,
         amount_sat: msatToWireSat(amount.value),
-        private: form.private,
+        private: form.visibility === 'private',
         fee_rate_sat_vbyte: feeRate.value.toString(),
       },
     });
@@ -62,20 +82,28 @@ export function OpenChannelForm({ nodeId, policy }: OpenChannelFormProps) {
       <Flex direction="column" gap="md">
         <TextField
           label="Peer public key"
-          description="The peer must already be connected."
+          description={connection ?? undefined}
           value={form.peer}
           onValueChange={(value) => setForm((current) => ({ ...current, peer: value }))}
           autoComplete="off"
           spellCheck={false}
-          error={show(peerCheck)}
+          error={show(peer) ?? createFieldError(submit.error, 'peer', FIELDS)}
           required
         />
         <AmountField
           label="Channel size"
           value={form.amount}
           onChange={(value) => setForm((current) => ({ ...current, amount: value }))}
-          error={show(amount)}
+          description={`Allowed: ${rangeText(policy.open_channel_sat, 'sat', form.amount.unit)}`}
+          error={show(amount) ?? createFieldError(submit.error, 'amount', FIELDS)}
           required
+        />
+        <SegmentedControl
+          label="Visibility"
+          size={size}
+          options={VISIBILITY}
+          value={form.visibility}
+          onValueChange={(value) => setForm((current) => ({ ...current, visibility: value === 'private' ? 'private' : 'public' }))}
         />
         <FeeRateField
           nodeId={nodeId}
@@ -84,17 +112,7 @@ export function OpenChannelForm({ nodeId, policy }: OpenChannelFormProps) {
           bounds={policy.fee_rate_sat_vbyte}
           error={show(feeRate)}
         />
-        <Checkbox
-          label="Private channel"
-          checked={form.private}
-          onCheckedChange={(checked) => setForm((current) => ({ ...current, private: checked === true }))}
-        />
-        <Flex>
-          <Button type="submit" tone="accent" loading={submit.isPending}>
-            Review channel
-          </Button>
-        </Flex>
-        <SubmitFeedback error={submit.error} result={submit.data} />
+        <ReviewSubmit label="Review channel open" pending={submit.isPending} error={submit.error} nodeId={nodeId} fields={FIELDS} />
       </Flex>
     </form>
   );

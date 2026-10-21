@@ -185,7 +185,11 @@ const channelsRoute = createRoute({
   }),
   component: ChannelsPage,
 });
-const openChannelRoute = createRoute({ ...node('/channels/new'), component: OpenChannelPage });
+const openChannelRoute = createRoute({
+  ...node('/channels/new'),
+  validateSearch: (search: Record<string, unknown>): { peer?: string } => ({ peer: pubkeyParam(search.peer) }),
+  component: OpenChannelPage,
+});
 const closeChannelRoute = createRoute({ ...node('/channels/$channelId/close'), component: CloseChannelPage });
 const transactionsRoute = createRoute({
   ...node('/onchain'),

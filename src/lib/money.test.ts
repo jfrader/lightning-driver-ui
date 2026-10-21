@@ -120,7 +120,7 @@ describe('amount input values', () => {
     ['1.5', 'sat'],
     ['0.000000015', 'btc'],
   ] as const)('rejects sub-satoshi %j %s where only whole sats are allowed', (value, unit) => {
-    expect(parseAmountInput(value, unit, { allowMsat: false })).toEqual({ ok: false, error: 'Use whole satoshis.' });
+    expect(parseAmountInput(value, unit, { allowMsat: false })).toEqual({ ok: false, error: 'On-chain amounts are whole satoshis.' });
   });
 
   it.each(['1.0', '1,000', '١', '-1', '1e2', ''])('rejects %j as a whole number', (value) => {

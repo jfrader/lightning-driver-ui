@@ -2,7 +2,6 @@ import { screen, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { mockJournal, operation } from '../../test/operation-journal';
-import { withinPanel } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, safeError, server } from '../../test/server';
 
@@ -13,8 +12,9 @@ vi.mock('@simplewebauthn/browser', async (importOriginal) =>
   }),
 );
 
+/** A form only creates a review; the review is where the one explicit confirmation happens. */
 describe('receive', () => {
-  it('creates and confirms a low-risk invoice in one explicit action, then shows it with copy and QR', async () => {
+  it('creates a review from the form, confirms it with one explicit action, then shows the invoice with copy and QR', async () => {
     const calls = mockJournal({
       created: operation('create_invoice'),
       confirm: () => HttpResponse.json(operation('create_invoice', 'succeeded', 'completed', true)),
@@ -23,15 +23,20 @@ describe('receive', () => {
 
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
     await user.type(screen.getByLabelText(/^Description/), 'Coffee');
+    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
+
+    await screen.findByRole('heading', { name: 'Review invoice' });
+    expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('create_invoice').id}`);
+    expect(calls.creates.map((call) => call.body)).toEqual([
+      { kind: 'create_invoice', params: { amount_msat: '2500000', description: 'Coffee', expiry_seconds: 3600 } },
+    ]);
+    expect(calls.confirms).toEqual([]);
+
     await user.click(screen.getByRole('button', { name: 'Create invoice' }));
 
     expect(await screen.findByRole('img', { name: 'Invoice QR code' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Invoice' })).toBeInTheDocument();
     expect(screen.getByText('SYNTHETIC_BOLT11_CREATED_NOT_PAYABLE')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('create_invoice').id}`);
-    expect(calls.creates.map((call) => call.body)).toEqual([
-      { kind: 'create_invoice', params: { amount_msat: '2500000', description: 'Coffee', expiry_seconds: 3600 } },
-    ]);
     expect(calls.confirms).toEqual([
       expect.objectContaining({ body: { review_digest: operation('create_invoice').review.digest, authorization_id: null } }),
     ]);
@@ -43,9 +48,9 @@ describe('receive', () => {
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
 
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '9007199254740.993');
-    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
 
-    await screen.findByRole('heading', { name: 'Invoice operation' });
+    await screen.findByRole('heading', { name: 'Review invoice' });
     expect(calls.creates[0]?.body).toEqual({
       kind: 'create_invoice',
       params: { amount_msat: '9007199254740993', description: '', expiry_seconds: 3600 },
@@ -58,7 +63,7 @@ describe('receive', () => {
     const amount = await screen.findByLabelText(/^Amount \(sat\)/);
 
     await user.type(amount, text);
-    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
 
     expect(amount).toHaveValue(text);
     expect(await screen.findByText('Use digits and a decimal point only, without spaces or commas.')).toBeInTheDocument();
@@ -82,9 +87,9 @@ describe('receive', () => {
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '150000');
     await user.click(within(screen.getByRole('radiogroup', { name: 'Amount unit' })).getByRole('radio', { name: 'BTC' }));
     expect(screen.getByLabelText(/^Amount \(BTC\)/)).toHaveValue('0.0015');
-    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
 
-    await screen.findByRole('heading', { name: 'Invoice operation' });
+    await screen.findByRole('heading', { name: 'Review invoice' });
     expect(calls.creates[0]?.body).toMatchObject({ params: { amount_msat: '150000000' } });
   });
 
@@ -98,7 +103,7 @@ describe('receive', () => {
     );
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
     const amount = await screen.findByLabelText(/^Amount \(sat\)/);
-    const create = screen.getByRole('button', { name: 'Create invoice' });
+    const create = screen.getByRole('button', { name: 'Review invoice' });
 
     await user.type(amount, '1000');
     await user.click(create);
@@ -121,14 +126,15 @@ describe('channel and on-chain reviews', () => {
     await user.type(await screen.findByLabelText(/^Peer public key/), operation('open_channel').review.peer_pubkey ?? '');
     await user.type(screen.getByLabelText(/^Channel size \(sat\)/), '1000000');
     await user.click(await screen.findByRole('button', { name: /^Normal/ }));
-    await user.click(screen.getByLabelText(/^Private channel/));
-    await user.click(screen.getByRole('button', { name: 'Review channel' }));
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Visibility' })).getByRole('radio', { name: 'Private' }));
+    await user.click(screen.getByRole('button', { name: 'Review channel open' }));
 
     expect(await screen.findByRole('button', { name: 'Open channel with passkey' })).toBeInTheDocument();
-    const review = await withinPanel('Review');
-    expect(review.getByText('Amount').nextElementSibling).toHaveTextContent('1,000,000 sat');
-    expect(review.getByText('Fee rate').nextElementSibling).toHaveTextContent('2 sat/vB');
-    expect(review.getByText('Fee').nextElementSibling).toHaveTextContent('Requested rate; the final fee can differ');
+    expect(screen.getByText('Open channel').nextElementSibling).toHaveTextContent('1,000,000 sat');
+    expect(screen.getByText('Channel capacity from this node')).toBeInTheDocument();
+    expect(screen.getByText('Fee rate').closest('div')).toHaveTextContent('Requested; the final fee can differ2 sat/vB');
+    expect(screen.getByText('Visibility').nextElementSibling).toHaveTextContent('Private');
+    expect(screen.queryByText('Total')).not.toBeInTheDocument();
     expect(calls.creates[0]?.body).toEqual(operation('open_channel').request);
     expect(calls.confirms).toEqual([]);
   });
@@ -140,9 +146,9 @@ describe('channel and on-chain reviews', () => {
     await user.type(await screen.findByLabelText(/^Peer public key/), operation('open_channel').review.peer_pubkey ?? '');
     await user.type(screen.getByLabelText(/^Channel size \(sat\)/), '50000');
     await user.type(screen.getByLabelText(/^Fee rate/), '2');
-    await user.click(screen.getByRole('button', { name: 'Review channel' }));
+    await user.click(screen.getByRole('button', { name: 'Review channel open' }));
 
-    expect(await screen.findByText('Enter between 100,000 sat and 10,000,000 sat.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter an amount from 100,000 sat to 10,000,000 sat.')).toBeInTheDocument();
     expect(calls.creates).toEqual([]);
   });
 
@@ -156,9 +162,8 @@ describe('channel and on-chain reviews', () => {
     await user.click(screen.getByRole('button', { name: 'Review send' }));
 
     expect(await screen.findByRole('button', { name: 'Send with passkey' })).toBeInTheDocument();
-    const review = await withinPanel('Review');
-    expect(review.getByText('Destination').nextElementSibling).toHaveTextContent('SYNTHETIC_REGTEST_ADDRESS_NOT_SENDABLE');
-    expect(review.getByText('Estimated fee').nextElementSibling).toHaveTextContent('200 sat');
+    expect(screen.getByTitle('SYNTHETIC_REGTEST_ADDRESS_NOT_SENDABLE')).toBeInTheDocument();
+    expect(screen.getByText('Estimated fee').closest('div')).toHaveTextContent('Estimate200 sat');
     expect(calls.creates[0]?.body).toEqual(operation('send_onchain').request);
   });
 

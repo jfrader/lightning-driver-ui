@@ -11,7 +11,7 @@ const SESSION_ENDED = {
   },
 };
 
-test('a 401 on the automatic low-risk confirm signs out instead of showing node data', async ({ page }) => {
+test('a 401 on the explicit low-risk confirm signs out instead of showing node data', async ({ page }) => {
   const requests = await installSyntheticApi(page);
   await page.route('**/api/v1/nodes/*/operations/*/confirm', (route) => {
     const request = route.request();
@@ -26,6 +26,8 @@ test('a 401 on the automatic low-risk confirm signs out instead of showing node 
   await page.getByLabel(/^Amount \(sat\)/).click();
   await page.keyboard.type('2500');
 
+  // The form creates the review; the low-risk confirm is the one explicit action on it.
+  await page.getByRole('button', { name: 'Review invoice' }).click();
   await page.getByRole('button', { name: 'Create invoice' }).click();
 
   await expect(page).toHaveURL(/\/login\?redirect=/);

@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Flex, TextField } from '@jfrader/ui';
+import { Flex, TextField } from '@jfrader/ui';
 import type { NodePolicy } from '../../api/types';
 import { msatToWireSat } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
 import { AmountField, type AmountEntry } from '../forms/AmountField';
+import { createFieldError } from '../forms/create-errors';
 import { FeeRateField } from '../forms/FeeRateField';
-import { checkAmount, checkFeeRate, type Checked } from '../forms/validation';
-import { SubmitFeedback } from '../operations/SubmitFeedback';
+import { ReviewSubmit } from '../forms/ReviewSubmit';
+import { checkAddress, checkAmount, checkFeeRate, rangeText, type Checked } from '../forms/validation';
 import { useSubmitOperation } from '../operations/use-submit-operation';
 
-const ADDRESS_MAX_LENGTH = 200;
+const FIELDS = ['address', 'amount'] as const;
 
 interface SendOnchainFormProps {
   nodeId: string;
@@ -23,17 +24,13 @@ interface FormState {
   submitted: boolean;
 }
 
-/** Fixed amount to one address. The server validates the address for the node's network. */
+/** A fixed amount to one address; no send-all, no coin selection. The server validates the address (§7.8). */
 export function SendOnchainForm({ nodeId, policy }: SendOnchainFormProps) {
   const { unit } = useDisplayUnit();
   const [form, setForm] = useState<FormState>({ address: '', amount: { text: '', unit }, feeRate: '', submitted: false });
   const submit = useSubmitOperation(nodeId);
 
-  const address = form.address.trim();
-  const addressCheck: Checked<string> =
-    address && address.length <= ADDRESS_MAX_LENGTH && !/\s/.test(address)
-      ? { ok: true, value: address }
-      : { ok: false, error: 'Enter a Bitcoin address.' };
+  const address = checkAddress(form.address);
   const amount = checkAmount(form.amount, { allowMsat: false, bounds: policy.send_onchain_sat, boundsUnit: 'sat' });
   const feeRate = checkFeeRate(form.feeRate, policy.fee_rate_sat_vbyte);
   const show = (check: Checked<unknown>) => (form.submitted && !check.ok ? check.error : undefined);
@@ -41,14 +38,10 @@ export function SendOnchainForm({ nodeId, policy }: SendOnchainFormProps) {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     setForm((current) => ({ ...current, submitted: true }));
-    if (!addressCheck.ok || !amount.ok || !feeRate.ok || submit.isPending) return;
+    if (!address.ok || !amount.ok || !feeRate.ok || submit.isPending) return;
     submit.mutate({
       kind: 'send_onchain',
-      params: {
-        address: addressCheck.value,
-        amount_sat: msatToWireSat(amount.value),
-        fee_rate_sat_vbyte: feeRate.value.toString(),
-      },
+      params: { address: address.value, amount_sat: msatToWireSat(amount.value), fee_rate_sat_vbyte: feeRate.value.toString() },
     });
   };
 
@@ -61,14 +54,15 @@ export function SendOnchainForm({ nodeId, policy }: SendOnchainFormProps) {
           onValueChange={(value) => setForm((current) => ({ ...current, address: value }))}
           autoComplete="off"
           spellCheck={false}
-          error={show(addressCheck)}
+          error={show(address) ?? createFieldError(submit.error, 'address', FIELDS)}
           required
         />
         <AmountField
           label="Amount"
           value={form.amount}
           onChange={(value) => setForm((current) => ({ ...current, amount: value }))}
-          error={show(amount)}
+          description={`Allowed: ${rangeText(policy.send_onchain_sat, 'sat', form.amount.unit)}`}
+          error={show(amount) ?? createFieldError(submit.error, 'amount', FIELDS)}
           required
         />
         <FeeRateField
@@ -78,12 +72,7 @@ export function SendOnchainForm({ nodeId, policy }: SendOnchainFormProps) {
           bounds={policy.fee_rate_sat_vbyte}
           error={show(feeRate)}
         />
-        <Flex>
-          <Button type="submit" tone="accent" loading={submit.isPending}>
-            Review send
-          </Button>
-        </Flex>
-        <SubmitFeedback error={submit.error} result={submit.data} />
+        <ReviewSubmit label="Review send" pending={submit.isPending} error={submit.error} nodeId={nodeId} fields={FIELDS} />
       </Flex>
     </form>
   );

@@ -51,15 +51,36 @@ export const BACKEND_LABEL: Record<NodeSummary['backend'], string> = {
   cln_rest: 'Core Lightning REST',
 };
 
-export const CAPABILITY_REASON: Record<CapabilityReason, string> = {
-  read_only: 'This node is read-only.',
-  unsupported: 'This node backend does not support this action.',
-  node_offline: 'The node is offline.',
-  unverified: 'The node identity is not verified.',
-  not_configured: 'Limits for this action are not configured on the server.',
-  permission_denied: 'The node credentials do not allow this action.',
-  syncing: 'The node is still syncing.',
-};
+/** Why an action is unavailable, as one sentence beside the control or in place of the form (§7.0.4). */
+export function capabilityReasonText(reason: CapabilityReason, node: Pick<NodeSummary, 'backend'>): string {
+  switch (reason) {
+    case 'read_only':
+      return 'This node is read-only.';
+    case 'unsupported':
+      return `${BACKEND_LABEL[node.backend]} does not support this action in Lightning Driver.`;
+    case 'node_offline':
+      return 'The node is offline.';
+    case 'unverified':
+      return 'The node identity is not verified.';
+    case 'not_configured':
+      return 'This action is not configured on the server.';
+    case 'permission_denied':
+      return 'The node credentials do not allow this action.';
+    case 'syncing':
+      return 'The node is syncing to chain.';
+  }
+}
+
+/**
+ * The reason an action cannot start on this node now, or `null` when it can. An unknown network or
+ * an unverified identity blocks every action as `unverified`, whatever the capability says.
+ */
+export function capabilityBlock(node: NodeSummary, capability: CapabilityKey): CapabilityReason | null {
+  if (node.read_only) return 'read_only';
+  if (node.network === 'unknown' || node.identity_pubkey === null) return 'unverified';
+  const state = node.capabilities[capability];
+  return state.enabled ? null : state.reason;
+}
 
 export const CAPABILITY_LABEL: Record<CapabilityKey, string> = {
   create_invoice: 'Create invoice',

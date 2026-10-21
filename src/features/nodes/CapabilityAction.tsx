@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Button, Flex, styled } from '@jfrader/ui';
 import type { CapabilityKey, NodeSummary } from '../../api/types';
-import { CAPABILITY_LABEL, CAPABILITY_REASON } from './labels';
+import { CAPABILITY_LABEL, capabilityBlock, capabilityReasonText } from './labels';
 
 const Reason = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
 
@@ -12,18 +12,20 @@ interface CapabilityActionProps {
   children: ReactNode;
 }
 
-/** Hides mutation entries on read-only nodes; shows a disabled entry with its reason otherwise. */
+/**
+ * Hides mutation entries on read-only nodes; otherwise a blocked entry stays visible, disabled, with
+ * its reason as adjacent text (never a tooltip).
+ */
 export function CapabilityAction({ node, capability, children }: CapabilityActionProps) {
-  const state = node.capabilities[capability];
-  if (node.read_only) return null;
-  if (state.enabled) return children;
-  if (state.reason === 'read_only') return null;
+  const reason = capabilityBlock(node, capability);
+  if (reason === null) return children;
+  if (reason === 'read_only') return null;
   return (
     <Flex direction="column" gap="xs">
       <Button size="sm" variant="outline" disabled>
         {CAPABILITY_LABEL[capability]}
       </Button>
-      <Reason>{CAPABILITY_REASON[state.reason]}</Reason>
+      <Reason>{capabilityReasonText(reason, node)}</Reason>
     </Flex>
   );
 }

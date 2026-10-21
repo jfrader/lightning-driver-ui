@@ -23,8 +23,8 @@ afterEach(() => onlineManager.setOnline(true));
 
 async function reviewPayment(view: ReturnType<typeof renderApp>, clicks = 1) {
   const { user } = view;
-  await user.type(await screen.findByLabelText(/Lightning invoice/), BOLT11);
-  await user.click(screen.getByRole('button', { name: 'Decode' }));
+  await user.type(await screen.findByLabelText(/^Invoice/), BOLT11);
+  await user.click(screen.getByRole('button', { name: 'Check invoice' }));
   const reviewButton = await screen.findByRole('button', { name: 'Review payment' });
   if (clicks === 2) await user.dblClick(reviewButton);
   else await user.click(reviewButton);
@@ -172,8 +172,8 @@ describe('pay invoice', () => {
       }),
     );
     const view = renderApp('/nodes/lnd-lab/payments/new');
-    await view.user.type(await screen.findByLabelText(/Lightning invoice/), BOLT11);
-    await view.user.click(screen.getByRole('button', { name: 'Decode' }));
+    await view.user.type(await screen.findByLabelText(/^Invoice/), BOLT11);
+    await view.user.click(screen.getByRole('button', { name: 'Check invoice' }));
     await screen.findByRole('button', { name: 'Review payment' });
 
     onlineManager.setOnline(false);

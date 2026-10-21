@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Flex, SegmentedControl } from '@jfrader/ui';
 import { ExactNumberField } from '../../components/ExactNumberField';
 import { isKeyOf, keysOf } from '../../lib/guards';
-import { PLAIN_DECIMAL_HINT, UNIT_LABEL, formatMsatInput, parseAmountInput, type DisplayUnit } from '../../lib/money';
+import { PLAIN_DECIMAL_HINT, UNIT_LABEL, formatInteger, formatMsatInput, parseAmountInput, type DisplayUnit } from '../../lib/money';
+import { useControlSize } from '../shell/use-shell-layout';
 
 export interface AmountEntry {
   /** The text exactly as entered, e.g. "0.0015". */
@@ -27,22 +28,33 @@ interface AmountFieldProps {
   label: string;
   value: AmountEntry;
   onChange: (value: AmountEntry) => void;
+  /** The node's allowed range or a fee helper, shown with the entry hint. */
+  description?: string;
   error?: string;
   required?: boolean;
 }
 
+/** `= 2,500,000 msat` for a parseable entry: the exact value that will be requested. */
+function readback(entry: AmountEntry): string | null {
+  const parsed = parseAmountInput(entry.text, entry.unit, { allowMsat: true, allowZero: true });
+  return parsed.ok ? `= ${formatInteger(parsed.msat)} msat` : null;
+}
+
 /**
- * Exact amount entry in the chosen unit, parsed later to bigint millisatoshis.
- * The unit belongs to the entry, so changing the session display unit never rescales entered digits.
+ * Exact amount entry in the chosen unit, parsed later to bigint millisatoshis, with the exact msat
+ * it reads as. The unit belongs to the entry, so changing the session display unit never rescales
+ * entered digits.
  */
-export function AmountField({ label, value, onChange, error, required }: AmountFieldProps) {
+export function AmountField({ label, value, onChange, description, error, required }: AmountFieldProps) {
   const [unitBlocked, setUnitBlocked] = useState(false);
+  const size = useControlSize();
+  const hint = [readback(value) ?? PLAIN_DECIMAL_HINT, description].filter(Boolean).join(' · ');
   return (
     <Flex gap="sm" align="end" wrap>
       <ExactNumberField
         kind="decimal"
         label={`${label} (${UNIT_LABEL[value.unit]})`}
-        description={PLAIN_DECIMAL_HINT}
+        description={hint}
         value={value.text}
         onValueChange={(text) => {
           setUnitBlocked(false);
@@ -54,7 +66,7 @@ export function AmountField({ label, value, onChange, error, required }: AmountF
       />
       <SegmentedControl
         label={`${label} unit`}
-        size="sm"
+        size={size}
         options={UNIT_OPTIONS}
         value={value.unit}
         onValueChange={(unit) => {

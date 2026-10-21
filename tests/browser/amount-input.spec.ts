@@ -28,7 +28,7 @@ for (const [method, enter] of [
         await enter(page, text);
 
         await expect(amountField(page)).toHaveValue(text);
-        await page.getByRole('button', { name: 'Create invoice' }).click();
+        await page.getByRole('button', { name: 'Review invoice' }).click();
 
         await expect(page.getByText(MALFORMED_ERROR)).toBeVisible();
         expect(requests).toEqual([]);
@@ -45,7 +45,7 @@ test('keeps a pasted malformed amount as pasted and sends nothing', async ({ pag
   await page.keyboard.press('ControlOrMeta+V');
 
   await expect(amountField(page)).toHaveValue('1,234.5');
-  await page.getByRole('button', { name: 'Create invoice' }).click();
+  await page.getByRole('button', { name: 'Review invoice' }).click();
   await expect(page.getByText(MALFORMED_ERROR)).toBeVisible();
   expect(requests).toEqual([]);
 });
@@ -74,8 +74,8 @@ test('keeps every digit of a large amount through editing, arrow keys, blur and 
   await unitChoice(page, 'sat').click();
   await expect(amountField(page)).toHaveValue('9007199254740.993');
 
-  await page.getByRole('button', { name: 'Create invoice' }).click();
-  await expect(page.getByRole('heading', { name: 'Create invoice' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review invoice' }).click();
+  await expect(page.getByRole('heading', { name: 'Review invoice' })).toBeVisible();
 
   expect(creates(requests)).toEqual([
     {
@@ -93,8 +93,8 @@ test('keeps a pasted large amount exact', async ({ page }) => {
   await page.keyboard.press('ArrowUp');
   await expect(amountField(page)).toHaveValue('9007199254740.993');
 
-  await page.getByRole('button', { name: 'Create invoice' }).click();
-  await expect(page.getByRole('heading', { name: 'Create invoice' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review invoice' }).click();
+  await expect(page.getByRole('heading', { name: 'Review invoice' })).toBeVisible();
   expect(creates(requests).map((r) => r.body)).toEqual([
     { kind: 'create_invoice', params: { amount_msat: '9007199254740993', description: '', expiry_seconds: 3600 } },
   ]);
@@ -126,13 +126,13 @@ test.describe('whole satoshis on-chain', () => {
 
   test('rejects a sub-satoshi amount', async ({ page }) => {
     const requests = await fillSend(page, '1.5');
-    await expect(page.getByText('Use whole satoshis.')).toBeVisible();
+    await expect(page.getByText('On-chain amounts are whole satoshis.')).toBeVisible();
     expect(requests).toEqual([]);
   });
 
   test('rejects an amount above the node policy with the policy bounds', async ({ page }) => {
     const requests = await fillSend(page, '100000001');
-    await expect(page.getByText('Enter between 1,000 sat and 100,000,000 sat.')).toBeVisible();
+    await expect(page.getByText('Enter an amount from 1,000 sat to 100,000,000 sat.')).toBeVisible();
     expect(requests).toEqual([]);
   });
 

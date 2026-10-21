@@ -25,7 +25,7 @@ test('the phone primary action clears the tab bar when scrolled to the end', asy
   test.skip(!isPhone(page), 'phone shell only');
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
-  const submit = page.getByRole('button', { name: 'Create invoice' });
+  const submit = page.getByRole('button', { name: 'Review invoice' });
   await expect(submit).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
 

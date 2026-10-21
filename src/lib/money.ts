@@ -89,6 +89,8 @@ export type AmountInputResult = { ok: true; msat: bigint } | { ok: false; error:
 interface AmountInputOptions {
   /** Accept millisatoshi precision; otherwise only whole satoshis. */
   allowMsat: boolean;
+  /** Accept zero (a fee cap of 0 is a real choice); amounts to send never are zero. */
+  allowZero?: boolean;
 }
 
 /** Plain decimal entry: ASCII digits with an optional decimal point and digits after it. */
@@ -112,9 +114,9 @@ export function parseAmountInput(text: string, unit: DisplayUnit, options: Amoun
   if (fraction.length > scale) return { ok: false, error: 'Too many decimal places.' };
   const msat = BigInt(whole) * 10n ** BigInt(scale) + BigInt(fraction.padEnd(scale, '0'));
 
-  if (!options.allowMsat && msat % MSAT_PER_SAT !== 0n) return { ok: false, error: 'Use whole satoshis.' };
+  if (!options.allowMsat && msat % MSAT_PER_SAT !== 0n) return { ok: false, error: 'On-chain amounts are whole satoshis.' };
   if (msat > I64_MAX) return { ok: false, error: 'Amount is too large.' };
-  if (msat === 0n) return { ok: false, error: 'Enter an amount greater than zero.' };
+  if (msat === 0n && !options.allowZero) return { ok: false, error: 'Enter an amount greater than zero.' };
   return { ok: true, msat };
 }
 
