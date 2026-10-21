@@ -9,7 +9,7 @@ export function UnitToggle() {
   const { unit, setUnit } = useDisplayUnit();
   return (
     <SegmentedControl
-      label="Amount unit"
+      label="Display unit"
       size="sm"
       options={OPTIONS}
       value={unit}

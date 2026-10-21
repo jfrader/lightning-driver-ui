@@ -9,9 +9,9 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router';
 import { errorCode, isSessionLoss } from '../api/errors';
+import { nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
-import { nodeQueryOptions } from '../api/node-queries';
 import { EnrollPage } from '../features/auth/EnrollPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { publicPolicyQueryOptions, sessionQueryOptions } from '../features/auth/queries';

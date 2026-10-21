@@ -26,7 +26,7 @@ export class ContractError extends Error {
   }
 }
 
-export type TransportFailure = 'network' | 'timeout';
+type TransportFailure = 'network' | 'timeout';
 
 /** No response arrived. For a mutation this never proves the server did nothing. */
 export class TransportError extends Error {

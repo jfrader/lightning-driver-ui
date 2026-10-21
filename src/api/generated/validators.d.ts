@@ -15,7 +15,6 @@ export declare const PublicPolicy: ContractValidator<components['schemas']['Publ
 export declare const NodesPage: ContractValidator<components['schemas']['NodesPage']>;
 export declare const NodeSummary: ContractValidator<components['schemas']['NodeSummary']>;
 export declare const NodeInfo: ContractValidator<components['schemas']['NodeInfo']>;
-export declare const NodeStatus: ContractValidator<components['schemas']['NodeStatus']>;
 export declare const NodePolicy: ContractValidator<components['schemas']['NodePolicy']>;
 export declare const FeeEstimates: ContractValidator<components['schemas']['FeeEstimates']>;
 export declare const Balances: ContractValidator<components['schemas']['Balances']>;

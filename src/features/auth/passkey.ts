@@ -85,9 +85,15 @@ export function passkeyFailure(error: unknown): PasskeyFailure | null {
   if (error instanceof ApiError || error instanceof TransportError || error instanceof ContractError) return null;
   if (error instanceof WebAuthnError && error.code === 'ERROR_CEREMONY_ABORTED') return 'canceled';
   const cause = error instanceof WebAuthnError ? error.cause : error;
-  if (cause instanceof Error && CANCELED_ERROR_NAMES.has(cause.name)) return 'canceled';
+  if (CANCELED_ERROR_NAMES.has(errorName(cause))) return 'canceled';
   if (error instanceof WebAuthnError || error instanceof DOMException) return 'failed';
   return browserSupportsWebAuthn() ? null : 'unsupported';
+}
+
+function errorName(value: unknown): string {
+  return typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string'
+    ? value.name
+    : '';
 }
 
 export const PASSKEY_FAILURE_MESSAGE: Record<PasskeyFailure, string> = {

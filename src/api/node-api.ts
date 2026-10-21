@@ -8,7 +8,6 @@ import {
   InvoicesPage,
   NodeInfo,
   NodePolicy,
-  NodeStatus,
   NodeSummary,
   NodesPage,
   OperationsPage,
@@ -47,8 +46,6 @@ export async function getNodeInfo(nodeId: string, signal?: AbortSignal) {
   return expectNode(path, nodeId, info.node.id, info);
 }
 
-export const getNodeStatus = (nodeId: string, signal?: AbortSignal) =>
-  getNodeResource(nodeId, 'status', NodeStatus, signal);
 export const getNodePolicy = (nodeId: string, signal?: AbortSignal) =>
   getNodeResource(nodeId, 'policy', NodePolicy, signal);
 export const getFeeEstimates = (nodeId: string, signal?: AbortSignal) =>
