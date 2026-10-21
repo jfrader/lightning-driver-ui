@@ -75,10 +75,7 @@ export function formatMsat(msat: bigint, unit: DisplayUnit, locale: Intl.Locales
   return `${number} ${UNIT_LABEL[unit]}`;
 }
 
-/**
- * Exact amount as the canonical value of an `<input type="number">` ("0.0015"). The browser shows
- * it with the field's locale; the value itself is never localized.
- */
+/** Exact amount as plain entry text in the unit: ASCII digits and a decimal point ("0.0015"). */
 export function formatMsatInput(msat: bigint, unit: DisplayUnit): string {
   return toDecimal(msat, unit);
 }
@@ -94,22 +91,22 @@ interface AmountInputOptions {
   allowMsat: boolean;
 }
 
-/**
- * HTML "valid floating-point number" without sign or exponent. `<input type="number">` turns the
- * operator's localized entry into this canonical string, or into "" when it cannot read it.
- */
-const CANONICAL_INPUT = /^(?:([0-9]+)(?:\.([0-9]+))?|\.([0-9]+))$/;
+/** Plain decimal entry: ASCII digits with an optional decimal point and digits after it. */
+const PLAIN_DECIMAL = /^([0-9]+)(?:\.([0-9]+))?$/;
+
+export const PLAIN_DECIMAL_HINT = 'Digits and a decimal point, for example 1500.5';
 
 /**
- * Parses the canonical value of a number input in the display unit to exact millisatoshis.
- * Localized text ("1,2", "1 2", Arabic-Indic digits) is the browser's job and is rejected here,
- * never reinterpreted.
+ * Parses typed or pasted text in the display unit to exact millisatoshis. Anything other than
+ * plain digits and one decimal point (spaces, commas, grouping, signs, exponents, other numerals)
+ * is rejected as typed, never reinterpreted.
  */
-export function parseAmountInput(value: string, unit: DisplayUnit, options: AmountInputOptions): AmountInputResult {
-  const match = CANONICAL_INPUT.exec(value);
-  if (!match) return { ok: false, error: value === '' ? 'Enter an amount.' : 'Enter a plain decimal amount.' };
-  const whole = match[1] ?? '0';
-  const fraction = match[2] ?? match[3] ?? '';
+export function parseAmountInput(text: string, unit: DisplayUnit, options: AmountInputOptions): AmountInputResult {
+  const match = PLAIN_DECIMAL.exec(text);
+  if (!match) {
+    return { ok: false, error: text === '' ? 'Enter an amount.' : 'Use digits and a decimal point only, without spaces or commas.' };
+  }
+  const [, whole, fraction = ''] = match;
 
   const scale = UNIT_SCALE[unit];
   if (fraction.length > scale) return { ok: false, error: 'Too many decimal places.' };
@@ -123,9 +120,9 @@ export function parseAmountInput(value: string, unit: DisplayUnit, options: Amou
 
 export type IntegerInputResult = { ok: true; value: bigint } | { ok: false; error: string };
 
-/** Parses the canonical value of a whole-number input, such as a fee rate in sat/vB. */
+/** Parses typed whole-number text such as a fee rate in sat/vB; only ASCII digits are accepted. */
 export function parsePositiveIntegerInput(input: string): IntegerInputResult {
-  if (!/^[0-9]+$/.test(input)) return { ok: false, error: 'Enter a whole number.' };
+  if (!/^[0-9]+$/.test(input)) return { ok: false, error: 'Enter a whole number using digits only.' };
   const value = BigInt(input);
   if (value === 0n) return { ok: false, error: 'Enter a number greater than zero.' };
   if (value > I64_MAX) return { ok: false, error: 'Number is too large.' };

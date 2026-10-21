@@ -1,20 +1,26 @@
+import { useState } from 'react';
 import { Flex, SegmentedControl } from '@jfrader/ui';
-import { NumberInputField } from '../../components/NumberInputField';
+import { ExactNumberField } from '../../components/ExactNumberField';
 import { isKeyOf, keysOf } from '../../lib/guards';
-import { UNIT_LABEL, formatMsatInput, parseAmountInput, type DisplayUnit } from '../../lib/money';
+import { PLAIN_DECIMAL_HINT, UNIT_LABEL, formatMsatInput, parseAmountInput, type DisplayUnit } from '../../lib/money';
 
 export interface AmountEntry {
-  /** Canonical value of the number input, e.g. "0.0015"; "" when empty or unreadable. */
+  /** The text exactly as entered, e.g. "0.0015". */
   text: string;
   unit: DisplayUnit;
 }
 
 const UNIT_OPTIONS = keysOf(UNIT_LABEL).map((unit) => ({ value: unit, label: UNIT_LABEL[unit] }));
+const UNIT_BLOCKED = 'Correct the amount before changing the unit.';
 
-/** Re-expresses the entered amount in the new unit so its value never changes with the unit. */
-function convertEntry(entry: AmountEntry, unit: DisplayUnit): AmountEntry {
+/**
+ * Re-expresses the entered amount exactly in the new unit. Text that is not a valid amount keeps
+ * its unit, so the same digits are never read as a different amount.
+ */
+function convertEntry(entry: AmountEntry, unit: DisplayUnit): AmountEntry | null {
+  if (entry.text === '') return { unit, text: '' };
   const parsed = parseAmountInput(entry.text, entry.unit, { allowMsat: true });
-  return { unit, text: parsed.ok ? formatMsatInput(parsed.msat, unit) : '' };
+  return parsed.ok ? { unit, text: formatMsatInput(parsed.msat, unit) } : null;
 }
 
 interface AmountFieldProps {
@@ -22,7 +28,6 @@ interface AmountFieldProps {
   value: AmountEntry;
   onChange: (value: AmountEntry) => void;
   error?: string;
-  description?: string;
   required?: boolean;
 }
 
@@ -30,16 +35,20 @@ interface AmountFieldProps {
  * Exact amount entry in the chosen unit, parsed later to bigint millisatoshis.
  * The unit belongs to the entry, so changing the session display unit never rescales entered digits.
  */
-export function AmountField({ label, value, onChange, error, description, required }: AmountFieldProps) {
+export function AmountField({ label, value, onChange, error, required }: AmountFieldProps) {
+  const [unitBlocked, setUnitBlocked] = useState(false);
   return (
     <Flex gap="sm" align="end" wrap>
-      <NumberInputField
-        step="any"
+      <ExactNumberField
+        kind="decimal"
         label={`${label} (${UNIT_LABEL[value.unit]})`}
+        description={PLAIN_DECIMAL_HINT}
         value={value.text}
-        onValueChange={(text) => onChange({ ...value, text })}
-        error={error}
-        description={description}
+        onValueChange={(text) => {
+          setUnitBlocked(false);
+          onChange({ ...value, text });
+        }}
+        error={unitBlocked ? UNIT_BLOCKED : error}
         required={required}
         sx={{ flex: '1 1 12rem' }}
       />
@@ -49,7 +58,10 @@ export function AmountField({ label, value, onChange, error, description, requir
         options={UNIT_OPTIONS}
         value={value.unit}
         onValueChange={(unit) => {
-          if (isKeyOf(UNIT_LABEL, unit)) onChange(convertEntry(value, unit));
+          if (!isKeyOf(UNIT_LABEL, unit)) return;
+          const converted = convertEntry(value, unit);
+          setUnitBlocked(converted === null);
+          if (converted) onChange(converted);
         }}
       />
     </Flex>

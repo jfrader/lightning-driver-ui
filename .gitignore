@@ -24,5 +24,8 @@ dist-ssr
 *.sw?
 
 project_source_bundled_for_ai.txt
+# Playwright
+test-results/
+playwright-report/
 graphify-out/
 source-to-txt.sh

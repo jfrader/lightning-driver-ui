@@ -9,9 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "api:generate": "node scripts/api-contract.mjs",
     "api:check": "node scripts/api-contract.mjs --check",
-    "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run test:browser",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@playwright/test": "1.64.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

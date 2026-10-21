@@ -79,26 +79,35 @@ describe('amount input values', () => {
     expect(parseAmountInput('0.0015', 'btc', { allowMsat: false })).toEqual(sats);
   });
 
-  it('parses canonical values beyond the safe integer range exactly', () => {
+  it('parses plain decimals beyond the safe integer range exactly', () => {
     expect(parseAmountInput('9007199254740993', 'sat', { allowMsat: false })).toEqual({
       ok: true,
       msat: 9_007_199_254_740_993_000n,
     });
-    expect(parseAmountInput('.5', 'sat', { allowMsat: true })).toEqual({ ok: true, msat: 500n });
+    expect(parseAmountInput('9007199254740.993', 'sat', { allowMsat: true })).toEqual({
+      ok: true,
+      msat: 9_007_199_254_740_993n,
+    });
   });
 
+  const MALFORMED = 'Use digits and a decimal point only, without spaces or commas.';
+
   it.each([
-    ['1 2', 'Enter a plain decimal amount.'],
-    ['1,2', 'Enter a plain decimal amount.'],
-    ['1,234.5', 'Enter a plain decimal amount.'],
-    ['1.234,5', 'Enter a plain decimal amount.'],
-    ['1.2.3', 'Enter a plain decimal amount.'],
-    ['١٢٣', 'Enter a plain decimal amount.'],
-    ['1e3', 'Enter a plain decimal amount.'],
-    ['-5', 'Enter a plain decimal amount.'],
-    ['+5', 'Enter a plain decimal amount.'],
-    [' 5', 'Enter a plain decimal amount.'],
-    ['.', 'Enter a plain decimal amount.'],
+    ['1 2', MALFORMED],
+    ['1,2', MALFORMED],
+    ['1,234.5', MALFORMED],
+    ['1.234,5', MALFORMED],
+    ['1.2.3', MALFORMED],
+    ['١٢٣', MALFORMED],
+    ['1٫2', MALFORMED],
+    ['1e3', MALFORMED],
+    ['-5', MALFORMED],
+    ['+5', MALFORMED],
+    [' 5', MALFORMED],
+    ['5 ', MALFORMED],
+    ['.5', MALFORMED],
+    ['5.', MALFORMED],
+    ['.', MALFORMED],
     ['', 'Enter an amount.'],
     ['1.2345', 'Too many decimal places.'],
     ['0', 'Enter an amount greater than zero.'],
