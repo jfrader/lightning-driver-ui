@@ -47,7 +47,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     writeThemePreference(next);
     withCrossfade(() => flushSync(() => setPreferenceState(next)));
   }, []);
-  const value = useMemo(() => ({ preference, setPreference }), [preference, setPreference]);
+  const value = useMemo(() => ({ preference, setPreference, theme: resolved }), [preference, setPreference, resolved]);
 
   return (
     <AppearanceContext value={value}>

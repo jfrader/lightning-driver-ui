@@ -5,6 +5,7 @@ import { nodeKeys } from '../../api/node-queries';
 import { confirmOperation, createOperation } from '../../api/operation-api';
 import type { CreateOperationRequest, Operation } from '../../api/types';
 import { throwIfAbandoned, useAttempt, type Attempt } from '../../lib/use-attempt';
+import { markConfirmAnswered, markConfirmSent } from './confirming';
 import { isUnansweredConfirmation } from './unanswered';
 import { useIntentKey } from './use-intent-key';
 
@@ -41,6 +42,7 @@ export function useSubmitOperation(nodeId: string) {
         return { operation, confirmation: undefined, confirmError: null };
       }
       throwIfAbandoned(attempt);
+      markConfirmSent(queryClient, operation.id);
       try {
         const confirmed = await confirmOperation(nodeId, operation.id, {
           review_digest: operation.review.digest,
@@ -52,6 +54,8 @@ export function useSubmitOperation(nodeId: string) {
         if (isSessionLoss(error)) throw error;
         if (isUnansweredConfirmation(error)) return { operation, confirmation: 'unanswered', confirmError: null };
         return { operation, confirmation: undefined, confirmError: error };
+      } finally {
+        markConfirmAnswered(queryClient, operation.id);
       }
     },
     onSuccess: ({ operation, confirmation, confirmError }, { attempt }) => {

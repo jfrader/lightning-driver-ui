@@ -1,0 +1,42 @@
+import type { ReactNode } from 'react';
+import { styled } from '@jfrader/ui';
+import { ASIDE_MEDIA, ASIDE_WIDTH } from '../config';
+
+const Grid = styled.div<{ measure: string }>(({ theme, measure }) => ({
+  display: 'grid',
+  gap: theme.space[8],
+  alignItems: 'start',
+  [ASIDE_MEDIA]: { gridTemplateColumns: `minmax(0, ${measure}) ${ASIDE_WIDTH}`, gap: theme.space[10] },
+}));
+
+const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
+  display: 'grid',
+  gap: theme.space[8],
+  minInlineSize: 0,
+  maxInlineSize: measure === '1fr' ? 'none' : measure,
+}));
+
+const Aside = styled.aside(({ theme }) => ({
+  display: 'grid',
+  gap: theme.space[8],
+  minInlineSize: 0,
+  [ASIDE_MEDIA]: { paddingInlineStart: theme.space[8], borderInlineStart: `1px solid ${theme.color.border}` },
+}));
+
+interface WorkLayoutProps {
+  main: ReactNode;
+  aside: ReactNode;
+  asideLabel: string;
+  /** Reading width for forms and reviews; lists use the full width. */
+  mainWidth?: string;
+}
+
+/** Task column plus supporting context: beside it from 80rem, after it below that. */
+export function WorkLayout({ main, aside, asideLabel, mainWidth = '1fr' }: WorkLayoutProps) {
+  return (
+    <Grid measure={mainWidth}>
+      <Column measure={mainWidth}>{main}</Column>
+      <Aside aria-label={asideLabel}>{aside}</Aside>
+    </Grid>
+  );
+}

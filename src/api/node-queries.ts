@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { NODE_REFRESH_MS } from '../config';
 import { errorCode } from './errors';
 import {
+  decodeInvoice,
   getBalances,
   getFeeEstimates,
   getNode,
@@ -86,7 +87,19 @@ export const channelsQueryOptions = listQuery('channels', listChannels);
 export const transactionsQueryOptions = listQuery('transactions', listTransactions);
 export const operationsQueryOptions = listQuery('operations', listOperations);
 
-export const operationQueryOptions = (nodeId: string, operationId: string) =>
+/**
+ * A local decode of an invoice the review was created from, re-run each time a review mounts (no
+ * cache kept): the review may only be confirmed when the decoded hash matches the server review.
+ */
+export const decodeQueryOptions = (nodeId: string, bolt11: string) =>
+  queryOptions({
+    queryKey: [...nodeKeys.detail(nodeId, 'decode'), bolt11] as const,
+    queryFn: () => decodeInvoice(nodeId, bolt11),
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
+export const operationQueryOptions =(nodeId: string, operationId: string) =>
   queryOptions({
     queryKey: nodeKeys.operation(nodeId, operationId),
     queryFn: ({ signal }) => getOperation(nodeId, operationId, signal),

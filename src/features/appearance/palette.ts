@@ -4,7 +4,7 @@ import { createTheme, type ThemeName, type ThemeTokens } from '@jfrader/ui';
  * The amber workbench palette, the only one the app ships. Values are the accepted preview's;
  * warnings are coral so they never read as the accent. No other colour literal belongs in the app.
  */
-const AMBER = {
+export const AMBER = {
   dark: {
     bg: '#0e0d0b',
     bgSoft: '#12110e',

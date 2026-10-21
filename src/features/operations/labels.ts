@@ -73,6 +73,42 @@ export const CONFIRM_LABEL: Record<OperationKind, string> = {
   send_onchain: 'Send with passkey',
 };
 
+/** What is known about an unresolved operation, and what not to do (copy deck §11.4). */
+export const UNRESOLVED_SENTENCE: Record<OperationKind, { unknown: string; pending: string }> = {
+  pay_invoice: {
+    unknown: 'The node may have sent this payment. Do not pay this invoice again until the outcome resolves.',
+    pending: 'In flight. The node has not reported a final outcome.',
+  },
+  send_onchain: {
+    unknown: 'The node may have broadcast this transaction. Do not send these funds again until the outcome resolves.',
+    pending: 'Sent to the node. Not yet reported as broadcast.',
+  },
+  open_channel: {
+    unknown: 'The node may have started funding this channel. Do not open another channel with this peer until the outcome resolves.',
+    pending: 'Funding started. Channel not active yet.',
+  },
+  close_channel: {
+    unknown: 'The node may have started closing this channel. Do not close it again until the outcome resolves.',
+    pending: 'Closing. Channel not closed yet.',
+  },
+  create_invoice: {
+    unknown: 'The node may have created this invoice. Do not create another invoice for this request until the outcome resolves.',
+    pending: 'Sent to the node. No invoice reported yet.',
+  },
+  new_address: {
+    unknown: 'The node may have created an address. No address is shown until the node reports it.',
+    pending: 'Sent to the node. No address reported yet.',
+  },
+  connect_peer: {
+    unknown: 'The node may have connected to this peer. Do not connect again until the outcome resolves.',
+    pending: 'Sent to the node.',
+  },
+  disconnect_peer: {
+    unknown: 'The node may have disconnected this peer. Do not disconnect again until the outcome resolves.',
+    pending: 'Sent to the node.',
+  },
+};
+
 const IN_FLIGHT: ReadonlySet<OperationState> = new Set(['dispatching', 'pending', 'unknown']);
 
 /** Possibly sent to the node and not final: only status reads may follow. */

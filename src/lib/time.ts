@@ -34,6 +34,32 @@ export function formatClockTime(iso: string, locale: Intl.LocalesArgument = DISP
   return new Intl.DateTimeFormat(locale, { timeStyle: 'medium', hourCycle: 'h23', timeZone: DISPLAY_TIME_ZONE }).format(time);
 }
 
+/** List time in UTC: "14:05" today, with the date on other days. */
+export function formatListTime(iso: string, now: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
+  const time = parseTime(iso);
+  if (time === null) return null;
+  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeZone: DISPLAY_TIME_ZONE });
+  const sameDay = day.format(time) === day.format(now);
+  return new Intl.DateTimeFormat(locale, {
+    ...(sameDay ? {} : { dateStyle: 'medium' }),
+    timeStyle: 'short',
+    hourCycle: 'h23',
+    timeZone: DISPLAY_TIME_ZONE,
+  }).format(time);
+}
+
+/** Detail time in UTC with seconds and the date: "Oct 21, 2026, 12:00:40". */
+export function formatDetailTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
+  const time = parseTime(iso);
+  if (time === null) return null;
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+    hourCycle: 'h23',
+    timeZone: DISPLAY_TIME_ZONE,
+  }).format(time);
+}
+
 export function isPast(iso: string, now: number): boolean {
   const time = parseTime(iso);
   return time !== null && time <= now;

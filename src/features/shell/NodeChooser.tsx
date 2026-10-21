@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { nodeChoiceLabel } from '../nodes/labels';
+import { useConfirmInFlight } from '../operations/confirming';
 import { NODE_DESTINATIONS } from './nav-model';
 import { useControlSize } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
@@ -11,8 +12,12 @@ import { visuallyHidden } from './visually-hidden';
 /** Not a valid node ID, so it can never collide with one. */
 const ALL_NODES = '*';
 
-/** Switching is a URL change: the same list on the other node, else its Overview. */
+/**
+ * Switching is a URL change: the same list on the other node, else its Overview. While a sent
+ * confirmation has not answered, switching is locked so no review is left half-confirmed.
+ */
 export function NodeChooser() {
+  const locked = useConfirmInFlight();
   const router = useRouter();
   const navigate = useNavigate();
   const size = useControlSize();
@@ -35,6 +40,8 @@ export function NodeChooser() {
     <Select
       label="Node"
       size={size}
+      disabled={locked}
+      description={locked ? 'Sending…' : undefined}
       options={options}
       value={nodeId ?? ALL_NODES}
       onValueChange={(next) => {

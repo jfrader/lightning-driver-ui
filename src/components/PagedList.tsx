@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { Alert, Button, EmptyState, Flex } from '@jfrader/ui';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { errorCode } from '../api/errors';
@@ -5,21 +6,20 @@ import type { PageMeta } from '../api/types';
 import { ErrorNotice } from './ErrorNotice';
 import { ListPager } from './ListPager';
 import { LoadingState } from './LoadingState';
-import { ResourceList, type ResourceColumn } from './ResourceList';
+import { ResourceList } from './ResourceList';
 
-interface PagedListProps<T> {
-  caption: string;
+type ListProps<T> = Omit<ComponentProps<typeof ResourceList<T>>, 'rows'>;
+
+interface PagedListProps<T> extends ListProps<T> {
   query: UseQueryResult<PageMeta & { items: T[] }>;
-  columns: readonly ResourceColumn<T>[];
-  getRowId: (row: T) => string;
   emptyTitle: string;
   cursor: string | undefined;
   onCursor: (cursor: string | undefined) => void;
 }
 
 /** Loading, error, expired-cursor, empty and populated states of one node list snapshot. */
-export function PagedList<T>({ caption, query, columns, getRowId, emptyTitle, cursor, onCursor }: PagedListProps<T>) {
-  if (query.isPending) return <LoadingState label={`Loading ${caption.toLowerCase()}`} />;
+export function PagedList<T>({ query, emptyTitle, cursor, onCursor, ...list }: PagedListProps<T>) {
+  if (query.isPending) return <LoadingState label={`Loading ${list.caption.toLowerCase()}`} />;
   if (query.isError) {
     if (errorCode(query.error) === 'cursor_expired') {
       return (
@@ -38,7 +38,7 @@ export function PagedList<T>({ caption, query, columns, getRowId, emptyTitle, cu
       {page.items.length === 0 ? (
         <EmptyState variant="inline" title={emptyTitle} />
       ) : (
-        <ResourceList caption={caption} rows={page.items} columns={columns} getRowId={getRowId} />
+        <ResourceList<T> {...list} rows={page.items} />
       )}
       <ListPager page={page} onFirstPage={cursor ? () => onCursor(undefined) : null} onNextPage={onCursor} />
     </Flex>

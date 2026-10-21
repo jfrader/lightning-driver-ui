@@ -10,6 +10,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { Panel } from '../../components/Panel';
 import { publicPolicyQueryOptions } from '../auth/queries';
 import { useNodeLookup } from '../nodes/use-current-node';
+import { PaymentReview } from '../payments/review/PaymentReview';
 import { ConfirmPanel } from './ConfirmPanel';
 import { OPERATION_KIND, OPERATION_STAGE, isInFlight, outcomeLabel } from './labels';
 import { OperationResultDetails } from './OperationResultDetails';
@@ -39,6 +40,9 @@ export function OperationPage() {
   if (operation.isError) return <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} />;
 
   const current = operation.data;
+  if (current.request.kind === 'pay_invoice' && current.state === 'awaiting_confirmation' && !unanswered) {
+    return <PaymentReview key={current.id} operation={current} bolt11={current.request.params.bolt11} node={node} />;
+  }
   const outcome = outcomeLabel(current);
   return (
     <Flex direction="column" gap="md">

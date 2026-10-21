@@ -44,7 +44,7 @@ export function msatToWireSat(msat: bigint): string {
   return (msat / MSAT_PER_SAT).toString();
 }
 
-function isDecimalLiteral(value: string): value is Intl.StringNumericLiteral {
+export function isDecimalLiteral(value: string): value is Intl.StringNumericLiteral {
   return /^[0-9]+(?:\.[0-9]+)?$/.test(value);
 }
 

@@ -11,6 +11,7 @@ import {
 import type { Operation } from '../../api/types';
 import { throwIfAbandoned, useAttempt, type Attempt } from '../../lib/use-attempt';
 import { requestPasskeyAssertion } from '../auth/passkey';
+import { markConfirmAnswered, markConfirmSent } from './confirming';
 import { UnansweredConfirmationError, isUnansweredConfirmation } from './unanswered';
 
 /**
@@ -68,6 +69,7 @@ export function useConfirmOperation(operation: Operation) {
     mutationFn: async ({ reviewed, attempt }: ConfirmAttempt) => {
       const authorizationId = reviewed.review.sensitive ? await authorize(reviewed, attempt) : null;
       throwIfAbandoned(attempt);
+      markConfirmSent(queryClient, reviewed.id);
       try {
         return await confirmOperation(reviewed.node_id, reviewed.id, {
           review_digest: reviewed.review.digest,
@@ -76,6 +78,8 @@ export function useConfirmOperation(operation: Operation) {
       } catch (error) {
         if (isUnansweredConfirmation(error)) throw new UnansweredConfirmationError();
         throw error;
+      } finally {
+        markConfirmAnswered(queryClient, reviewed.id);
       }
     },
     onSuccess: (confirmed, { attempt }) => {
