@@ -32,8 +32,9 @@ owned by the backend (GURI-2908, Specify and implement the Lightning node-manage
 them. `npm run api:generate` checks their SHA-256 against the frozen revision and regenerates:
 
 - `src/api/generated/schema.ts`: types (openapi-typescript 7.13.0);
-- `src/api/generated/validators.js`: response and request validators (ajv standalone), so malformed
-  or out-of-range amounts are rejected before rendering.
+- `src/api/generated/validators.js`: response and request validators (Ajv standalone with
+  ajv-formats, bundled with esbuild into one self-contained ES module), so malformed amounts,
+  timestamps, IDs or over-long strings are rejected before rendering.
 
 To adopt a new frozen revision, copy both files, update the hashes in `scripts/api-contract.mjs` and
 run `npm run api:generate`.
@@ -54,8 +55,9 @@ backend, real passkeys or real nodes.
 
 ## Limitations
 
-- Operation pages live under a configured node. History of a node removed from the server
-  configuration is kept by the backend but has no page here.
+- Amounts, fee rates, expiry and port are entered in `<input type="number">` with the display locale
+  as `lang`. Reading localized digits and separators is the browser's job and varies between
+  browsers; the app only accepts the canonical value the browser exposes.
 - Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
   backend need browser QA.
-- The bundle is one chunk (about 1 MB, 265 kB gzip), including the generated validators.
+- The bundle is one chunk (about 1 MB, 266 kB gzip), including the generated validators.
