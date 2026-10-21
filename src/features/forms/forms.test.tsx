@@ -29,7 +29,7 @@ describe('blocked forms', () => {
   it.each([
     ['an unverified identity', '/payments/new', { identity_pubkey: null }, 'The node identity is not verified.'],
     ['an unknown network', '/invoices/new', { network: 'unknown' }, 'The node identity is not verified.'],
-    ['a syncing node', '/onchain/send', withCapability('send_onchain', 'syncing'), 'The node is syncing to chain.'],
+    ['a syncing node', '/onchain/send', withCapability('send_onchain', 'syncing'), 'The node is syncing.'],
     ['an unsupported backend', '/peers/new', withCapability('connect_peer', 'unsupported'), 'LND gRPC does not support this action in Lightning Driver.'],
     ['an offline node', '/channels/new', withCapability('open_channel', 'node_offline'), 'The node is offline.'],
   ])('renders the reason and no field for %s', async (_label, path, overrides, reason) => {

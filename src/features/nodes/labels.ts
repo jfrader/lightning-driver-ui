@@ -67,7 +67,7 @@ export function capabilityReasonText(reason: CapabilityReason, node: Pick<NodeSu
     case 'permission_denied':
       return 'The node credentials do not allow this action.';
     case 'syncing':
-      return 'The node is syncing to chain.';
+      return 'The node is syncing.';
   }
 }
 
