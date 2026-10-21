@@ -1,7 +1,8 @@
 # Lightning Driver UI
 
 Browser UI for the Lightning node manager: one operator, several server-configured nodes (LND gRPC,
-LND REST, Core Lightning REST), passkey sign-in, per-node read-only policy.
+LND REST, Core Lightning REST), passkey sign-in with optional NIP-07 Nostr sign-in, per-node
+read-only policy.
 
 Vite single-page app on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/tokens, TanStack Router and
 TanStack Query. The Rust API server is authoritative: it holds node credentials, enforces read-only
@@ -69,5 +70,8 @@ other numerals) stays as typed and is rejected. Amounts are displayed with the b
 
 - Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
   backend need browser QA.
-- The initial route is one chunk (about 1 MB, 281 kB gzip), including the generated validators.
-  Recharts lives only in the lazy `src/charts/` chunk (about 88 kB gzip), loaded on the first chart.
+- Nostr sign-in uses a NIP-07 browser extension. NIP-46 remote signing and mobile bunkers are not
+  implemented; the login page shows `No Nostr extension found.` when the browser has none.
+- The initial route is one chunk (about 1 MB, 265 kB gzip), including the generated validators.
+  Recharts lives only in the lazy `src/charts/` chunk (about 87 kB gzip), loaded on the first chart.
+- More is the phone page; the desktop shell has no sign-in-methods surface yet.
