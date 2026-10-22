@@ -135,9 +135,10 @@ export function useConfirmOperation(operation: Operation) {
       }
     },
     onSuccess: (confirmed, { attempt }) => {
-      // The node accepted it whether or not this screen is still open: what it changes is stale.
-      void invalidateAffectedReads(queryClient, confirmed);
-      if (!attempt.isCurrent()) return;
+      if (!attempt.isCurrent()) {
+        void invalidateAffectedReads(queryClient, confirmed);
+        return;
+      }
       queryClient.setQueryData(nodeKeys.operation(nodeId, operationId), confirmed);
     },
     onError: (error, { attempt }) => {
@@ -152,8 +153,8 @@ export function useConfirmOperation(operation: Operation) {
         });
       }
     },
-    onSettled: () => {
-      inFlight.current = false;
+    onSettled: (_data, error) => {
+      if (error) inFlight.current = false;
     },
   });
 
