@@ -16,20 +16,30 @@ failure.
 
 The journey covers every read route on LND gRPC, LND REST and CLN REST; the
 eight mutation kinds through LND gRPC and LND REST; a real CLN invoice;
-`fundchannel`, `xpay` and `close` through the CLN adapter; and two channel
-open/close cycles. Authentication uses an injected NIP-07 signer; no real
-identity or credentials are involved.
+`fundchannel` and `xpay` through the CLN adapter; a cooperative CLN `close`; and
+two channel open/close cycles. Authentication uses an injected NIP-07 signer; no
+real identity or credentials are involved.
 
 `polarlightning/clightning:25.12` cannot fund a channel in this stack: its
 `fundchannel` broadcast is rejected by bitcoind 29 with
 `mandatory-script-verify-flag-failed (OP_EQUALVERIFY)`. The compose file pins
-`25.09.3`, which funds, pays and closes correctly against the same bitcoind.
+`25.09.3`, which funds and pays against the same bitcoind.
 
-The CLN `xpay` leg is intermittent against a just-opened channel: the node
-sometimes fails the payment without an attributable error, and the operation
-stays `unknown` by design rather than being guessed. The same invoice paid
-through `lightning-cli` or the CLN REST endpoint succeeds, so a failing run is
-node-side, not adapter-side.
+CLN needs the peer online to close cooperatively: `close` without
+`unilateraltimeout` (the adapter's choice) negotiates the closing fee. A dropped
+link makes CLN broadcast the commitment instead, and that channel then stays
+onchain through its CSV delay. The suite connects and waits for both ends
+before closing.
+
+CLN 25.09 keeps a cooperatively closed channel in `listpeerchannels` as
+`ONCHAIN` with no close cause and does not list it in `listclosedchannels`, so
+the adapter cannot observe the close type the contract requires. The close is
+accepted and broadcast and the operation stays `pending`; the suite asserts that
+honest projection.
+
+CLN's `channeld` occasionally dies under load. The node then fails the payment
+and the operation correctly stays `unknown`; the suite retries once with a fresh
+invoice and reports a second failure instead of hiding it.
 
 The suite deliberately uses a CA-signed LND certificate, so it exercises the
 default `tls_verification = "ca"` mode. Stock LND ships a self-signed leaf that
