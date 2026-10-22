@@ -1,0 +1,78 @@
+services:
+  bitcoind:
+    image: polarlightning/bitcoind:29.0
+    command:
+      - -regtest
+      - -server=1
+      - -rpcuser=polar
+      - -rpcpassword=polar
+      - -rpcallowip=0.0.0.0/0
+      - -rpcbind=0.0.0.0
+      - -fallbackfee=0.0002
+      - -txindex=1
+      - -zmqpubrawblock=tcp://0.0.0.0:28332
+      - -zmqpubrawtx=tcp://0.0.0.0:28333
+      - -printtoconsole
+    volumes:
+      - ${E2E_DATA:?E2E_DATA is required}/bitcoind:/home/bitcoin/.bitcoin
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bitcoin-cli -regtest -rpcuser=polar -rpcpassword=polar getblockchaininfo >/dev/null",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  lnd:
+    image: polarlightning/lnd:0.19.2-beta
+    command:
+      - --bitcoin.active
+      - --bitcoin.regtest
+      - --bitcoin.node=bitcoind
+      - --bitcoind.rpchost=bitcoind:18443
+      - --bitcoind.rpcuser=polar
+      - --bitcoind.rpcpass=polar
+      - --bitcoind.zmqpubrawblock=tcp://bitcoind:28332
+      - --bitcoind.zmqpubrawtx=tcp://bitcoind:28333
+      - --noseedbackup
+      - --alias=lnd1
+      - --rpclisten=0.0.0.0:10009
+      - --restlisten=0.0.0.0:8080
+      - --listen=0.0.0.0:9735
+      - --tlsextradomain=localhost
+      - --tlsextraip=127.0.0.1
+    volumes:
+      - ${E2E_DATA:?E2E_DATA is required}/lnd:/home/lnd/.lnd
+    ports:
+      - "10009:10009"
+      - "8081:8080"
+      - "9735:9735"
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+
+  cln:
+    image: polarlightning/clightning:25.12
+    command:
+      - --network=regtest
+      - --bitcoin-rpcuser=polar
+      - --bitcoin-rpcpassword=polar
+      - --bitcoin-rpcconnect=bitcoind
+      - --bitcoin-rpcport=18443
+      - --lightning-dir=/home/clightning/.lightning
+      - --addr=0.0.0.0:9735
+      - --clnrest-port=3010
+      - --clnrest-host=0.0.0.0
+      - --clnrest-protocol=https
+      - --clnrest-certs=/home/clightning/.lightning/certs
+      - --log-level=info
+    volumes:
+      - ${E2E_DATA:?E2E_DATA is required}/cln:/home/clightning/.lightning
+    ports:
+      - "3011:3010"
+      - "9835:9735"
+    depends_on:
+      bitcoind:
+        condition: service_healthy

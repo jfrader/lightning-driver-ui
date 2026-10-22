@@ -14,7 +14,8 @@
     "api:check": "node scripts/api-contract.mjs --check",
     "budget": "node scripts/bundle-budget.mjs",
     "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run budget && npm run test:browser",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "node tests/e2e/run.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
