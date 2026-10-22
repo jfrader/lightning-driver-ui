@@ -52,7 +52,7 @@ function SessionFacts() {
   );
 }
 
-/** Screens spec §5, phone only: theme, unit, session, sign-in methods, sign out, version; nothing else. */
+/** Theme, unit, session, sign-in methods, sign out and version. */
 export function MorePage() {
   return (
     <Flex direction="column" gap="lg">

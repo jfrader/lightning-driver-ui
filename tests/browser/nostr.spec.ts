@@ -115,7 +115,7 @@ test('a Nostr session confirms a sensitive payment with a fresh, operation-bound
 });
 
 test('More: linked keys as a short npub, and removing one ends the session', async ({ page }) => {
-  test.skip(!isPhone(page), 'More is the phone page; the desktop shell has no sign-in methods');
+  test.skip(!isPhone(page), 'Phone sign-in-method controls');
   const requests = await installSyntheticApi(page, { nostrIdentity: true });
   await installNostrSigner(page);
   await page.goto('/more');
@@ -133,4 +133,51 @@ test('More: linked keys as a short npub, and removing one ends the session', asy
   await expect(page.getByText('Signed out.')).toBeVisible();
   expect(calls(requests)).toEqual(['POST /auth/nostr/start', 'POST /auth/nostr/finish']);
   expect(requests[0].body).toEqual({ purpose: 'unlink', pubkey: expect.stringMatching(/^[0-9a-f]{64}$/) });
+});
+
+test('desktop More: sidebar keyboard entry, linked key controls and removal ends the session', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const problems = collectProblems(page);
+  const requests = await installSyntheticApi(page, { nostrIdentity: true });
+  await installNostrSigner(page);
+  await page.goto('/nodes/lnd-lab');
+  await expect(page.getByRole('heading', { name: 'LND lab' })).toBeVisible();
+
+  const more = page.getByRole('navigation', { name: 'Node sections' }).getByRole('link', { name: 'More', exact: true });
+  for (let step = 0; step < 30 && !(await more.evaluate((element) => element === document.activeElement)); step += 1) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(more).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/more$/);
+  await expect(more).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
+
+  const methods = page.getByRole('region', { name: 'Sign-in methods' });
+  const npub = methods.getByTitle(SYNTHETIC_NPUB);
+  await expect(npub).toHaveText(SYNTHETIC_NPUB);
+  expect(await npub.locator('span').evaluate((element) => getComputedStyle(element).overflowWrap)).toBe('anywhere');
+  await expectNoHorizontalOverflow(page);
+  await methods.getByRole('button', { name: 'Copy npub' }).focus();
+  await page.keyboard.press('Tab');
+  const remove = methods.getByRole('button', { name: 'Remove…' });
+  await expect(remove).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(methods.getByRole('button', { name: 'Link Nostr' })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Enter');
+  const confirm = methods.getByRole('button', { name: 'Remove key' });
+  await confirm.scrollIntoViewIfNeeded();
+  expect(await confirm.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return hit === element || (hit !== null && element.contains(hit));
+  })).toBe(true);
+  await confirm.click();
+
+  await expect(page).toHaveURL(/\/login\?notice=signed_out$/);
+  await expect(page.getByText('Signed out.')).toBeVisible();
+  expect(calls(requests)).toEqual(['POST /auth/nostr/start', 'POST /auth/nostr/finish']);
+  expect(requests[0].body).toEqual({ purpose: 'unlink', pubkey: expect.stringMatching(/^[0-9a-f]{64}$/) });
+  expect(problems).toEqual([]);
 });

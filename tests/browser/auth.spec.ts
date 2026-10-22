@@ -102,21 +102,19 @@ for (const size of SIZES) {
       await expectNoHorizontalOverflow(page);
     });
 
-    test('More: theme, unit, session and sign out on a phone; the workbench on desktop', async ({ page }) => {
+    test('More: theme, unit, session and sign out at every width', async ({ page }) => {
       const requests = await installSyntheticApi(page);
-      // Opening a node remembers it; a desktop visit to More returns there.
       await page.goto('/nodes/lnd-lab');
       await expect(page.getByRole('heading', { name: 'LND lab' })).toBeVisible();
       await page.goto('/more');
 
       if (!isPhone(page)) {
-        await expect(page).toHaveURL(/\/nodes\/lnd-lab$/);
+        await expect(page).toHaveURL(/\/more$/);
         const rail = page.getByRole('complementary', { name: 'Node and sections' });
         await expect(rail.getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
         // 0.0.0 is the scaffold placeholder; it must not be printed as a version.
         await expect(rail.getByText(/^App version /)).toHaveCount(0);
         await expect(rail.getByRole('button', { name: 'Sign out' })).toBeVisible();
-        return;
       }
 
       await expect(page.getByRole('heading', { name: 'More' })).toBeVisible();
@@ -124,7 +122,7 @@ for (const size of SIZES) {
       await expect(page.getByText(/^App version /)).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
       for (const radio of await page.getByRole('main').getByRole('radio').all()) await expectTouchTarget(page, radio);
-      const signOut = page.getByRole('button', { name: 'Sign out' });
+      const signOut = page.getByRole('main').getByRole('button', { name: 'Sign out' });
       await expectTouchTarget(page, signOut);
 
       await signOut.focus();

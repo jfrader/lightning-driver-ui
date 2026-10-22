@@ -24,7 +24,12 @@ export interface DestinationGroup {
   tab: PhoneTab;
 }
 
-/** Sidebar groups in order; Fleet follows them as the one destination outside any node. */
+export const GLOBAL_DESTINATIONS = {
+  fleet: { label: 'Fleet', to: '/fleet', keywords: 'nodes' },
+  more: { label: 'More', to: '/more', keywords: 'sign-in methods linked keys session theme unit' },
+} as const;
+
+/** Sidebar groups in order; global destinations follow them. */
 export const DESTINATION_GROUPS: readonly DestinationGroup[] = [
   { key: 'node', items: ['overview'], tab: 'overview' },
   { key: 'wallet', label: 'Wallet', items: ['payments', 'invoices', 'onchain'], tab: 'wallet' },

@@ -8,7 +8,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 import { formatInteger } from '../../lib/money';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
-import { useControlSize } from '../shell/use-shell-layout';
+import { useControlSize, useDesktopShell } from '../shell/use-shell-layout';
 import { linkNostr, unlinkNostr } from './ceremonies';
 import { NOSTR_FAILURE_MESSAGE, hasNostrExtension } from './nostr';
 import { nostrIdentitiesQueryOptions } from './queries';
@@ -49,6 +49,7 @@ function MethodError({ error, texts }: { error: unknown; texts: Partial<Record<E
 
 function NostrKey({ identity, removable }: { identity: NostrIdentity; removable: boolean }) {
   const size = useControlSize();
+  const desktop = useDesktopShell();
   const signedOut = useSignedOut();
   const [confirming, setConfirming] = useState(false);
   // Success revokes this session on the server: nothing read with it stays.
@@ -57,7 +58,7 @@ function NostrKey({ identity, removable }: { identity: NostrIdentity; removable:
   return (
     <li>
       <Flex direction="column" gap="sm">
-        <Identifier value={identity.npub} label="npub" truncated />
+        <Identifier value={identity.npub} label="npub" grouped={false} truncated={!desktop} />
         {confirming ? (
           <Flex wrap gap="sm" align="center">
             <Button size={size} variant="solid" tone="danger" loading={unlink.isPending} onClick={() => unlink.mutate()}>
