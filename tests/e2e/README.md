@@ -14,10 +14,22 @@ an enrollment token, starts the API and Vite, then runs
 `tests/e2e/real.spec.ts`. All data is disposable; `E2E_KEEP=1` keeps it on
 failure.
 
-The journey covers every read route on LND gRPC, LND REST and CLN REST, a real
-CLN invoice, a real LND channel open, an LND payment to CLN, a real on-chain
-send, and a channel close. Authentication uses an injected NIP-07 signer; no
-real identity or credentials are involved.
+The journey covers every read route on LND gRPC, LND REST and CLN REST; the
+eight mutation kinds through LND gRPC and LND REST; a real CLN invoice;
+`fundchannel`, `xpay` and `close` through the CLN adapter; and two channel
+open/close cycles. Authentication uses an injected NIP-07 signer; no real
+identity or credentials are involved.
+
+`polarlightning/clightning:25.12` cannot fund a channel in this stack: its
+`fundchannel` broadcast is rejected by bitcoind 29 with
+`mandatory-script-verify-flag-failed (OP_EQUALVERIFY)`. The compose file pins
+`25.09.3`, which funds, pays and closes correctly against the same bitcoind.
+
+The CLN `xpay` leg is intermittent against a just-opened channel: the node
+sometimes fails the payment without an attributable error, and the operation
+stays `unknown` by design rather than being guessed. The same invoice paid
+through `lightning-cli` or the CLN REST endpoint succeeds, so a failing run is
+node-side, not adapter-side.
 
 The suite deliberately uses a CA-signed LND certificate, so it exercises the
 default `tls_verification = "ca"` mode. Stock LND ships a self-signed leaf that

@@ -10,6 +10,7 @@ const COMPOSE = process.env.E2E_COMPOSE_FILE;
 const DATA = process.env.E2E_DATA;
 const NODE_CLN = 'Polar CLN';
 const NODE_GRPC = 'Polar LND gRPC';
+const NODE_REST = 'Polar LND REST';
 
 function compose(...args: string[]) {
   return execFileSync(
@@ -31,8 +32,42 @@ function bitcoin(...args: string[]) {
   );
 }
 
+function cln(...args: string[]) {
+  return compose(
+    'cln',
+    'lightning-cli',
+    '--lightning-dir=/home/clightning/.lightning',
+    '--network=regtest',
+    ...args,
+  );
+}
+
 function mine(blocks = 6) {
   bitcoin('generatetoaddress', String(blocks), bitcoin('getnewaddress'));
+}
+
+function lnd(...args: string[]) {
+  return compose('lnd', 'lncli', '--lnddir=/home/lnd/.lnd', '--network=regtest', ...args);
+}
+
+/** Both ends must consider the channel usable; CLN alone does not see LND's activation. */
+async function waitForLndChannel(peer: string) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const channels = JSON.parse(lnd('listchannels')).channels ?? [];
+    if (channels.some((c: { remote_pubkey: string; active: boolean }) => c.remote_pubkey === peer && c.active)) return;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  throw new Error('LND never reported the channel active');
+}
+
+/** CLN must see the peer connected and the channel in CHANNELD_NORMAL before xpay can route. */
+async function waitForClnChannel(peer: string) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const channels = JSON.parse(cln('listpeerchannels')).channels ?? [];
+    if (channels.some((c: { peer_id: string; state: string; peer_connected: boolean }) => c.peer_id === peer && c.state === 'CHANNELD_NORMAL' && c.peer_connected)) return;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  throw new Error('CLN channel never became routable');
 }
 
 async function switchNode(page: Page, label: string) {
@@ -65,9 +100,28 @@ async function latestOperation(page: Page, node: string, kind: string) {
   )) as { id: string; state: string; stage: string; result: Record<string, string> } | null;
 }
 
+/** The channel list is a node read; wait until the node reports the channel before closing it. */
+async function waitForChannelOnNode(page: Page, node: string, channelId: string) {
+  for (let attempt = 0; attempt < 15; attempt += 1) {
+    const found = await page.evaluate(
+      async ({ node, channelId }) => {
+        const response = await fetch(`/api/v1/nodes/${node}/channels?limit=100`);
+        const body = await response.json();
+        return (body.items ?? []).some((channel: { id: string }) => channel.id === channelId);
+      },
+      { node, channelId },
+    );
+    if (found) return;
+    await page.waitForTimeout(2000);
+  }
+  throw new Error(`${node} never listed channel ${channelId}`);
+}
+
 async function mineUntil(page: Page, node: string, kind: string, wanted: string) {
   let latest = await latestOperation(page, node, kind);
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  // Reconciliation spaces reads out (5 s doubling), and a channel needs the peer to
+  // exchange channel_ready after the funding confirms; allow both to happen.
+  for (let attempt = 0; attempt < 12; attempt += 1) {
     if (latest?.state === wanted) return latest;
     await page.waitForTimeout(2500);
     mine(6);
@@ -79,7 +133,7 @@ async function mineUntil(page: Page, node: string, kind: string, wanted: string)
 }
 
 test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, close', async ({ page }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(900_000);
   expect(TOKEN).toMatch(/^[0-9a-f]{64}$/);
   expect(LND).toMatch(/^[0-9a-f]{66}$/);
   expect(CLN).toMatch(/^[0-9a-f]{66}$/);
@@ -161,11 +215,130 @@ test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, cl
   await page.getByRole('button', { name: 'Send with Nostr', exact: true }).click();
   await expect(page.getByText(/Broadcast|Sent to node/).first()).toBeVisible({ timeout: 60_000 });
 
+  await waitForChannelOnNode(page, 'lnd-grpc', channelId);
   await page.goto(`/nodes/lnd-grpc/channels/${encodeURIComponent(channelId)}/close`);
   await page.getByLabel('Fee rate (sat/vB)').fill('2');
   await page.getByRole('button', { name: 'Review close', exact: true }).click();
   await page.getByRole('button', { name: 'Close channel with Nostr', exact: true }).click();
   await mineUntil(page, 'lnd-grpc', 'close_channel', 'succeeded');
+
+  // Real CLN mutations: fundchannel, xpay and close through the CLN adapter.
+  await switchNode(page, NODE_CLN);
+  await page.getByRole('link', { name: 'Channels', exact: true }).click();
+  await page.getByRole('link', { name: /^Open channel/ }).first().click();
+  await page.getByLabel('Peer public key').fill(LND!);
+  await page.getByRole('textbox', { name: 'Channel size (sat)' }).fill('1000000');
+  await page.getByRole('radio', { name: 'Private', exact: true }).click();
+  await page.getByLabel('Fee rate (sat/vB)').fill('2');
+  await page.getByRole('button', { name: 'Review channel open', exact: true }).click();
+  await page.getByRole('button', { name: 'Open channel with Nostr', exact: true }).click();
+  const clnOpened = await mineUntil(page, 'cln', 'open_channel', 'succeeded');
+  expect(clnOpened.result.channel_id).toBeTruthy();
+  const clnChannel = clnOpened.result.channel_id;
+
+
+  // Real LND REST mutations through the same adapter seam.
+  await switchNode(page, NODE_REST);
+  await page.getByRole('link', { name: 'On-chain', exact: true }).click();
+  await page.getByRole('link', { name: 'New address', exact: true }).click();
+  await page.getByRole('button', { name: 'Review new address', exact: true }).click();
+  await page.getByRole('button', { name: 'New address', exact: true }).click();
+  const addressOp = await mineUntil(page, 'lnd-rest', 'new_address', 'succeeded');
+  expect(addressOp.result.address).toMatch(/^bcrt1/);
+
+  const restAddress = bitcoin('getnewaddress');
+  await switchNode(page, NODE_REST);
+  await page.getByRole('link', { name: 'On-chain', exact: true }).click();
+  await page.getByRole('link', { name: 'Send on-chain', exact: true }).click();
+  await page.getByLabel(/^Address/).fill(restAddress);
+  await page.getByRole('textbox', { name: 'Amount (sat)' }).fill('10000');
+  await page.getByLabel('Fee rate (sat/vB)').fill('2');
+  await page.getByRole('button', { name: 'Review send', exact: true }).click();
+  await page.getByRole('button', { name: 'Send with Nostr', exact: true }).click();
+  const sent = await mineUntil(page, 'lnd-rest', 'send_onchain', 'succeeded');
+  expect(sent.result.txid).toMatch(/^[0-9a-f]{64}$/);
+
+  await page.goto(`/nodes/lnd-rest/peers?selected=${CLN}`);
+  await page.getByRole('button', { name: 'Disconnect peer…' }).click();
+  await page.getByRole('button', { name: 'Disconnect', exact: true }).click();
+  await mineUntil(page, 'lnd-rest', 'disconnect_peer', 'succeeded');
+
+  await switchNode(page, NODE_REST);
+  await page.getByRole('link', { name: 'Peers', exact: true }).click();
+  await page.getByRole('link', { name: 'Connect peer', exact: true }).click();
+  await page.getByLabel('Node public key').fill(`${CLN}@cln:9735`);
+  await page.getByRole('button', { name: 'Review connection', exact: true }).click();
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await mineUntil(page, 'lnd-rest', 'connect_peer', 'succeeded');
+
+  await switchNode(page, NODE_REST);
+  await page.getByRole('link', { name: 'Channels', exact: true }).click();
+  await page.getByRole('link', { name: /^Open channel/ }).first().click();
+  await page.getByLabel('Peer public key').fill(CLN!);
+  await page.getByRole('textbox', { name: 'Channel size (sat)' }).fill('1000000');
+  await page.getByRole('radio', { name: 'Private', exact: true }).click();
+  await page.getByLabel('Fee rate (sat/vB)').fill('2');
+  await page.getByRole('button', { name: 'Review channel open', exact: true }).click();
+  await page.getByRole('button', { name: 'Open channel with Nostr', exact: true }).click();
+  const restOpened = await mineUntil(page, 'lnd-rest', 'open_channel', 'succeeded');
+  expect(restOpened.result.channel_id).toBeTruthy();
+  const restChannel = restOpened.result.channel_id;
+
+  const restInvoice = JSON.parse(cln('invoice', '2000000msat', 'rest-pay', 'paid by LND REST')).bolt11;
+  await switchNode(page, NODE_REST);
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await page.getByRole('link', { name: 'Pay invoice', exact: true }).click();
+  await page.getByLabel(/^Invoice/).fill(restInvoice);
+  await page.getByRole('button', { name: 'Check invoice', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Review payment', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Review payment', exact: true }).click();
+  await page.getByRole('button', { name: 'Pay with Nostr', exact: true }).click();
+  await expect(page.getByText(/Paid|Settled/).first()).toBeVisible({ timeout: 60_000 });
+
+  await waitForChannelOnNode(page, 'lnd-rest', restChannel);
+  await page.goto(`/nodes/lnd-rest/channels/${encodeURIComponent(restChannel)}/close`);
+  await page.getByLabel('Fee rate (sat/vB)').fill('2');
+  await page.getByRole('button', { name: 'Review close', exact: true }).click();
+  await page.getByRole('button', { name: 'Close channel with Nostr', exact: true }).click();
+  await mineUntil(page, 'lnd-rest', 'close_channel', 'succeeded');
+
+  await switchNode(page, NODE_GRPC);
+  await page.getByRole('link', { name: 'Invoices', exact: true }).click();
+  await page.getByRole('link', { name: 'Create invoice', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Amount (sat)' }).fill('2000');
+  await page.getByLabel('Description', { exact: true }).fill('paid by real CLN xpay');
+  await page.getByRole('button', { name: 'Review invoice', exact: true }).click();
+  await page.getByRole('button', { name: 'Create invoice', exact: true }).click();
+  await expect(page.getByText('Invoice created', { exact: true }).first()).toBeVisible();
+  const lndInvoice = await operation(page, 'lnd-grpc', 'create_invoice');
+  expect(lndInvoice?.result.bolt11).toMatch(/^lnbcrt/);
+
+  // The disconnect/connect cycle in the REST section can leave the CLN channel briefly
+  // unusable; assert both ends and a route right before dispatching the payment.
+  cln('connect', `${LND}@lnd:9735`);
+  await waitForClnChannel(LND!);
+  await waitForLndChannel(CLN!);
+  cln('getroute', LND!, '2000000msat', '0');
+  await page.waitForTimeout(3000);
+
+  await switchNode(page, NODE_CLN);
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
+  await page.getByRole('link', { name: 'Pay invoice', exact: true }).click();
+  await page.getByLabel(/^Invoice/).fill(lndInvoice!.result.bolt11);
+  await page.getByRole('button', { name: 'Check invoice', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Review payment', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Review payment', exact: true }).click();
+  await page.getByRole('button', { name: 'Pay with Nostr', exact: true }).click();
+  await expect(page.getByText(/Paid|Settled/).first()).toBeVisible({ timeout: 60_000 });
+  const clnPaid = await mineUntil(page, 'cln', 'pay_invoice', 'succeeded');
+  expect(clnPaid.result.kind).toBe('pay_invoice');
+
+  await waitForChannelOnNode(page, 'cln', clnChannel);
+  await page.goto(`/nodes/cln/channels/${encodeURIComponent(clnChannel)}/close`);
+  await page.getByLabel('Fee rate (sat/vB)').fill('2');
+  await page.getByRole('button', { name: 'Review close', exact: true }).click();
+  await page.getByRole('button', { name: 'Close channel with Nostr', exact: true }).click();
+  await mineUntil(page, 'cln', 'close_channel', 'succeeded');
 
   expect(problems).toEqual([]);
 });

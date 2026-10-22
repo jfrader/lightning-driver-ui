@@ -54,7 +54,7 @@ services:
         condition: service_healthy
 
   cln:
-    image: polarlightning/clightning:25.12@sha256:a9cf89b0e1afacca961dcc8d3cc7a94a0dbc87854d0714dcd86849ba9dc388fb
+    image: polarlightning/clightning:25.09.3@sha256:63820cc521774f2abe0cf530ff4632c138a7bea85e10cad2978e694817a2e8c1
     command:
       - --network=regtest
       - --bitcoin-rpcuser=polar
