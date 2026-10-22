@@ -1267,7 +1267,18 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             last_reconciled_at: components["schemas"]["NullableTime"];
+            reconciliation?: components["schemas"]["Reconciliation"] | null;
         };
+        /** @description Bounded read-only reconciliation of a nonterminal operation. attempts counts observations that reserved a slot; next_attempt_at is the earliest time another read may observe; exhausted means the lifetime budget is spent and no further automatic check will happen. Never authorizes a mutation retry. */
+        Reconciliation: {
+            attempts: number;
+            last_attempt_at: components["schemas"]["NullableTime"];
+            next_attempt_at: components["schemas"]["NullableTime"];
+            last_outcome: components["schemas"]["ReconciliationOutcome"] | null;
+            exhausted: boolean;
+        };
+        /** @enum {string} */
+        ReconciliationOutcome: "in_flight" | "positive" | "rejected" | "withheld" | "not_found" | "invalid" | "pruned" | "conflict" | "paid_elsewhere";
         /** @description Fleet node_id/network=null; node pages carry their explicit binding. Snapshot observation time, not HTTP response time. Cursor paging can return stale cached records. No initial node observation =>503, not an empty healthy list. */
         PageMeta: {
             node_id: components["schemas"]["NodeId"] | null;

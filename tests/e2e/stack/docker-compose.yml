@@ -1,6 +1,6 @@
 services:
   bitcoind:
-    image: polarlightning/bitcoind:29.0
+    image: polarlightning/bitcoind:29.0@sha256:4521294ac25fdbf1492a8cc5ea987463a5f244b82546d29bbe8451db39f36f3a
     command:
       - -regtest
       - -server=1
@@ -26,7 +26,7 @@ services:
       retries: 60
 
   lnd:
-    image: polarlightning/lnd:0.19.2-beta
+    image: polarlightning/lnd:0.19.2-beta@sha256:cfeb4debcce182c32bca3f06738d2c370b190b31a24905fb78b92f6c6ff52674
     command:
       - --bitcoin.active
       - --bitcoin.regtest
@@ -54,7 +54,7 @@ services:
         condition: service_healthy
 
   cln:
-    image: polarlightning/clightning:25.12
+    image: polarlightning/clightning:25.12@sha256:a9cf89b0e1afacca961dcc8d3cc7a94a0dbc87854d0714dcd86849ba9dc388fb
     command:
       - --network=regtest
       - --bitcoin-rpcuser=polar

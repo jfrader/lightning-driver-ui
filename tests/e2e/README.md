@@ -19,6 +19,19 @@ CLN invoice, a real LND channel open, an LND payment to CLN, a real on-chain
 send, and a channel close. Authentication uses an injected NIP-07 signer; no
 real identity or credentials are involved.
 
-The suite deliberately uses a CA-signed LND certificate. Stock LND generates a
-self-signed leaf that rustls rejects as a CA-used-as-end-entity; do not work
-around that by disabling certificate verification.
+The suite deliberately uses a CA-signed LND certificate, so it exercises the
+default `tls_verification = "ca"` mode. Stock LND ships a self-signed leaf that
+rustls rejects as a CA-used-as-end-entity; `tls_verification = "pinned"` accepts
+exactly that certificate while still verifying its host or IP subject and its
+dates, and is covered for both REST and gRPC in
+`api-server/src/operations/lnd/tests.rs`. Never disable certificate or hostname
+verification.
+
+## CI
+
+`.github/workflows/ci.yml` runs `npm run verify` on every push and pull request.
+The real e2e is a manual `workflow_dispatch` job (`e2e: true`); it needs a runner
+with Docker and a `LIGHTNING_DRIVER_CHECKOUT_TOKEN` secret that can read
+`jfrader/lightning-driver`, because the backend checkout is a second repository.
+Image digests are pinned in `tests/e2e/stack/docker-compose.yml`.
+
