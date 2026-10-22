@@ -1,7 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import examples from '../../contract/examples.v1.json';
-import { keysOf } from '../lib/guards';
-import { EXAMPLE_GAPS } from '../test/example-gaps';
 import { fixture } from '../test/fixtures';
 import { nostrChallenge, nostrIdentity } from '../test/nostr';
 import { AuthBootstrap, NodeSummary, NostrChallenge, NostrIdentities, Operation, Session } from './generated/validators';
@@ -15,13 +12,6 @@ describe('generated contract validators', () => {
     expect(Operation(fixture('operation_review'))).toBe(true);
     expect(AuthBootstrap(fixture('bootstrap'))).toBe(true);
     expect(NodeSummary(fixture('node_lnd'))).toBe(true);
-  });
-
-  it('fill in only fields the frozen examples still lack', () => {
-    for (const name of keysOf(EXAMPLE_GAPS)) {
-      const frozen: object = examples.fixtures[name].value;
-      for (const field of Object.keys(EXAMPLE_GAPS[name])) expect(Object.hasOwn(frozen, field), `${name}.${field}`).toBe(false);
-    }
   });
 
   it('check the Nostr shapes, including the inline identities list', () => {

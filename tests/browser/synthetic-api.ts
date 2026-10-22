@@ -1,16 +1,12 @@
 import type { Page, Route } from '@playwright/test';
 import type { EventTemplate } from 'nostr-tools/pure';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
-import { EXAMPLE_GAPS } from '../../src/test/example-gaps';
 import { SYNTHETIC_NOSTR_PUBKEY, SYNTHETIC_NPUB, isSignedTemplate } from './nostr-signer';
 
 type Fixtures = (typeof examples)['fixtures'];
-const gaps: Partial<Record<keyof Fixtures, object>> = EXAMPLE_GAPS;
-/** A frozen contract fixture with the fields the frozen examples still lack. */
-export const fixture = <T extends keyof Fixtures>(name: T): Fixtures[T]['value'] => ({
-  ...structuredClone(examples.fixtures[name].value),
-  ...gaps[name],
-});
+/** A frozen contract fixture, cloned so a test may modify it. */
+export const fixture = <T extends keyof Fixtures>(name: T): Fixtures[T]['value'] =>
+  structuredClone(examples.fixtures[name].value);
 
 /** Inside the fixtures' review window (reviews expire 12:05Z). */
 export const FIXTURE_NOW = new Date('2026-10-21T12:01:00Z');
