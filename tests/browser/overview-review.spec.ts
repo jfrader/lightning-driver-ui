@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
-import { installSyntheticApi, operation } from './synthetic-api';
+import { fixture, installSyntheticApi, operation, unresolvedOperation } from './synthetic-api';
 
 /** The phone review's primary action must clear the fixed tab bar by at least this much. */
 const TAB_BAR_CLEARANCE_PX = 12;
@@ -9,6 +9,30 @@ const PAYMENT_HASH = examples.fixtures.payments_page.value.items[0].payment_hash
 const BALANCES = examples.fixtures.balances.value;
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
+
+test('an unknown operation shows the withheld check on overview and detail', async ({ page }) => {
+  await installSyntheticApi(page);
+  const unknown = {
+    ...unresolvedOperation(),
+    reconciliation: {
+      attempts: 1,
+      last_attempt_at: '2026-10-21T12:00:30Z',
+      next_attempt_at: '2026-10-21T12:02:00Z',
+      last_outcome: 'withheld',
+      exhausted: false,
+    },
+  };
+  await page.route('**/api/v1/nodes/lnd-lab/operations**', (route) => route.fulfill({
+    json: new URL(route.request().url()).pathname.endsWith(unknown.id)
+      ? unknown
+      : { ...fixture('operations_page'), node_id: unknown.node_id, network: unknown.review.node.network, items: [unknown] },
+  }));
+  await page.goto('/nodes/lnd-lab');
+  await expect(page.getByText('The node could not be reached.', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'View operation', exact: true }).click();
+  await expect(page).toHaveURL(`/nodes/lnd-lab/operations/${unknown.id}`);
+  await expect(page.getByText('The node could not be reached.', { exact: true })).toBeVisible();
+});
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

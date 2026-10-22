@@ -8,7 +8,7 @@ import { Section } from '../../components/Section';
 import { isInFlight } from '../operations/labels';
 import { LastChecked } from '../operations/LastChecked';
 import { OperationAmount } from '../operations/OperationAmount';
-import { operationSentence } from '../operations/operation-sentence';
+import { operationSentence, reconciliationSentence } from '../operations/operation-sentence';
 import { useControlSize } from '../shell/use-shell-layout';
 
 const List = styled.ul(({ theme }) => ({ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: theme.space[3] }));
@@ -69,13 +69,16 @@ export function AttentionList({ nodeId }: { nodeId: string }) {
   return (
     <Section title="Needs attention">
       <List>
-        {items.map((operation) => (
+        {items.map((operation) => {
+          const reconciliation = reconciliationSentence(operation);
+          return (
             <Item key={operation.id}>
               <Line>
                 <Title>{title(operation)}</Title>
                 <OperationAmount operation={operation} />
               </Line>
               <Body>{operationSentence(operation)}</Body>
+              {reconciliation !== null && <Body>{reconciliation}</Body>}
               <Line>
                 <LastChecked at={operation.last_reconciled_at} />
                 <ButtonLink
@@ -88,7 +91,8 @@ export function AttentionList({ nodeId }: { nodeId: string }) {
                 </ButtonLink>
               </Line>
             </Item>
-        ))}
+          );
+        })}
       </List>
     </Section>
   );
