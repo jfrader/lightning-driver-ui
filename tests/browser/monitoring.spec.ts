@@ -47,6 +47,7 @@ test('Bitcoin workspace has monitoring sections, peers and no Lightning actions'
   await expect(page.getByText('Connected since', { exact: true })).toBeVisible();
   await page.goto('/nodes/bitcoin-lab/peers?selected=1');
   await expect(page.getByText('Connected since', { exact: true })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Selected Bitcoin peer' })).toContainText(/Ping\s*Not reported/);
   await expect(page.getByText('Not reported', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Connect peer', exact: true })).toHaveCount(0);
   expect(requests.some((path) => /\/(balances|payments|policy|info)$/.test(path))).toBe(false);
@@ -131,6 +132,9 @@ test('watchtower client shows backups, policy and tower sessions with truncation
   await page.goto('/nodes/lnd-lab/watchtower');
   await expect(page.getByRole('heading', { name: 'Watchtower client', exact: true })).toBeVisible();
   await expect(page.getByText('Since startup', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Backups', exact: true })).toContainText(
+    /Accepted\s*10\s*Pending\s*1\s*Ineligible\s*0/,
+  );
   await expect(page.getByRole('heading', { name: 'Policy', exact: true })).toBeVisible();
   await page.locator('[data-row-primary]').click();
   await expect(page.getByRole('heading', { name: 'Anchor sessions', exact: true })).toBeVisible();
@@ -142,11 +146,28 @@ test('watchtower client shows backups, policy and tower sessions with truncation
 });
 
 test('watchtower server shows identity, listeners and URIs without clients', async ({ page }) => {
+  await page.addInitScript(() => {
+    const copied: string[] = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          copied.push(value);
+        },
+      },
+    });
+    Reflect.set(window, '__copiedValues', copied);
+  });
   const mutations = await installMonitoringApi(page);
   await page.goto('/nodes/lnd-lab/watchtower/server');
   await expect(page.getByRole('heading', { name: 'Watchtower server', exact: true })).toBeVisible();
   await expect(page.getByText('Serving', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy public key', exact: true })).toBeVisible();
+  const server = fixture('watchtower_server');
+  await expect(page.getByText(server.listeners[0], { exact: true })).toBeVisible();
+  await expect(page.getByText(server.uris[0], { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Copy public key', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, '__copiedValues'))).toEqual([server.pubkey]);
   for (const name of ['Identity', 'Listeners', 'URIs'])
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Clients', exact: true })).toHaveCount(0);
