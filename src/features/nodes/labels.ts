@@ -12,7 +12,7 @@ import type { StateLabel } from '../display/StateWord';
 
 /** Node status words (screens spec §4.2). */
 export const NODE_STATUS: Record<NodeStatus['status'], StateLabel> = {
-  online: { label: 'Online', tone: 'quiet' },
+  online: { label: 'Online', tone: 'success' },
   connecting: { label: 'Connecting', tone: 'info' },
   offline: { label: 'Offline', tone: 'warning' },
   auth_error: { label: 'Credentials rejected', tone: 'danger' },

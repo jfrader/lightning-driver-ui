@@ -1,7 +1,7 @@
 import { styled } from '@jfrader/ui';
 
-/** quiet: settled or terminal-normal; info: in progress; warning: needs a look; danger: failure. */
-export type StateTone = 'quiet' | 'info' | 'warning' | 'danger';
+/** quiet: settled or terminal-normal; success: healthy and settled; info: in progress; warning: needs a look; danger: failure. */
+export type StateTone = 'quiet' | 'success' | 'info' | 'warning' | 'danger';
 
 export interface StateLabel {
   label: string;
@@ -16,6 +16,7 @@ const Label = styled.span<{ tone: StateTone }>(({ theme, tone }) => ({
   fontSize: theme.textSize.sm,
   color: {
     quiet: theme.color.textMuted,
+    success: theme.color.success,
     info: theme.color.info,
     warning: theme.color.warning,
     danger: theme.color.dangerText,
