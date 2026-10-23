@@ -1,7 +1,7 @@
 import { styled } from '@jfrader/ui';
 import { Outlet } from '@tanstack/react-router';
 import { Wordmark } from '../../components/Wordmark';
-import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT, TOUCH_TARGET } from '../../config';
+import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT, TAB_BAR_CLEARANCE, TOUCH_TARGET } from '../../config';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { LogoutButton } from '../auth/LogoutButton';
 import { useSessionExpiry } from '../auth/use-session-expiry';
@@ -121,7 +121,7 @@ const PhoneMain = styled.main(({ theme }) => ({
   inlineSize: '100%',
   paddingBlockStart: theme.space[4],
   paddingInline: theme.space[4],
-  paddingBlockEnd: `calc(${TAB_BAR_HEIGHT} + ${theme.space[8]} + env(safe-area-inset-bottom))`,
+  paddingBlockEnd: `calc(${TAB_BAR_HEIGHT} + ${TAB_BAR_CLEARANCE} + env(safe-area-inset-bottom))`,
   '&:focus': { outline: 'none' },
 }));
 

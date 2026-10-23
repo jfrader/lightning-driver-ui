@@ -19,7 +19,7 @@ interface CapabilityActionProps {
 export function CapabilityAction({ node, capability, children }: CapabilityActionProps) {
   const reason = capabilityBlock(node, capability);
   if (reason === null) return children;
-  if (reason === 'read_only') return null;
+  if (reason === 'read_only' || reason === 'monitor_only') return null;
   return (
     <Flex direction="column" gap="xs">
       <Button size="sm" variant="outline" disabled>

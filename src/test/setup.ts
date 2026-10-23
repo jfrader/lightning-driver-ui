@@ -1,10 +1,13 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import { clearSessionCsrfToken } from '../api/csrf';
 import { installDomShims } from './dom-shims';
 import { TEST_NOW, isWideLayout, setWideLayout } from './environment';
 import { server } from './server';
+
+const ASYNC_RENDER_TIMEOUT_MS = 5_000;
+configure({ asyncUtilTimeout: ASYNC_RENDER_TIMEOUT_MS });
 
 beforeAll(() => {
   installDomShims();

@@ -2,6 +2,7 @@ import type { Page, Route } from '@playwright/test';
 import type { EventTemplate } from 'nostr-tools/pure';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { SYNTHETIC_NOSTR_PUBKEY, SYNTHETIC_NPUB, isSignedTemplate } from './nostr-signer';
+import { BROWSER_ORIGIN } from '../../playwright.config';
 
 type Fixtures = (typeof examples)['fixtures'];
 /** A frozen contract fixture, cloned so a test may modify it. */
@@ -83,7 +84,7 @@ const ORIGIN = 'https://manager.example.invalid';
 const NOSTR_CHALLENGE_ID = '00000000-0000-4000-8000-000000000a01';
 
 /** The browser test preview server; the screenshot run serves its own build and passes its origin. */
-export const APP_ORIGIN = 'http://127.0.0.1:4317';
+export const APP_ORIGIN = BROWSER_ORIGIN;
 
 function safeError(code: string, message: string) {
   return { error: { code, message, request_id: '00000000-0000-4000-8000-0000000009fd', operation_id: null, outcome: 'not_applicable' } };

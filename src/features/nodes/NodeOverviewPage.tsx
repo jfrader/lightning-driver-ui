@@ -9,9 +9,15 @@ import { NodeContext } from '../overview/NodeContext';
 import { QuickActions } from '../overview/QuickActions';
 import { RecentPayments } from '../overview/RecentPayments';
 import { useCurrentNode } from './use-current-node';
+import { BitcoinOverview } from '../../app/lazy-screens';
 
 /** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
 export function NodeOverviewPage() {
+  const node = useCurrentNode();
+  return node.kind === 'bitcoin' ? <BitcoinOverview /> : <LightningOverview />;
+}
+
+function LightningOverview() {
   const node = useCurrentNode();
   const besideContent = useMediaQuery(ASIDE_QUERY);
   const context = <NodeContext node={node} />;

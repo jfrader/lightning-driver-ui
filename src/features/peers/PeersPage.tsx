@@ -19,6 +19,7 @@ import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
 import { connectionLabel, directionLabel } from './labels';
 import { PeerInspector } from './PeerInspector';
+import { BitcoinPeersPage } from '../bitcoin/BitcoinPeersPage';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/peers');
 
@@ -75,6 +76,11 @@ function PeerRow({ peer, open }: { peer: Peer; open: Open }) {
 
 /** Peers of the node; the contract has no alias, latency or channel count for them, so none is shown. */
 export function PeersPage() {
+  const node = useCurrentNode();
+  return node.kind === 'bitcoin' ? <BitcoinPeersPage /> : <LightningPeersPage />;
+}
+
+function LightningPeersPage() {
   const node = useCurrentNode();
   const size = useControlSize();
   const search = route.useSearch();

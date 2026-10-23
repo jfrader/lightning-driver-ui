@@ -23,6 +23,7 @@ export const NODE_STATUS: Record<NodeStatus['status'], StateLabel> = {
 
 /** Short reason words for a whole node's actions (Fleet row summary, §7.0.4). */
 export const CAPABILITY_REASON_WORD: Record<CapabilityReason, string> = {
+  monitor_only: 'Monitor only',
   read_only: 'Read-only',
   unsupported: 'Unsupported',
   node_offline: 'Offline',
@@ -37,6 +38,7 @@ export const CAPABILITY_REASON_WORD: Record<CapabilityReason, string> = {
  * Built only from `capabilities`; limits come from the node's policy, not the fleet list.
  */
 export function capabilitySummary(node: NodeSummary): string {
+  if (node.kind === 'bitcoin') return 'None';
   const states = keysOf(node.capabilities).map((key) => node.capabilities[key]);
   if (states.every((state) => state.enabled)) return 'All actions';
   const reasons = new Set(states.map((state) => (state.enabled ? null : state.reason)));
@@ -48,12 +50,14 @@ export function capabilitySummary(node: NodeSummary): string {
 export const NETWORK_LABEL: Record<Network, string> = {
   mainnet: 'Mainnet',
   testnet: 'Testnet',
+  testnet4: 'Testnet4',
   signet: 'Signet',
   regtest: 'Regtest',
   unknown: 'Unknown network',
 };
 
 export const BACKEND_LABEL: Record<NodeSummary['backend'], string> = {
+  bitcoin_rpc: 'Bitcoin Core',
   lnd_grpc: 'LND gRPC',
   lnd_rest: 'LND REST',
   cln_rest: 'Core Lightning REST',
@@ -62,6 +66,8 @@ export const BACKEND_LABEL: Record<NodeSummary['backend'], string> = {
 /** Why an action is unavailable, as one sentence beside the control or in place of the form (§7.0.4). */
 export function capabilityReasonText(reason: CapabilityReason, node: Pick<NodeSummary, 'backend'>): string {
   switch (reason) {
+    case 'monitor_only':
+      return 'This node is monitor only.';
     case 'read_only':
       return 'This node is read-only.';
     case 'unsupported':
@@ -84,6 +90,7 @@ export function capabilityReasonText(reason: CapabilityReason, node: Pick<NodeSu
  * an unverified identity blocks every action as `unverified`, whatever the capability says.
  */
 export function capabilityBlock(node: NodeSummary, capability: CapabilityKey): CapabilityReason | null {
+  if (node.kind === 'bitcoin') return 'monitor_only';
   if (node.read_only) return 'read_only';
   if (node.network === 'unknown' || node.identity_pubkey === null) return 'unverified';
   const state = node.capabilities[capability];
@@ -107,10 +114,14 @@ export const CAPABILITY_LABEL: Record<CapabilityKey, string> = {
  */
 export function nodeChoiceLabel(node: NodeSummary): string {
   const flags = [
-    node.read_only ? 'read-only' : null,
+    node.kind === 'bitcoin' ? 'Bitcoin Core · Monitor only' : node.read_only ? 'read-only' : null,
     node.status.status === 'online' ? null : NODE_STATUS[node.status.status].label.toLowerCase(),
   ];
   return [node.label, NETWORK_LABEL[node.network], ...flags.filter((flag) => flag !== null)].join(' · ');
+}
+
+export function accessLabel(node: NodeSummary): string {
+  return node.kind === 'bitcoin' ? 'Monitor only' : node.read_only ? 'Read-only' : 'Writable';
 }
 
 /** The confirmation policy as the session meets it: with its passkey or its Nostr key. */

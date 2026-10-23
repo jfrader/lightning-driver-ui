@@ -5,7 +5,7 @@ import { fleetQueryOptions } from '../../api/node-queries';
 import { keysOf } from '../../lib/guards';
 import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
-import { FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS } from './nav-model';
+import { FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, surfacesFor, destinationOf } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
 interface NavPaletteProps {
@@ -25,24 +25,35 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
 
   const items: CommandPaletteItemRecord[] = [];
   if (nodeId !== null) {
-    for (const key of keysOf(NODE_DESTINATIONS)) {
+    for (const key of node ? surfacesFor(node) : (['operations'] as const)) {
       const { label, to } = NODE_DESTINATIONS[key];
-      items.push({ value: `go-${key}`, label, group: 'Go to', onSelect: () => void navigate({ to, params: { nodeId } }) });
+      items.push({
+        value: `go-${key}`,
+        label,
+        group: 'Go to',
+        onSelect: () => void navigate({ to, params: { nodeId } }),
+      });
     }
-    items.push({
-      value: 'go-unresolved',
-      label: 'Unresolved operations',
-      group: 'Go to',
-      keywords: 'unknown pending',
-      onSelect: () => void navigate({ to: '/nodes/$nodeId/operations', params: { nodeId }, search: { state: 'nonterminal' } }),
-    });
+    if (!node || surfacesFor(node).includes('operations'))
+      items.push({
+        value: 'go-unresolved',
+        label: 'Unresolved operations',
+        group: 'Go to',
+        keywords: 'unknown pending',
+        onSelect: () =>
+          void navigate({ to: '/nodes/$nodeId/operations', params: { nodeId }, search: { state: 'nonterminal' } }),
+      });
   }
   for (const key of keysOf(GLOBAL_DESTINATIONS)) {
     const { label, to, keywords } = GLOBAL_DESTINATIONS[key];
     items.push({ value: `go-${key}`, label, group: 'Go to', keywords, onSelect: () => void navigate({ to }) });
   }
   if (nodeId !== null && node) {
-    for (const form of FORM_DESTINATIONS) {
+    for (const form of FORM_DESTINATIONS.filter(
+      (form) =>
+        node.kind === 'lightning' &&
+        surfacesFor(node).includes(destinationOf(form.to.replace('$nodeId', nodeId)) ?? 'overview'),
+    )) {
       items.push({
         value: `form-${form.capability}`,
         label: form.label,
