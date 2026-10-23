@@ -137,6 +137,20 @@ async function main() {
   writeFileSync(path.join(DATA, 'cln', 'rune'), `${rune}\n`, { mode: 0o600 });
   chmodSync(path.join(DATA, 'lnd', 'data/chain/bitcoin/regtest/admin.macaroon'), 0o600);
 
+  // Least-privilege credentials: reads only, no mutation permission. The adapters preflight
+  // every mutation (LND CheckMacaroonPermissions, CLN checkrune) before dispatching it.
+  lnd(['bakemacaroon', '--save_to', '/home/lnd/.lnd/readonly.macaroon',
+    // LND entities are onchain/offchain/address/message/peers/info/invoices/signer/macaroon/uri.
+    // `macaroon:read` lets the adapter check a macaroon before dispatching a mutation.
+    'info:read', 'invoices:read', 'peers:read', 'offchain:read', 'onchain:read', 'macaroon:read']);
+  // The CLI runs as the container's user; set the mode from inside so the host keeps no
+  // group or other bits on a credential the API reads.
+  docker(['exec', '-T', 'lnd', 'sh', '-c',
+    'chown 1000:1000 /home/lnd/.lnd/readonly.macaroon && chmod 600 /home/lnd/.lnd/readonly.macaroon']);
+  const readonlyRune = JSON.parse(cln(['createrune',
+    'restrictions=[["method^list","method^getinfo","method^checkrune","method^feerates"]]'])).rune;
+  writeFileSync(path.join(DATA, 'cln', 'readonly.rune'), `${readonlyRune}\n`, { mode: 0o600 });
+
   const policy = {
     create_invoice_msat: { min: '1', max: '100000000000' },
     pay_invoice_msat: { min: '1', max: '10000000000' },
@@ -148,10 +162,10 @@ async function main() {
     invoice_expiry_seconds: { min: 60, max: 86400, default: 3600 },
   };
   const peer = { allowed_hosts: ['cln', 'lnd', 'localhost'], allowed_ports: [9735] };
-  const node = (id, label, backend, endpoint, cert, cred, pub) => ({
+  const node = (id, label, backend, endpoint, cert, cred, pub, readOnly = false) => ({
     id, label, backend, endpoint,
     certificate_file: cert, credential_file: cred,
-    expected_pubkey: pub, network: 'regtest', read_only: false,
+    expected_pubkey: pub, network: 'regtest', read_only: readOnly,
     policy, peer_policy: peer,
   });
   const config = {
@@ -175,6 +189,17 @@ async function main() {
       node('cln', 'Polar CLN', 'cln_rest', 'https://localhost:3011',
         path.join(DATA, 'cln', 'certs', 'ca.pem'),
         path.join(DATA, 'cln', 'rune'), clnInfo.id),
+      // The credential, not the policy, is what refuses these two.
+      node('lnd-readonly', 'LND read-only key', 'lnd_grpc', 'https://localhost:10009',
+        path.join(DATA, 'certs', 'ca.crt'),
+        path.join(DATA, 'lnd', 'readonly.macaroon'), lndInfo.identity_pubkey),
+      node('cln-readonly', 'CLN read-only rune', 'cln_rest', 'https://localhost:3011',
+        path.join(DATA, 'cln', 'certs', 'ca.pem'),
+        path.join(DATA, 'cln', 'readonly.rune'), clnInfo.id),
+      // An admin credential on a read-only node: policy refuses before any RPC.
+      node('lnd-locked', 'LND locked policy', 'lnd_rest', 'https://localhost:8081',
+        path.join(DATA, 'certs', 'ca.crt'),
+        path.join(DATA, 'lnd/data/chain/bitcoin/regtest/admin.macaroon'), lndInfo.identity_pubkey, true),
     ],
   };
   const configPath = path.join(DATA, 'config.json');

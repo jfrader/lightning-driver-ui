@@ -138,14 +138,8 @@ test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, cl
   expect(LND).toMatch(/^[0-9a-f]{66}$/);
   expect(CLN).toMatch(/^[0-9a-f]{66}$/);
 
+  // Collected after the least-privilege refusals, whose 4xx responses are expected.
   const problems: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`console: ${message.text()}`);
-  });
-  page.on('pageerror', (error) => problems.push(`page: ${error.message}`));
-  page.on('response', (response) => {
-    if (response.status() >= 400) problems.push(`${response.status()} ${response.url()}`);
-  });
 
   const signer = await installNostrSigner(page);
 
@@ -168,6 +162,61 @@ test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, cl
       expect(status, `${node}/${resource}`).toBe(200);
     }
   }
+
+  // Least-privilege credentials: reads answer, every mutation is refused before dispatch.
+  const csrf = (await page.evaluate(() => fetch('/api/v1/session').then((response) => response.json())))
+    .csrf_token as string;
+  const attempt = (node: string, body: unknown) =>
+    page.evaluate(
+      async ({ node, body, csrf }) => {
+        const response = await fetch(`/api/v1/nodes/${node}/operations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'Idempotency-Key': crypto.randomUUID() },
+          body: JSON.stringify(body),
+        });
+        return { status: response.status, body: await response.json() };
+      },
+      { node, body, csrf },
+    );
+  const invoiceRequest = (amount: string) => ({
+    kind: 'create_invoice',
+    params: { amount_msat: amount, description: 'refused before dispatch', expiry_seconds: 3600 },
+  });
+  const count = (node: string) =>
+    page.evaluate(async (node) => (await fetch(`/api/v1/nodes/${node}/operations`).then((r) => r.json())).items.length, node);
+
+  for (const node of ['lnd-readonly', 'cln-readonly']) {
+    for (const resource of ['info', 'balances', 'invoices', 'payments', 'peers', 'channels', 'transactions']) {
+      const status = await page.evaluate(
+        async ({ node, resource }) => (await fetch(`/api/v1/nodes/${node}/${resource}`)).status,
+        { node, resource },
+      );
+      expect(status, `${node}/${resource} reads with a read-only credential`).toBe(200);
+    }
+    const denied = await attempt(node, invoiceRequest('1000'));
+    expect(denied.body.error?.code, `${node} refuses the mutation`).toBe('node_auth_error');
+    expect(await count(node), `${node} created no operation`).toBe(0);
+  }
+
+  const locked = await attempt('lnd-locked', invoiceRequest('1000'));
+  expect(locked.body.error?.code, 'a read-only node refuses before any RPC').toBe('read_only');
+  expect(await count('lnd-locked')).toBe(0);
+
+  const overAmount = await attempt('lnd-grpc', invoiceRequest('9007199254740993'));
+  expect(overAmount.body.error?.code, 'policy bounds refuse before dispatch').toBe('policy_violation');
+  const disallowedPeer = await attempt('lnd-grpc', {
+    kind: 'connect_peer',
+    params: { pubkey: CLN!, host: 'not-allowed.example.invalid', port: 9735 },
+  });
+  expect(disallowedPeer.body.error?.code, 'peer allowlists refuse before dispatch').toBe('policy_violation');
+
+  page.on('console', (message) => {
+    if (message.type() === 'error') problems.push(`console: ${message.text()}`);
+  });
+  page.on('pageerror', (error) => problems.push(`page: ${error.message}`));
+  page.on('response', (response) => {
+    if (response.status() >= 400) problems.push(`${response.status()} ${response.url()}`);
+  });
 
   await switchNode(page, NODE_CLN);
   await page.getByRole('link', { name: 'Invoices', exact: true }).click();
