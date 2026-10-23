@@ -7,6 +7,8 @@ containers. It is not part of `npm run verify`.
 LIGHTNING_DRIVER_BACKEND=/absolute/path/to/lightning-driver npm run test:e2e
 # Passkey scenario only (also starts and tears down the regtest stack):
 LIGHTNING_DRIVER_BACKEND=/absolute/path/to/lightning-driver npm run test:e2e:passkey
+# Restart drill only, using a separate port from a running local API:
+LIGHTNING_DRIVER_BACKEND=/absolute/path/to/lightning-driver E2E_API_PORT=18083 E2E_DATA=/tmp/lightning-driver-restart npm run test:e2e:restart
 ```
 
 Requirements: Docker with Compose, `openssl`, Chromium installed by
@@ -20,6 +22,32 @@ All data is disposable; failures always keep their data and print its location.
 `E2E_KEEP=1` also keeps data on success. Enrollment tokens are never logged.
 The API defaults to port 8080; set `E2E_API_PORT` if another local API uses it.
 The UI uses port 5174. Both ports must be free.
+
+## Restart drill
+
+`test:e2e:restart` runs `restart.spec.ts` through the same disposable harness and
+real Nostr enrollment. It stops and starts `bitcoind`, `lnd`, then `cln` separately.
+Bitcoin Core is registered as a monitoring node with loopback RPC on port 18443;
+LND recovery is checked through both gRPC and REST. The compose ports must be free,
+and no other real-node e2e run may use the shared compose project concurrently.
+
+Each daemon must first report online with fresh info. During its outage the API
+must report offline/an upstream error and return either stale info or a failed
+read; fresh fabricated info cannot satisfy the check. After `start`, the node must
+again report online and return fresh info. Polls are bounded to 120 seconds with
+35-second request deadlines; Playwright does not retry the drill. Failures name
+the daemon and step. Containers are restarted in `finally` even if an outage
+assertion fails, and the runner tears down the stack at the end.
+
+Before each stop, the drill creates a low-risk invoice review in the journal.
+It checks the same operation during the outage, confirms it after recovery, and
+polls its original id until success. Repeating create with the original
+idempotency key must return that id, with exactly one matching journal entry.
+This exercises an in-flight review across disconnection, not an ambiguous
+payment dispatch or an API-process restart. One evidence line per daemon includes
+the checked transports and operation id; the same line is attached to the
+Playwright result. Use `E2E_KEEP=1` to retain successful stack data; failures
+always retain data. No generated evidence belongs in git.
 
 The first scenario uses Chromium's CDP WebAuthn virtual authenticator (CTAP2,
 internal transport, resident-key support and user verification). It enrolls through
