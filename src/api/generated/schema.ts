@@ -543,6 +543,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/nodes/{node_id}/bitcoin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getBitcoinNodeInfo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/nodes/{node_id}/bitcoin/peers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listBitcoinPeers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/nodes/{node_id}/watchtower/server": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getWatchtowerServer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/nodes/{node_id}/watchtower/client": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getWatchtowerClient"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/nodes/{node_id}/watchtower/client/towers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listWatchtowerTowers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/nodes/{node_id}/watchtower/client/towers/{pubkey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+                pubkey: components["schemas"]["Pubkey"];
+            };
+            cookie?: never;
+        };
+        get: operations["getWatchtowerTower"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -635,11 +744,11 @@ export interface components {
         /** Format: date-time */
         NullableTime: string | null;
         /** @enum {string} */
-        Network: "mainnet" | "testnet" | "signet" | "regtest" | "unknown";
+        Network: "mainnet" | "testnet" | "testnet4" | "signet" | "regtest" | "unknown";
         /** @enum {string} */
-        VerifiedNetwork: "mainnet" | "testnet" | "signet" | "regtest";
+        VerifiedNetwork: "mainnet" | "testnet" | "testnet4" | "signet" | "regtest";
         /** @enum {string} */
-        Backend: "lnd_grpc" | "lnd_rest" | "cln_rest";
+        Backend: "lnd_grpc" | "lnd_rest" | "cln_rest" | "bitcoin_rpc";
         /** @enum {string} */
         OperationKind: "create_invoice" | "pay_invoice" | "connect_peer" | "disconnect_peer" | "open_channel" | "close_channel" | "new_address" | "send_onchain";
         /** @enum {string} */
@@ -873,7 +982,7 @@ export interface components {
             session_absolute_seconds: number;
             session_idle_seconds: number;
         };
-        /** @description enabled=true iff reason=null. On read-only nodes every mutation reason is read_only regardless of availability. No write probes to discover permission. */
+        /** @description enabled=true iff reason=null. On read-only Lightning nodes every mutation reason is read_only regardless of availability. Bitcoin monitoring nodes use monitor_only for every mutation. No write probes to discover permission. */
         Capability: {
             /** @constant */
             enabled: true;
@@ -881,8 +990,7 @@ export interface components {
         } | {
             /** @constant */
             enabled: false;
-            /** @enum {string} */
-            reason: "read_only" | "unsupported" | "node_offline" | "unverified" | "not_configured" | "permission_denied" | "syncing";
+            reason: components["schemas"]["CapabilityReason"];
         };
         Capabilities: {
             create_invoice: components["schemas"]["Capability"];
@@ -920,6 +1028,8 @@ export interface components {
             status: components["schemas"]["NodeStatus"];
             capabilities: components["schemas"]["Capabilities"];
             unresolved_operation_count: components["schemas"]["Decimal"];
+            kind: components["schemas"]["NodeKind"];
+            read_availability: components["schemas"]["ReadAvailability"];
         };
         /** @description Immutable verified binding; review never uses unknown network. Public identity only, no connection secrets. */
         NodeBinding: {
@@ -1311,6 +1421,169 @@ export interface components {
         OperationsPage: components["schemas"]["PageMeta"] & {
             items: components["schemas"]["Operation"][];
         };
+        /** @enum {string} */
+        NodeKind: "lightning" | "bitcoin";
+        /** @enum {string} */
+        PeerTransport: "ipv4" | "ipv6" | "onion" | "i2p" | "cjdns" | "notreachable";
+        /** @enum {string} */
+        CapabilityReason: "read_only" | "unsupported" | "node_offline" | "unverified" | "not_configured" | "permission_denied" | "syncing" | "monitor_only";
+        /** @description Read support and permission only, never health, connectivity, sync or freshness. Disabled reasons: unsupported, not_configured, permission_denied. */
+        ReadAvailability: {
+            payments: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            invoices: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            onchain: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            channels: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            peers: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            operations: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            bitcoin: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            bitcoin_peers: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            watchtower_server: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+            watchtower_client: components["schemas"]["Capability"] & {
+                /** @enum {unknown} */
+                reason?: null | "unsupported" | "not_configured" | "permission_denied";
+            };
+        };
+        BitcoinMempool: {
+            transactions: components["schemas"]["Decimal"];
+            vsize: components["schemas"]["Decimal"];
+            usage: components["schemas"]["Decimal"];
+        };
+        BitcoinNodeInfo: {
+            node_id: components["schemas"]["NodeId"];
+            chain: string;
+            network: components["schemas"]["Network"];
+            blocks: components["schemas"]["Decimal"];
+            headers: components["schemas"]["Decimal"];
+            best_block_hash: components["schemas"]["Hash32"];
+            verification_progress_bp: components["schemas"]["Decimal"] & unknown;
+            initial_block_download: boolean;
+            pruned: boolean;
+            prune_height: components["schemas"]["NullableDecimal"];
+            connections: components["schemas"]["Decimal"];
+            connections_in: components["schemas"]["NullableDecimal"];
+            connections_out: components["schemas"]["NullableDecimal"];
+            mempool: components["schemas"]["BitcoinMempool"];
+            size_on_disk: components["schemas"]["Decimal"];
+            version: components["schemas"]["Decimal"];
+            subversion: string;
+            uptime_seconds: components["schemas"]["Decimal"];
+            /** @description Upstream string-or-array warnings normalized to an array of strings. */
+            warnings: string[];
+            observed_at: components["schemas"]["Timestamp"];
+            stale: boolean;
+        };
+        BitcoinPeer: {
+            id: components["schemas"]["Decimal"];
+            addr: string;
+            network: components["schemas"]["PeerTransport"];
+            inbound: boolean;
+            connection_type: string;
+            version: components["schemas"]["Decimal"];
+            subversion: string;
+            ping_ms: components["schemas"]["NullableDecimal"];
+            connected_at: components["schemas"]["Timestamp"];
+            bytes_sent: components["schemas"]["Decimal"];
+            bytes_received: components["schemas"]["Decimal"];
+            synced_headers: components["schemas"]["NullableDecimal"];
+            synced_blocks: components["schemas"]["NullableDecimal"];
+        };
+        /** @enum {string} */
+        WatchtowerPolicyType: "legacy" | "anchor" | "taproot";
+        /** @constant */
+        WatchtowerStatsScope: "since_startup";
+        WatchtowerServerInfo: {
+            node_id: components["schemas"]["NodeId"];
+            pubkey: components["schemas"]["Pubkey"];
+            listeners: string[];
+            uris: string[];
+            observed_at: components["schemas"]["Timestamp"];
+            stale: boolean;
+        };
+        WatchtowerStats: {
+            num_backups: components["schemas"]["Decimal"];
+            num_pending_backups: components["schemas"]["Decimal"];
+            num_ineligible_backups: components["schemas"]["Decimal"];
+            num_sessions_acquired: components["schemas"]["Decimal"];
+            num_sessions_exhausted: components["schemas"]["Decimal"];
+            scope: components["schemas"]["WatchtowerStatsScope"];
+        };
+        WatchtowerPolicy: {
+            policy_type: components["schemas"]["WatchtowerPolicyType"];
+            max_updates: components["schemas"]["Decimal"];
+            sweep_sat_per_vbyte: components["schemas"]["Decimal"];
+        };
+        WatchtowerClientInfo: {
+            node_id: components["schemas"]["NodeId"];
+            stats: components["schemas"]["WatchtowerStats"];
+            policies: components["schemas"]["WatchtowerPolicy"][];
+            observed_at: components["schemas"]["Timestamp"];
+            stale: boolean;
+        };
+        WatchtowerSessionInfo: {
+            policy_type: components["schemas"]["WatchtowerPolicyType"];
+            active_session_candidate: boolean;
+            num_sessions: components["schemas"]["Decimal"];
+        };
+        WatchtowerTower: {
+            pubkey: components["schemas"]["Pubkey"];
+            addresses: string[];
+            session_info: components["schemas"]["WatchtowerSessionInfo"][];
+        };
+        WatchtowerSession: {
+            /** @description Base64-encoded 33-byte session id. */
+            id: string;
+            num_backups: components["schemas"]["Decimal"];
+            num_pending_backups: components["schemas"]["Decimal"];
+            max_backups: components["schemas"]["Decimal"];
+            sweep_sat_per_vbyte: components["schemas"]["Decimal"];
+        };
+        WatchtowerSessionInfoDetail: {
+            policy_type: components["schemas"]["WatchtowerPolicyType"];
+            active_session_candidate: boolean;
+            num_sessions: components["schemas"]["Decimal"];
+            sessions_truncated: boolean;
+            sessions: components["schemas"]["WatchtowerSession"][];
+        };
+        WatchtowerTowerDetail: {
+            pubkey: components["schemas"]["Pubkey"];
+            addresses: string[];
+            session_info: components["schemas"]["WatchtowerSessionInfoDetail"][];
+        };
+        BitcoinPeersPage: components["schemas"]["PageMeta"] & {
+            items: components["schemas"]["BitcoinPeer"][];
+        };
+        WatchtowerTowersPage: components["schemas"]["PageMeta"] & {
+            items: components["schemas"]["WatchtowerTower"][];
+        };
+        /** Format: date-time */
+        Timestamp: string;
     };
     responses: {
         /** @description Safe JSON error. 400 malformed/cursor; 401 session; 403 csrf/origin/read_only; 404 resource; 409 idempotency/resource/auth/review conflict; 410 cursor expired; 415 content type; 422 invalid amount/invoice/address/policy; 429 throttled; 502 upstream schema; 503 offline/config/storage. A known potentially dispatched action is returned as Operation, not advertised retryable. */
@@ -2249,6 +2522,155 @@ export interface operations {
         responses: {
             200: components["responses"]["Operation"];
             202: components["responses"]["OperationAccepted"];
+            default: components["responses"]["SafeError"];
+        };
+    };
+    getBitcoinNodeInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description BitcoinNodeInfo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BitcoinNodeInfo"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    listBitcoinPeers: {
+        parameters: {
+            query?: {
+                /** @description Omit for configured default (initial default 50); reject above configured maximum (hard protocol ceiling 200). Central pagination policy returned by /config. */
+                limit?: components["parameters"]["Limit"];
+                /** @description Opaque snapshot cursor bound to session, node identity, resource, filters and page limit. Not an upstream token. Expired=>410 cursor_expired; mismatched=>400 invalid_cursor. */
+                cursor?: components["parameters"]["Cursor"];
+            };
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description BitcoinPeersPage */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BitcoinPeersPage"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    getWatchtowerServer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WatchtowerServerInfo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchtowerServerInfo"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    getWatchtowerClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WatchtowerClientInfo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchtowerClientInfo"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    listWatchtowerTowers: {
+        parameters: {
+            query?: {
+                /** @description Omit for configured default (initial default 50); reject above configured maximum (hard protocol ceiling 200). Central pagination policy returned by /config. */
+                limit?: components["parameters"]["Limit"];
+                /** @description Opaque snapshot cursor bound to session, node identity, resource, filters and page limit. Not an upstream token. Expired=>410 cursor_expired; mismatched=>400 invalid_cursor. */
+                cursor?: components["parameters"]["Cursor"];
+            };
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WatchtowerTowersPage */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchtowerTowersPage"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    getWatchtowerTower: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                node_id: components["parameters"]["NodeId"];
+                pubkey: components["schemas"]["Pubkey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WatchtowerTowerDetail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchtowerTowerDetail"];
+                };
+            };
             default: components["responses"]["SafeError"];
         };
     };
