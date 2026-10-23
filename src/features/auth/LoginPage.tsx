@@ -1,21 +1,22 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
-import type { Session } from '../../api/types';
+import type { AuthMethod, Session } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { safeRedirectPath } from '../../lib/safe-redirect';
 import { useControlSize } from '../shell/use-shell-layout';
 import { visuallyHidden } from '../shell/visually-hidden';
 import { AuthLayout } from './AuthLayout';
-import { signInWithPasskey } from './ceremonies';
+import { signInWithNostr, signInWithPasskey } from './ceremonies';
 import { EnrollForm } from './EnrollForm';
 import { HostInstruction } from './HostInstruction';
-import { LOGIN_NOTICE, loginState } from './login-state';
+import { LOGIN_NOTICE, loginState, type BrowserMethods } from './login-state';
+import { hasNostrExtension } from './nostr';
 import { bootstrapQueryOptions } from './queries';
 import { SignInNotice } from './SignInNotice';
-import { SIGN_IN_COPY, signInProblem } from './sign-in-problem';
+import { METHOD_COPY, SIGN_IN_COPY, signInProblem } from './sign-in-problem';
 import { useCooldown } from './use-cooldown';
 import { useSessionStart } from './use-session-start';
 
@@ -23,6 +24,15 @@ const route = getRouteApi('/login');
 
 const Hidden = styled.span(visuallyHidden);
 const Line = styled.p({ margin: 0 });
+
+const SIGN_IN: Record<AuthMethod, () => Promise<Session>> = {
+  passkey: signInWithPasskey,
+  nostr: signInWithNostr,
+};
+
+function browserMethods(): BrowserMethods {
+  return { passkey: browserSupportsWebAuthn(), nostr: hasNostrExtension() };
+}
 
 /** Screens spec §6: `/login` holds sign-in, enrollment and the host-only recovery wording. */
 export function LoginPage() {
@@ -35,16 +45,17 @@ export function LoginPage() {
   // Leaving enrollment returns focus to the sign-in action the operator came from.
   const [backFromEnroll, setBackFromEnroll] = useState(false);
   const cooldown = useCooldown();
+  const nostrReasonId = useId();
 
   const enter = (session: Session) => {
     startSession(session);
     void navigate({ href: safeRedirectPath(redirect), replace: true });
   };
   const signIn = useMutation({
-    mutationFn: signInWithPasskey,
+    mutationFn: (method: AuthMethod) => SIGN_IN[method](),
     onSuccess: enter,
-    onError: (error) => {
-      const problem = signInProblem(error);
+    onError: (error, method) => {
+      const problem = signInProblem(error, method);
       if (problem.kind === 'rate_limited') cooldown.start(problem.seconds);
     },
   });
@@ -54,8 +65,9 @@ export function LoginPage() {
     </Button>
   );
 
-  const state = loginState({ webauthn: browserSupportsWebAuthn(), bootstrap, enrolling });
-  switch (state) {
+  const browser = browserMethods();
+  const state = loginState({ browser, bootstrap, enrolling });
+  switch (state.kind) {
     case 'loading':
       return (
         <AuthLayout title="Sign in" busy>
@@ -65,7 +77,9 @@ export function LoginPage() {
     case 'unsupported':
       return (
         <AuthLayout title="Sign in">
-          <Line>{SIGN_IN_COPY.unsupported}</Line>
+          {state.missing.map((method) => (
+            <Line key={method}>{METHOD_COPY[method].unsupported}</Line>
+          ))}
         </AuthLayout>
       );
     case 'error':
@@ -75,11 +89,11 @@ export function LoginPage() {
           {reload}
         </AuthLayout>
       );
-    case 'no_passkey':
+    case 'no_method':
       return (
         <AuthLayout title="Sign in">
           <Flex direction="column" gap="sm">
-            <Line>{SIGN_IN_COPY.noPasskey}</Line>
+            <Line>{SIGN_IN_COPY.noMethod}</Line>
             <HostInstruction ending=", then reload this page." />
           </Flex>
           {reload}
@@ -87,8 +101,9 @@ export function LoginPage() {
       );
     case 'enroll':
       return (
-        <AuthLayout title="Enroll a passkey">
+        <AuthLayout title="Enroll">
           <EnrollForm
+            browser={browser}
             onBack={
               bootstrap.data?.login_available
                 ? () => {
@@ -102,27 +117,52 @@ export function LoginPage() {
           />
         </AuthLayout>
       );
-    case 'sign_in':
+    case 'sign_in': {
+      const pending = (method: AuthMethod) => signIn.isPending && signIn.variables === method;
+      // Passkey stays the primary action; Nostr takes that role only when it is the sole method.
+      const nostrPrimary = !state.passkey;
       return (
         <AuthLayout title="Sign in">
           {notice && <Alert tone="info">{LOGIN_NOTICE[notice]}</Alert>}
-          <Button
-            tone="accent"
-            size="lg"
-            loading={signIn.isPending}
-            disabled={cooldown.active}
-            autoFocus={backFromEnroll}
-            onClick={() => signIn.mutate()}
-          >
-            Continue with passkey
-          </Button>
-          {signIn.isError && <SignInNotice problem={signInProblem(signIn.error)} />}
+          {state.passkey && (
+            <Button
+              tone="accent"
+              size="lg"
+              loading={pending('passkey')}
+              disabled={cooldown.active || pending('nostr')}
+              autoFocus={backFromEnroll}
+              onClick={() => signIn.mutate('passkey')}
+            >
+              Continue with passkey
+            </Button>
+          )}
+          {state.nostr && (
+            <Flex direction="column" gap="sm">
+              <Button
+                tone={nostrPrimary ? 'accent' : undefined}
+                variant={nostrPrimary ? 'solid' : 'outline'}
+                size={nostrPrimary ? 'lg' : size}
+                loading={pending('nostr')}
+                disabled={!browser.nostr || cooldown.active || pending('passkey')}
+                autoFocus={backFromEnroll && nostrPrimary}
+                aria-describedby={browser.nostr ? undefined : nostrReasonId}
+                onClick={() => signIn.mutate('nostr')}
+              >
+                Sign in with Nostr
+              </Button>
+              {!browser.nostr && <Line id={nostrReasonId}>{METHOD_COPY.nostr.unsupported}</Line>}
+            </Flex>
+          )}
+          {signIn.isError && signIn.variables && (
+            <SignInNotice problem={signInProblem(signIn.error, signIn.variables)} />
+          )}
           {bootstrap.data?.enrollment_available && (
             <Button variant="ghost" size={size} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
-              Enroll a passkey
+              Enroll a sign-in method
             </Button>
           )}
         </AuthLayout>
       );
+    }
   }
 }

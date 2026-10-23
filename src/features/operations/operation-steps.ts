@@ -53,7 +53,7 @@ export function operationSteps(operation: Operation): OperationStep[] {
   if (authorizationNeeded) {
     steps.push({
       id: 'authorization',
-      label: 'Passkey authorization',
+      label: 'Authorization',
       detail: AUTHORIZATION_STATUS[operation.authorization.status],
       status: AUTHORIZED.has(operation.authorization.status) ? 'done' : 'not_observed',
       at: null,

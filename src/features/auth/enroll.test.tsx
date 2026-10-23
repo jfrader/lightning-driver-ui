@@ -48,7 +48,7 @@ beforeEach(() => {
 /** Enrollment is a state of `/login` (P-2), opened from sign-in. */
 async function openEnrollment() {
   const view = renderApp('/login');
-  await view.user.click(await screen.findByRole('button', { name: 'Enroll a passkey' }));
+  await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
   return view;
 }
 

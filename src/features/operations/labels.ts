@@ -1,5 +1,6 @@
 import type { PillTone } from '@jfrader/ui';
 import type {
+  AuthMethod,
   Operation,
   OperationKind,
   OperationListState,
@@ -65,9 +66,9 @@ export const OPERATION_NOUN: Record<OperationKind, string> = {
 
 export const AUTHORIZATION_STATUS: Record<Operation['authorization']['status'], string> = {
   not_required: 'Not required',
-  required: 'Passkey required',
-  authorized: 'Passkey approved, not yet used',
-  consumed: 'Passkey approved and used',
+  required: 'Authorization required',
+  authorized: 'Authorized, not yet used',
+  consumed: 'Authorized and used',
 };
 
 const SUCCESS_LABEL: Record<OperationKind, string> = {
@@ -81,16 +82,24 @@ const SUCCESS_LABEL: Record<OperationKind, string> = {
   send_onchain: 'Broadcast',
 };
 
-export const CONFIRM_LABEL: Record<OperationKind, string> = {
+const CONFIRM_VERB: Record<OperationKind, string> = {
   create_invoice: 'Create invoice',
-  pay_invoice: 'Pay with passkey',
+  pay_invoice: 'Pay',
   connect_peer: 'Connect',
   disconnect_peer: 'Disconnect',
-  open_channel: 'Open channel with passkey',
-  close_channel: 'Close channel with passkey',
+  open_channel: 'Open channel',
+  close_channel: 'Close channel',
   new_address: 'New address',
-  send_onchain: 'Send with passkey',
+  send_onchain: 'Send',
 };
+
+const STEP_UP_NAME: Record<AuthMethod, string> = { passkey: 'passkey', nostr: 'Nostr' };
+
+/** A sensitive review's action names the step-up it starts: "Pay with passkey", "Pay with Nostr". */
+export function confirmLabel(operation: Operation, method: AuthMethod): string {
+  const verb = CONFIRM_VERB[operation.request.kind];
+  return operation.review.sensitive ? `${verb} with ${STEP_UP_NAME[method]}` : verb;
+}
 
 /** What is known about an unresolved operation, and what not to do (copy deck §11.4). */
 export const UNRESOLVED_SENTENCE: Record<OperationKind, { unknown: string; pending: string }> = {

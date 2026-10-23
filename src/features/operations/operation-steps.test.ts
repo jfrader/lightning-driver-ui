@@ -33,7 +33,7 @@ describe('operation timeline steps', () => {
   it('marks dispatch and checks as not observed before they happen', () => {
     const op = asOperation(operation('pay_invoice'));
     const steps = byId(operationSteps(op));
-    expect(steps.authorization).toMatchObject({ status: 'not_observed', detail: 'Passkey required', missing: NOT_OBSERVED_YET });
+    expect(steps.authorization).toMatchObject({ status: 'not_observed', detail: 'Authorization required', missing: NOT_OBSERVED_YET });
     expect(steps.dispatch).toMatchObject({ status: 'not_observed', at: null, missing: NOT_OBSERVED_YET });
     expect(steps.reconciled).toMatchObject({ status: 'not_observed', at: null });
   });

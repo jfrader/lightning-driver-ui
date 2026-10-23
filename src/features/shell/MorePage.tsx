@@ -10,8 +10,10 @@ import { APP_VERSION } from '../../config';
 import { formatDurationSeconds } from '../../lib/duration';
 import { useNow } from '../../lib/use-now';
 import { ThemeChoice } from '../appearance/ThemeChoice';
+import { AUTH_METHOD_LABEL } from '../auth/labels';
 import { LogoutButton } from '../auth/LogoutButton';
 import { sessionQueryOptions } from '../auth/queries';
+import { SignInMethods } from '../auth/SignInMethods';
 import { NotReported } from '../display/NotReported';
 import { UnitToggle } from '../display/UnitToggle';
 import { REAUTH_LABEL } from '../nodes/labels';
@@ -22,8 +24,8 @@ const Version = styled.p(({ theme }) => ({
   color: theme.color.textMuted,
 }));
 
-function confirmationText(reauth: Session['reauth']): string {
-  const label = REAUTH_LABEL[reauth.mode];
+function confirmationText({ reauth, auth_method: method }: Session): string {
+  const label = REAUTH_LABEL[method][reauth.mode];
   return reauth.mode === 'recent' && reauth.recent_auth_seconds !== null
     ? `${label} · ${formatDurationSeconds(reauth.recent_auth_seconds)}`
     : label;
@@ -39,9 +41,10 @@ function SessionFacts() {
       <DetailList
         items={[
           { label: 'Signed in', value: data ? <UtcTime value={data.last_authenticated_at} /> : pending },
+          { label: 'Signed in with', value: data ? AUTH_METHOD_LABEL[data.auth_method] : pending },
           { label: 'Session ends', value: data ? <UtcTime value={data.expires_at} now={now} /> : pending },
           { label: 'Ends if idle', value: data ? <UtcTime value={data.idle_expires_at} /> : pending },
-          { label: 'Confirmation', value: data ? confirmationText(data.reauth) : pending },
+          { label: 'Confirmation', value: data ? confirmationText(data) : pending },
         ]}
       />
       {session.isError && <ErrorNotice error={session.error} />}
@@ -49,7 +52,7 @@ function SessionFacts() {
   );
 }
 
-/** Screens spec §5, phone only: theme, unit, session, sign out, version; nothing else. */
+/** Theme, unit, session, sign-in methods, sign out and version. */
 export function MorePage() {
   return (
     <Flex direction="column" gap="lg">
@@ -62,6 +65,9 @@ export function MorePage() {
       </Section>
       <Section title="Session">
         <SessionFacts />
+      </Section>
+      <Section title="Sign-in methods">
+        <SignInMethods />
       </Section>
       <div>
         <LogoutButton variant="outline" />

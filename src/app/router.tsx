@@ -26,7 +26,6 @@ import { forgetRememberedNodeId, isNodeId, readRememberedNodeId, rememberNodeId 
 import { OPERATION_KIND, OPERATION_LIST_STATE } from '../features/operations/labels';
 import { PAYMENT_STATE } from '../features/payments/labels';
 import { AppShell } from '../features/shell/AppShell';
-import { SHELL_QUERY } from '../config';
 import {
   ChannelsPage,
   CloseChannelPage,
@@ -115,15 +114,9 @@ const fleetRoute = createRoute({
   component: FleetPage,
 });
 
-/** Phone only; the desktop shell carries the same controls, so a desktop visit opens the workspace. */
 const moreRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/more',
-  beforeLoad: () => {
-    if (!window.matchMedia(SHELL_QUERY).matches) return;
-    const nodeId = readRememberedNodeId();
-    throw nodeId ? redirect({ to: '/nodes/$nodeId', params: { nodeId } }) : redirect({ to: '/fleet' });
-  },
   component: MorePage,
 });
 

@@ -142,6 +142,7 @@ test.describe('200% zoom', () => {
     ['/nodes/lnd-lab/onchain/send', { role: 'button', name: 'Review send' }],
     [REVIEW_PATH, { role: 'button', name: 'Pay with passkey' }],
     ['/login', { role: 'button', name: 'Continue with passkey' }],
+    ['/more', { role: 'button', name: 'Sign out' }],
   ] as const) {
     test(`${path}: no horizontal overflow and the primary action is whole`, async ({ page }) => {
       await installSyntheticApi(page);

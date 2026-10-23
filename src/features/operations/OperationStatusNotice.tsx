@@ -1,7 +1,7 @@
 import { Alert, Flex, type AlertTone } from '@jfrader/ui';
 import type { Operation, OperationState } from '../../api/types';
 import { LastChecked } from './LastChecked';
-import { operationSentence } from './operation-sentence';
+import { operationSentence, reconciliationSentence } from './operation-sentence';
 
 interface OperationStatusNoticeProps {
   operation: Operation;
@@ -32,11 +32,13 @@ export function OperationStatusNotice({ operation, unanswered }: OperationStatus
     );
   }
   const sentence = operationSentence(operation);
+  const reconciliation = reconciliationSentence(operation);
   if (sentence === null) return null;
   return (
     <Alert tone={TONE[operation.state]}>
       <Flex direction="column" gap="xs">
         <span>{sentence}</span>
+        {reconciliation !== null && <span>{reconciliation}</span>}
         <LastChecked at={operation.last_reconciled_at} />
       </Flex>
     </Alert>

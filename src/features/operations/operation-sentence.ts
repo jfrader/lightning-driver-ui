@@ -1,7 +1,26 @@
 import type { ErrorCode, Operation, OperationKind } from '../../api/types';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { CLOSE_TYPE } from '../channels/labels';
-import { UNRESOLVED_SENTENCE } from './labels';
+import { isInFlight, UNRESOLVED_SENTENCE } from './labels';
+
+const RECONCILIATION_SENTENCE: Record<NonNullable<NonNullable<Operation['reconciliation']>['last_outcome']>, string | null> = {
+  in_flight: null,
+  positive: null,
+  rejected: null,
+  withheld: 'The node could not be reached.',
+  not_found: 'The node reported no result yet.',
+  invalid: 'The node returned an unusable answer.',
+  pruned: 'The node reported no result yet.',
+  conflict: 'The node returned an unusable answer.',
+  paid_elsewhere: null,
+};
+
+export function reconciliationSentence(operation: Pick<Operation, 'state' | 'reconciliation'>): string | null {
+  if (!isInFlight(operation.state) || !operation.reconciliation) return null;
+  const { exhausted, last_outcome } = operation.reconciliation;
+  if (exhausted) return 'No further automatic checks.';
+  return last_outcome === null ? null : RECONCILIATION_SENTENCE[last_outcome];
+}
 
 /** Error code → sentence (copy deck §11.5); codes not listed fall back to the server message. */
 const ERROR_SENTENCE: Partial<Record<ErrorCode, string>> = {

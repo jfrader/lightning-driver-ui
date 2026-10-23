@@ -24,6 +24,9 @@ const ALWAYS = ['operations', 'summary'] as const;
 export function invalidateAffectedReads(queryClient: QueryClient, operation: Operation): Promise<void[]> {
   const resources = [...AFFECTED_READS[operation.request.kind], ...ALWAYS];
   return Promise.all(
-    resources.map((resource) => queryClient.invalidateQueries({ queryKey: nodeKeys.detail(operation.node_id, resource) })),
+    [
+      ...resources.map((resource) => queryClient.invalidateQueries({ queryKey: nodeKeys.detail(operation.node_id, resource) })),
+      queryClient.invalidateQueries({ queryKey: ['fleet'] }),
+    ],
   );
 }

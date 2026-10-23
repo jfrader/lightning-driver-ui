@@ -13,8 +13,8 @@ import { build } from 'esbuild';
 
 // Frozen backend-owned API v1 (GURI-2908). The snapshot is a consumer copy; change it only by
 // copying a newly frozen revision and updating these hashes.
-const FROZEN_SHA256 = 'a92d6ceb9066d7b174972d279b1fc480adc26b866671305413ad1689ab32b50a';
-const FROZEN_EXAMPLES_SHA256 = '13adce818576f64d24303f99c0c86c54ee26d69ade4719142780ae2171f5ec66';
+const FROZEN_SHA256 = 'efad6a2fbe32c88aab8854fb49c6ca6a1c11b19bc269a6a38687a1f553149c9e';
+const FROZEN_EXAMPLES_SHA256 = '889dce55d785b4ee02cc26ad2b36ffe988dcc41dfbac36c9052ec2be96b58d35';
 const CONTRACT_URL = new URL('../contract/openapi.v1.json', import.meta.url);
 const EXAMPLES_URL = new URL('../contract/examples.v1.json', import.meta.url);
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -49,7 +49,39 @@ const VALIDATED_SCHEMAS = [
   'Operation',
   'OperationsPage',
   'ErrorResponse',
+  'NostrChallenge',
+  'NostrEvent',
+  'NostrIdentityResponse',
+  'NostrRemoved',
+  'NostrAuthorizationStart',
 ];
+
+// Success bodies the contract declares inline rather than as a named schema: validator name to
+// the operationId whose 200 JSON response it checks.
+const VALIDATED_RESPONSES = {
+  NostrIdentities: 'listNostrIdentities',
+};
+
+function operationResponseSchema(document, operationId) {
+  for (const item of Object.values(document.paths)) {
+    for (const operation of Object.values(item)) {
+      if (operation?.operationId === operationId) return operation.responses['200'].content['application/json'].schema;
+    }
+  }
+  throw new Error(`No operation ${operationId} in the contract`);
+}
+
+// A response schema compiled on its own resolves the contract's local refs against the contract.
+function withContractRefs(schema) {
+  if (Array.isArray(schema)) return schema.map(withContractRefs);
+  if (typeof schema !== 'object' || schema === null) return schema;
+  return Object.fromEntries(
+    Object.entries(schema).map(([key, value]) => [
+      key,
+      key === '$ref' && typeof value === 'string' && value.startsWith('#/') ? `${CONTRACT_ID}${value}` : withContractRefs(value),
+    ]),
+  );
+}
 
 async function readFrozen(url, expectedSha) {
   const bytes = await readFile(url);
@@ -103,14 +135,20 @@ async function generate() {
   ajv.addKeyword('discriminator');
   ajv.addKeyword('components');
   ajv.addSchema({ $id: CONTRACT_ID, components: { schemas: document.components.schemas } });
-  const refs = Object.fromEntries(
-    VALIDATED_SCHEMAS.map((name) => [name, `${CONTRACT_ID}#/components/schemas/${name}`]),
-  );
+  const responseRefs = Object.entries(VALIDATED_RESPONSES).map(([name, operationId]) => {
+    const id = `${CONTRACT_ID}/responses/${operationId}`;
+    ajv.addSchema({ $id: id, ...withContractRefs(operationResponseSchema(document, operationId)) });
+    return [name, id];
+  });
+  const refs = Object.fromEntries([
+    ...VALIDATED_SCHEMAS.map((name) => [name, `${CONTRACT_ID}#/components/schemas/${name}`]),
+    ...responseRefs,
+  ]);
   const validatorsJs = HEADER + (await bundleForBrowser(standaloneCode(ajv, refs)));
 
   const validatorsDts = [
     HEADER,
-    "import type { components } from './schema';",
+    "import type { components, operations } from './schema';",
     '',
     'export interface ContractValidator<T> {',
     '  (data: unknown): data is T;',
@@ -119,6 +157,10 @@ async function generate() {
     '',
     ...VALIDATED_SCHEMAS.map(
       (name) => `export declare const ${name}: ContractValidator<components['schemas']['${name}']>;`,
+    ),
+    ...Object.entries(VALIDATED_RESPONSES).map(
+      ([name, operationId]) =>
+        `export declare const ${name}: ContractValidator<operations['${operationId}']['responses'][200]['content']['application/json']>;`,
     ),
     '',
   ].join('\n');

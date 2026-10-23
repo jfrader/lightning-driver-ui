@@ -24,6 +24,8 @@ export function safeError(code: string, message: string, outcome = 'not_applicab
 export const handlers = [
   http.get(api('/auth/bootstrap'), () => HttpResponse.json(fixture('bootstrap'))),
   http.get(api('/session'), () => HttpResponse.json(fixture('session'))),
+  // The frozen session signed in with a passkey; no Nostr key is linked.
+  http.get(api('/auth/nostr/identities'), () => HttpResponse.json({ identities: [], passkey_count: 1 })),
   http.get(api('/config'), () => HttpResponse.json({ ...fixture('public_policy'), operation_poll_seconds: 1 })),
   http.get(api('/nodes'), () =>
     HttpResponse.json({ ...fixture('nodes_page'), items: nodes, next_cursor: null, truncated: false }),

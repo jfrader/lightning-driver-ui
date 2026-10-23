@@ -5,7 +5,7 @@ import { fleetQueryOptions } from '../../api/node-queries';
 import { keysOf } from '../../lib/guards';
 import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
-import { FORM_DESTINATIONS, NODE_DESTINATIONS } from './nav-model';
+import { FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
 interface NavPaletteProps {
@@ -37,7 +37,10 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       onSelect: () => void navigate({ to: '/nodes/$nodeId/operations', params: { nodeId }, search: { state: 'nonterminal' } }),
     });
   }
-  items.push({ value: 'go-fleet', label: 'Fleet', group: 'Go to', keywords: 'nodes', onSelect: () => void navigate({ to: '/fleet' }) });
+  for (const key of keysOf(GLOBAL_DESTINATIONS)) {
+    const { label, to, keywords } = GLOBAL_DESTINATIONS[key];
+    items.push({ value: `go-${key}`, label, group: 'Go to', keywords, onSelect: () => void navigate({ to }) });
+  }
   if (nodeId !== null && node) {
     for (const form of FORM_DESTINATIONS) {
       items.push({

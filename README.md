@@ -2,7 +2,7 @@
 
 Browser UI for [lightning-driver](https://github.com/jfrader/lightning-driver), the Rust Lightning node
 manager: one operator, several server-configured nodes (LND gRPC, LND REST, Core Lightning REST),
-passkey sign-in, per-node read-only policy.
+passkey sign-in with optional NIP-07 Nostr sign-in, per-node read-only policy.
 
 The Rust API server is authoritative: it holds node credentials, enforces read-only policy, journals
 every operation and performs all node actions. The browser only talks to `/api/v1` on its own origin.
@@ -63,6 +63,7 @@ run `npm run api:generate`.
 | `npm run build` | Typecheck and production build |
 | `npm run budget` | Builds and fails if the first-load JS or the lazy chart chunk exceeds `bundle-budget.json` |
 | `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build, including 44 px targets, forced colors, 200% zoom, reduced motion and the phone tab-bar clearance |
+| `npm run test:e2e` | Opt-in real Polar/Docker regtest journey (bitcoind + LND gRPC/REST + CLN REST); requires `LIGHTNING_DRIVER_BACKEND` and a built release API; not part of `npm run verify` |
 | `npm run verify` | All of the above in order |
 | `npm run screenshots` | Rewrites the README images in `docs/screenshots` from a fresh production build at 1440×1000 and 390×844; not part of `verify`, because it writes files |
 
@@ -84,5 +85,7 @@ other numerals) stays as typed and is rejected. Amounts are displayed with the b
 
 - Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
   backend need browser QA.
-- The initial route is one chunk (about 1 MB, 281 kB gzip), including the generated validators.
-  Recharts lives only in the lazy `src/charts/` chunk (about 88 kB gzip), loaded on the first chart.
+- Nostr sign-in uses a NIP-07 browser extension. NIP-46 remote signing and mobile bunkers are not
+  implemented; the login page shows `No Nostr extension found.` when the browser has none.
+- The initial route is one chunk (about 1 MB, 266 kB gzip), including the generated validators.
+  Recharts lives only in the lazy `src/charts/` chunk (about 87 kB gzip), loaded on the first chart.
