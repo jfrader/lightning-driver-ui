@@ -6,7 +6,7 @@ import { useDisplayUnit } from './unit-context';
 const Value = styled.span(({ theme }) => ({
   fontFamily: theme.font.mono,
   fontVariantNumeric: 'tabular-nums',
-  whiteSpace: 'nowrap',
+  overflowWrap: 'anywhere',
 }));
 
 interface AmountProps {

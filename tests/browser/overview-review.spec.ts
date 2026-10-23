@@ -143,3 +143,20 @@ test('the chart module loads only when a chart renders', async ({ page }) => {
   await expect(page.getByRole('img', { name: /On-chain composition/ }).locator('svg')).toBeVisible();
   expect(chartRequests.length).toBe(1);
 });
+
+test('a long policy amount wraps instead of widening the document', async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.route('**/api/v1/nodes/*/policy', (route) =>
+    route.fulfill({ json: { ...fixture('node_policy'), max_routing_fee_msat: '9007199254740' } }),
+  );
+  for (const size of [
+    { width: 1280, height: 900 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(size);
+    await page.goto('/nodes/lnd-lab');
+    await expect(page.getByRole('main')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expectNoHorizontalOverflow(page);
+  }
+});
