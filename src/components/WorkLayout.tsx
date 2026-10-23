@@ -13,11 +13,7 @@ const Grid = styled.div<{ measure: string }>(({ theme, measure }) => ({
 
 const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
   display: 'grid',
-<<<<<<< HEAD
   gridTemplateColumns: `minmax(0, ${measure})`,
-=======
-  gridTemplateColumns: 'minmax(0, 1fr)',
->>>>>>> 114fa5f (fix: align read surfaces and contain enlarged peer tables)
   gap: theme.space[8],
   minInlineSize: 0,
 }));
