@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { fixture, installSyntheticApi } from './synthetic-api';
+import { APP_ORIGIN, fixture, installSyntheticApi } from './synthetic-api';
 
 /** Touch targets on the phone layout. */
 const MIN_TOUCH_PX = 44;
@@ -101,6 +101,68 @@ for (const size of SIZES) {
       await expectTouchTarget(page, page.getByRole('button', { name: 'Reload' }));
       await expectNoHorizontalOverflow(page);
     });
+
+    for (const nostrAvailable of [false, true]) {
+      test(`unsupported sign-in: enroll a passkey with Nostr offered=${nostrAvailable}`, async ({ page, context }) => {
+        const appOrigin = new URL(APP_ORIGIN);
+        appOrigin.hostname = 'localhost';
+        const requests = await installSyntheticApi(page, { appOrigin: appOrigin.origin });
+        await page.route('**/api/v1/auth/bootstrap', (route) => route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...fixture('bootstrap'),
+            login_available: true,
+            passkey_login_available: false,
+            nostr_login_available: nostrAvailable,
+            enrollment_available: true,
+          }),
+        }));
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('WebAuthn.enable');
+        await cdp.send('WebAuthn.addVirtualAuthenticator', {
+          options: {
+            protocol: 'ctap2', transport: 'internal', hasResidentKey: true,
+            hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true,
+          },
+        });
+        await page.goto(new URL('/login', appOrigin).href);
+        if (nostrAvailable) await expect(page.getByText('No Nostr extension found.', { exact: true })).toBeVisible();
+        const enroll = page.getByRole('button', { name: 'Enroll a sign-in method' });
+        await expect(enroll).toBeVisible();
+        await expectTouchTarget(page, enroll);
+        await expectNoHorizontalOverflow(page);
+        await enroll.click();
+        await expect(page.getByRole('heading', { name: 'Enroll', exact: true })).toBeVisible();
+        await expect(page.getByText('No Nostr extension found.', { exact: true })).toBeVisible();
+        const token = 'a'.repeat(64);
+        await page.getByLabel(/^Enrollment token/).fill(token);
+        await page.getByRole('button', { name: 'Create passkey' }).click();
+        await expect(page).not.toHaveURL(/\/login/);
+        await expect(page.getByRole('main')).toBeVisible();
+        expect(requests.map((request) => `${request.method} ${request.path}`)).toEqual([
+          'POST /auth/enrollment/start', 'POST /auth/enrollment/finish',
+        ]);
+        expect(requests[0].body).toEqual({ enrollment_token: token });
+        expect(requests[1].body).toMatchObject({ challenge_id: fixture('enrollment_challenge').challenge_id });
+        await cdp.detach();
+      });
+
+      test(`unsupported sign-in: enrollment stays closed without a token, Nostr offered=${nostrAvailable}`, async ({ page }) => {
+        await installSyntheticApi(page);
+        await page.route('**/api/v1/auth/bootstrap', (route) => route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...fixture('bootstrap'), login_available: true, passkey_login_available: false,
+            nostr_login_available: nostrAvailable, enrollment_available: false,
+          }),
+        }));
+        await page.goto('/login');
+        await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+        if (nostrAvailable) await expect(page.getByText('No Nostr extension found.', { exact: true })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Enroll a sign-in method' })).toHaveCount(0);
+        await expect(page.getByLabel(/^Enrollment token/)).toHaveCount(0);
+      });
+    }
 
     test('More: theme, unit, session and sign out at every width', async ({ page }) => {
       const requests = await installSyntheticApi(page);

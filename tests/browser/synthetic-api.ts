@@ -164,6 +164,12 @@ export async function installSyntheticApi(page: Page, options: SyntheticOptions 
     }
     if (path === '/session' && request.method() === 'DELETE') return route.fulfill({ status: 204 });
     if (path === '/session') return json(route, session);
+    if (path === '/auth/enrollment/start' && request.method() === 'POST') {
+      const challenge = fixture('enrollment_challenge');
+      challenge.options.publicKey.rp.id = new URL(appOrigin).hostname;
+      return json(route, challenge);
+    }
+    if (path === '/auth/enrollment/finish' && request.method() === 'POST') return json(route, session);
     if (path === '/auth/nostr/identities') return json(route, { identities, passkey_count: 1 });
     if (path === '/auth/nostr/start' && request.method() === 'POST') {
       const purpose = String(bodyField(request.postDataJSON(), 'purpose'));
