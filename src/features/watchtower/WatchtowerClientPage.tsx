@@ -17,7 +17,7 @@ import { PagedList } from '../../components/PagedList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { Section } from '../../components/Section';
 import { TextLink } from '../../components/TextLink';
-import { numberValue } from '../bitcoin/format';
+import { numberValue } from '../display/quantity';
 import { Identifier, ShortIdentifier } from '../display/Identifier';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';

@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { installMonitoringApi } from './monitoring-api';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { installMonitoringApi, MONITORING_CURSOR } from './monitoring-api';
 import { fixture } from './synthetic-api';
 
 async function doubleText(page: Page) {
@@ -14,6 +14,13 @@ async function doubleText(page: Page) {
       if (Number.isFinite(line)) element.style.setProperty('line-height', `${line * 2}px`, 'important');
     }
   });
+}
+
+async function expectTouchButton(page: Page, button: Locator) {
+  await expect(button).toBeVisible();
+  if ((page.viewportSize()?.width ?? 0) >= 768) return;
+  const box = await button.boundingBox();
+  expect(box && box.width >= 44 && box.height >= 44).toBe(true);
 }
 
 test('Bitcoin workspace has monitoring sections, peers and no Lightning actions', async ({ page }) => {
@@ -53,6 +60,40 @@ test('Bitcoin IBD stays Online with progress; mismatch names both networks', asy
   await expect(page.getByText('Syncing · 23.45%', { exact: true })).toBeVisible();
   await expect(page.getByText('Network mismatch', { exact: true })).toBeVisible();
   await expect(page.getByText('Expected Testnet4 · Reported Mainnet')).toBeVisible();
+});
+
+test('Bitcoin peer cursor paging stays bounded and the page controls are touch-sized', async ({ page }) => {
+  await installMonitoringApi(page, { paged: true });
+  const pages: URL[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith('/bitcoin/peers')) pages.push(url);
+  });
+  await page.goto('/nodes/bitcoin-lab/peers');
+  await expect(page.getByText('List is incomplete', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Narrow the filter/)).toHaveCount(0);
+  const next = page.getByRole('button', { name: 'Next page', exact: true });
+  await expectTouchButton(page, next);
+  await next.click();
+  const first = page.getByRole('button', { name: 'First page', exact: true });
+  await expectTouchButton(page, first);
+  await page.locator('[data-row-primary]').click();
+  await expect(page.getByText('127.0.0.1:49333', { exact: true })).toBeVisible();
+  await first.click();
+  await expect(next).toBeVisible();
+  expect(pages.every((url) => url.searchParams.get('limit') === '100')).toBe(true);
+  expect(pages.some((url) => url.searchParams.get('cursor') === MONITORING_CURSOR)).toBe(true);
+});
+
+test('an expired Bitcoin peer snapshot can be replaced from a touch-sized action', async ({ page }) => {
+  await installMonitoringApi(page, { expired: true });
+  await page.goto('/nodes/bitcoin-lab/peers?cursor=expired');
+  await expect(page.getByText('This list expired', { exact: true })).toBeVisible();
+  const reload = page.getByRole('button', { name: 'Load first page', exact: true });
+  await expectTouchButton(page, reload);
+  await reload.click();
+  await expect(page.locator('[data-row-primary]')).toBeVisible();
+  await expect(page).toHaveURL(/\/nodes\/bitcoin-lab\/peers$/);
 });
 
 test('Bitcoin fleet row is monitor only with no actions or unresolved count', async ({ page }) => {

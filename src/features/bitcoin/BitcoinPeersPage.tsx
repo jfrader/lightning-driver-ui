@@ -15,7 +15,7 @@ import { UtcTime } from '../../components/UtcTime';
 import { ShortIdentifier } from '../display/Identifier';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
-import { numberValue, unitValue } from './format';
+import { numberValue, unitValue } from '../display/quantity';
 
 type Peer = components['schemas']['BitcoinPeer'];
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/peers');

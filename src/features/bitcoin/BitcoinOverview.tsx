@@ -11,7 +11,7 @@ import { WorkLayout } from '../../components/WorkLayout';
 import { DISPLAY_LOCALE } from '../../config';
 import { NETWORK_LABEL } from '../nodes/labels';
 import { useCurrentNode } from '../nodes/use-current-node';
-import { numberValue, unitValue } from './format';
+import { numberValue, unitValue } from '../display/quantity';
 import { surfacesFor } from '../shell/nav-model';
 import { useControlSize } from '../shell/use-shell-layout';
 

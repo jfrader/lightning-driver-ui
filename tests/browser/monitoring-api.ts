@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 import { fixture, installSyntheticApi } from './synthetic-api';
 
+export const MONITORING_CURSOR = 'c3ludGhldGljLW5leHQ';
+
 export interface MonitoringOptions {
   offline?: boolean;
   syncing?: boolean;
@@ -11,6 +13,8 @@ export interface MonitoringOptions {
   long?: boolean;
   truncated?: boolean;
   restricted?: boolean;
+  paged?: boolean;
+  expired?: boolean;
 }
 
 export async function installMonitoringApi(page: Page, options: MonitoringOptions = {}) {
@@ -63,7 +67,31 @@ export async function installMonitoringApi(page: Page, options: MonitoringOption
         },
       });
     if (new URL(route.request().url()).pathname.endsWith('/peers')) {
-      const peers = fixture('bitcoin_peers_page');
+      const cursor = new URL(route.request().url()).searchParams.get('cursor');
+      if (options.expired && cursor)
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: {
+              code: 'cursor_expired',
+              message: 'This list expired.',
+              request_id: '00000000-0000-4000-8000-0000000009fd',
+              operation_id: null,
+              outcome: 'not_applicable',
+            },
+          },
+        });
+      const peers = {
+        ...fixture('bitcoin_peers_page'),
+        next_cursor: options.paged && !cursor ? MONITORING_CURSOR : null,
+        truncated: Boolean(options.paged),
+      };
+      if (options.paged) {
+        if (cursor && peers.items[0]) {
+          peers.items[0].id = '2';
+          peers.items[0].addr = '127.0.0.1:49333';
+        }
+      }
       if (options.empty) peers.items = [];
       if (options.long && peers.items[0]) peers.items[0].addr = `${'a'.repeat(56)}.onion:48333`;
       return route.fulfill({ json: peers });
