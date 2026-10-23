@@ -64,6 +64,11 @@ export function LoginPage() {
       Reload
     </Button>
   );
+  const enrollmentAction = bootstrap.data?.enrollment_available && (
+    <Button variant="ghost" size={size} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
+      Enroll a sign-in method
+    </Button>
+  );
 
   const browser = browserMethods();
   const state = loginState({ browser, bootstrap, enrolling });
@@ -80,6 +85,7 @@ export function LoginPage() {
           {state.missing.map((method) => (
             <Line key={method}>{METHOD_COPY[method].unsupported}</Line>
           ))}
+          {enrollmentAction}
         </AuthLayout>
       );
     case 'error':
@@ -156,11 +162,7 @@ export function LoginPage() {
           {signIn.isError && signIn.variables && (
             <SignInNotice problem={signInProblem(signIn.error, signIn.variables)} />
           )}
-          {bootstrap.data?.enrollment_available && (
-            <Button variant="ghost" size={size} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
-              Enroll a sign-in method
-            </Button>
-          )}
+          {enrollmentAction}
         </AuthLayout>
       );
     }
