@@ -11,7 +11,7 @@ import { NotReported } from '../display/NotReported';
 import { useControlSize, useDesktopShell } from '../shell/use-shell-layout';
 import { linkNostr, unlinkNostr } from './ceremonies';
 import { NOSTR_FAILURE_MESSAGE, hasNostrExtension } from './nostr';
-import { nostrIdentitiesQueryOptions } from './queries';
+import { nostrIdentitiesQueryOptions, sessionQueryOptions } from './queries';
 import { SignerError } from './SignerError';
 import { useSignedOut } from './use-signed-out';
 
@@ -97,11 +97,16 @@ export function SignInMethods() {
   const size = useControlSize();
   const queryClient = useQueryClient();
   const methods = useQuery(nostrIdentitiesQueryOptions);
+  const session = useQuery(sessionQueryOptions);
   const extension = hasNostrExtension();
   const reasonId = useId();
   const link = useMutation({
-    mutationFn: linkNostr,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: nostrIdentitiesQueryOptions.queryKey }),
+    // A stale session signs in again first; that replaces the session, its CSRF and its reads.
+    mutationFn: () => linkNostr(session.data!.auth_method),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: nostrIdentitiesQueryOptions.queryKey });
+      void queryClient.invalidateQueries({ queryKey: sessionQueryOptions.queryKey });
+    },
   });
   const data = methods.data;
   const pending = <NotReported>…</NotReported>;
@@ -126,7 +131,7 @@ export function SignInMethods() {
           size={size}
           variant="outline"
           loading={link.isPending}
-          disabled={!extension}
+          disabled={!extension || !session.data}
           aria-describedby={extension ? undefined : reasonId}
           onClick={() => link.mutate()}
         >

@@ -1,6 +1,7 @@
 import type { CsrfSource } from '../../api/client';
+import { errorCode } from '../../api/errors';
 import { NostrIdentityResponse, NostrRemoved, Session as isSession, type ContractValidator } from '../../api/generated/validators';
-import type { NostrIdentity, NostrStart, Session } from '../../api/types';
+import type { AuthMethod, NostrIdentity, NostrStart, Session } from '../../api/types';
 import {
   finishEnrollment,
   finishLogin,
@@ -50,10 +51,28 @@ export async function enrollNostr(enrollmentToken: string): Promise<Session> {
   return nostrCeremony(await preauth(), { purpose: 'enrollment', token: enrollmentToken }, isSession);
 }
 
-/** Adds the extension's key to the signed-in operator. Other sessions stay signed in. */
-export async function linkNostr(): Promise<NostrIdentity> {
-  const { identity } = await nostrCeremony({ kind: 'session' }, { purpose: 'link' }, NostrIdentityResponse);
-  return identity;
+/** Signs in again with the method that owns this session, replacing it with a fresh one. */
+async function proveCurrentMethod(method: AuthMethod): Promise<Session> {
+  return method === 'passkey' ? signInWithPasskey() : signInWithNostr();
+}
+
+/**
+ * Adds the extension's key to the signed-in operator. The server requires a session that
+ * proved its own method moments ago, so a stale session signs in again first and the link
+ * is retried once on the rotated session.
+ */
+export async function linkNostr(method: AuthMethod): Promise<NostrIdentity> {
+  const link = async () => {
+    const { identity } = await nostrCeremony({ kind: 'session' }, { purpose: 'link' }, NostrIdentityResponse);
+    return identity;
+  };
+  try {
+    return await link();
+  } catch (error) {
+    if (errorCode(error) !== 'reauth_required') throw error;
+    await proveCurrentMethod(method);
+    return link();
+  }
 }
 
 /** Removes an identity with a signature from that key. The server then ends this session. */

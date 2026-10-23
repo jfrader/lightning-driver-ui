@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { sessionCsrfToken } from '../../api/csrf';
 import { fixture } from '../../test/fixtures';
 import { NOSTR_KEYS, installNostrExtension, nostrChallenge, nostrIdentities, nostrIdentity } from '../../test/nostr';
+import { assertion } from '../../test/webauthn-mock';
 import { renderApp } from '../../test/render-app';
 import { api, safeError, server } from '../../test/server';
 
@@ -20,10 +21,15 @@ interface Calls {
 }
 
 /** The operator's methods and the session-bound Nostr ceremony; `finish` decides the answer. */
-function methodsServer(listed: ReturnType<typeof nostrIdentities>, finish: (purpose: string) => Response): Calls {
+function methodsServer(
+  listed: ReturnType<typeof nostrIdentities>,
+  finish: (purpose: string) => Response,
+  options: { reauthOnce?: boolean } = {},
+): Calls {
   const calls: Calls = { starts: [], finishes: [] };
   let current = listed;
   let purpose = '';
+  let reauth = options.reauthOnce ?? false;
   server.use(
     http.get(api('/auth/nostr/identities'), () => HttpResponse.json(current)),
     http.post(api('/auth/nostr/start'), async ({ request }) => {
@@ -32,6 +38,10 @@ function methodsServer(listed: ReturnType<typeof nostrIdentities>, finish: (purp
       purpose = typeof body === 'object' && body !== null && 'purpose' in body ? String(body.purpose) : '';
       if (purpose === 'unlink' && current.passkey_count + current.identities.length <= 1) {
         return HttpResponse.json(safeError('last_credential', 'Last credential.'), { status: 409 });
+      }
+      if (purpose === 'link' && reauth) {
+        reauth = false;
+        return HttpResponse.json(safeError('reauth_required', 'Sign in again.'), { status: 403 });
       }
       return HttpResponse.json(nostrChallenge(purpose === 'unlink' ? 'unlink' : 'link'));
     }),
@@ -84,6 +94,30 @@ describe('More: sign-in methods', () => {
     expect(calls.starts).toEqual([{ body: { purpose: 'link' }, csrf: fixture('session').csrf_token }]);
     expect(signEvent).toHaveBeenCalledWith(nostrChallenge('link').event);
     expect(view.router.state.location.pathname).toBe('/more');
+  });
+
+  it('proves the current method before linking when the server asks for it', async () => {
+    const signEvent = installNostrExtension(1);
+    const calls = methodsServer(
+      nostrIdentities([], 1),
+      () => HttpResponse.json({ identity: nostrIdentity(1) }),
+      { reauthOnce: true },
+    );
+    server.use(
+      http.post(api('/auth/passkey/start'), () => HttpResponse.json(fixture('login_challenge'))),
+      http.post(api('/auth/passkey/finish'), () => HttpResponse.json(fixture('session'))),
+    );
+    webauthn.startAuthentication.mockResolvedValue(assertion);
+
+    const view = renderApp('/more');
+    const region = await section();
+    await view.user.click(within(region).getByRole('button', { name: 'Link Nostr' }));
+
+    await waitFor(() => expect(calls.starts).toHaveLength(2));
+    expect(await within(region).findByTitle(NOSTR_KEYS[1].npub)).toBeInTheDocument();
+    expect(webauthn.startAuthentication).toHaveBeenCalledTimes(1);
+    expect(calls.starts.map((call) => (call.body as { purpose: string }).purpose)).toEqual(['link', 'link']);
+    expect(signEvent).toHaveBeenCalledTimes(1);
   });
 
   it('removes a key only after the confirmation, then ends this session', async () => {
