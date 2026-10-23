@@ -80,6 +80,7 @@ const RailFoot = styled.div(({ theme }) => ({
 
 const FootRow = styled.div(({ theme }) => ({
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: theme.space[2],
@@ -102,6 +103,7 @@ const DesktopMain = styled.main(({ theme }) => ({
 
 const PhoneHeader = styled.header(({ theme }) => ({
   display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
   gap: theme.space[2],
   paddingBlock: theme.space[3],
   paddingInline: theme.space[4],
@@ -110,10 +112,12 @@ const PhoneHeader = styled.header(({ theme }) => ({
 }));
 
 const PhoneHeaderRow = styled.div(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  display: 'flex',
+  minInlineSize: 0,
+  flexWrap: 'wrap',
   alignItems: 'center',
   gap: theme.space[2],
+  '& > :first-child': { flex: '1 1 max-content', inlineSize: 'auto' },
 }));
 
 const PhoneMain = styled.main(({ theme }) => ({
@@ -123,6 +127,9 @@ const PhoneMain = styled.main(({ theme }) => ({
   paddingInline: theme.space[4],
   paddingBlockEnd: `calc(${TAB_BAR_HEIGHT} + ${TAB_BAR_CLEARANCE} + env(safe-area-inset-bottom))`,
   '&:focus': { outline: 'none' },
+  '& :is(a, button, input, select, textarea, [tabindex])': {
+    scrollMarginBlockEnd: `calc(${TAB_BAR_HEIGHT} + ${TAB_BAR_CLEARANCE} + env(safe-area-inset-bottom))`,
+  },
 }));
 
 /** The authenticated workbench: desktop sidebar + status strip, or phone header + bottom tabs. */
@@ -176,7 +183,15 @@ export function AppShell() {
             </PhoneHeaderRow>
             {node && <StatusFacts node={node} compact />}
           </PhoneHeader>
-          <PhoneMain id={CONTENT_ID} tabIndex={-1}>
+          <PhoneMain
+            id={CONTENT_ID}
+            tabIndex={-1}
+            onFocus={(event) => {
+              if (event.target !== event.currentTarget && event.target.matches(':focus-visible')) {
+                event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+              }
+            }}
+          >
             <GroupLinks />
             {content}
           </PhoneMain>

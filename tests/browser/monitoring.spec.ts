@@ -1,20 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { installMonitoringApi, MONITORING_CURSOR } from './monitoring-api';
 import { fixture } from './synthetic-api';
-
-async function doubleText(page: Page) {
-  await page.evaluate(() => {
-    const sizes = [...document.body.querySelectorAll<HTMLElement>('*')].map((element) => ({
-      element,
-      font: parseFloat(getComputedStyle(element).fontSize),
-      line: parseFloat(getComputedStyle(element).lineHeight),
-    }));
-    for (const { element, font, line } of sizes) {
-      element.style.setProperty('font-size', `${font * 2}px`, 'important');
-      if (Number.isFinite(line)) element.style.setProperty('line-height', `${line * 2}px`, 'important');
-    }
-  });
-}
+import { doubleText } from './text-size';
 
 async function expectTouchButton(page: Page, button: Locator) {
   await expect(button).toBeVisible();

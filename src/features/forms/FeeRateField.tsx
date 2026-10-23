@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { feeEstimatesQueryOptions } from '../../api/node-queries';
 import type { AmountBounds, FeeEstimates } from '../../api/types';
 import { ExactNumberField } from '../../components/ExactNumberField';
+import { wrappingControlText } from '../../components/control-styles';
 import { formatInteger, isWithin, parseWireDecimal } from '../../lib/money';
 import { formatClockTime } from '../../lib/time';
 import { useControlSize } from '../shell/use-shell-layout';
@@ -45,6 +46,7 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
                 key={key}
                 size={size}
                 variant="outline"
+                sx={wrappingControlText(size)}
                 disabled={!allowed}
                 title={allowed ? undefined : "Outside this node's fee-rate limits."}
                 onClick={() => onChange(estimate.fee_rate_sat_vbyte)}

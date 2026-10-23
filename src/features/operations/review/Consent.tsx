@@ -7,6 +7,8 @@ import { NETWORK_LABEL } from '../../nodes/labels';
 
 const Block = styled.div(({ theme }) => ({
   display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  minInlineSize: 0,
   gap: theme.space[3],
   padding: theme.space[3],
   backgroundColor: theme.color.surface,
@@ -61,7 +63,7 @@ const Qualifier = styled.span(({ theme }) => ({
   color: theme.color.accentText,
 }));
 
-const Value = styled.dd({ margin: 0, display: 'grid', justifyItems: 'end', textAlign: 'end' });
+const Value = styled.dd({ margin: 0, minInlineSize: 0, overflowWrap: 'anywhere', display: 'grid', justifyItems: 'end', textAlign: 'end' });
 
 /** "at most", "estimate" and similar qualifiers inside a value. */
 export const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontWeight: theme.fontWeight.regular }));
