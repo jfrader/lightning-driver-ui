@@ -15,11 +15,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   ui:
     runs-on: [self-hosted, mifulbo-ci]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -44,11 +50,14 @@ jobs:
       E2E_DATA: ${{ runner.temp }}/lightning-driver-e2e
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v5
         with:
           repository: jfrader/lightning-driver
           path: backend
           token: ${{ secrets.LIGHTNING_DRIVER_CHECKOUT_TOKEN }}
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 24
