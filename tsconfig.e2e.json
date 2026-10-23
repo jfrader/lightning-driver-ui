@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["playwright.config.ts", "tests/browser"]
+  "include": ["playwright.config.ts", "playwright.screenshots.config.ts", "tests/browser", "tests/screenshots"]
 }
