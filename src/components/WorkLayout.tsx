@@ -11,9 +11,9 @@ const Grid = styled.div<{ measure: string }>(({ theme, measure }) => ({
 
 const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
   display: 'grid',
+  gridTemplateColumns: `minmax(0, ${measure})`,
   gap: theme.space[8],
   minInlineSize: 0,
-  maxInlineSize: measure === '1fr' ? 'none' : measure,
 }));
 
 const Aside = styled.aside(({ theme }) => ({
