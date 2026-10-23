@@ -2,7 +2,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { installNostrSigner } from '../browser/nostr-signer';
 
-const TOKEN = process.env.E2E_TOKEN;
 const LND = process.env.E2E_LND_PUBKEY;
 const CLN = process.env.E2E_CLN_PUBKEY;
 const PROJECT = process.env.E2E_PROJECT;
@@ -11,6 +10,15 @@ const DATA = process.env.E2E_DATA;
 const NODE_CLN = 'Polar CLN';
 const NODE_GRPC = 'Polar LND gRPC';
 const NODE_REST = 'Polar LND REST';
+
+function enrollmentToken() {
+  const binary = process.env.E2E_BACKEND_BINARY;
+  const config = process.env.E2E_CONFIG;
+  if (!binary || !config) throw new Error('Run this suite through npm run test:e2e');
+  const token = execFileSync(binary, ['auth', 'enrollment', '--config', config], { encoding: 'utf8' }).trim();
+  expect(token).toMatch(/^[0-9a-f]{64}$/);
+  return token;
+}
 
 function compose(...args: string[]) {
   return execFileSync(
@@ -132,9 +140,107 @@ async function mineUntil(page: Page, node: string, kind: string, wanted: string)
   return latest!;
 }
 
+test('real passkey regtest journey: enrollment, rejected credentials, login and reload', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('WebAuthn.enable');
+  const { authenticatorId } = await cdp.send('WebAuthn.addVirtualAuthenticator', {
+    options: {
+      protocol: 'ctap2',
+      transport: 'internal',
+      hasResidentKey: true,
+      hasUserVerification: true,
+      isUserVerified: true,
+      automaticPresenceSimulation: true,
+    },
+  });
+  try {
+    const token = enrollmentToken();
+    await page.goto('/login');
+    await page.getByLabel('Enrollment token').fill(token);
+    await page.getByRole('radio', { name: 'Passkey', exact: true }).click();
+    const enrolled = page.waitForResponse((response) => response.url().endsWith('/auth/enrollment/finish'));
+    await page.getByRole('button', { name: 'Create passkey', exact: true }).click();
+    expect((await enrolled).status()).toBe(200);
+    await expect(page).not.toHaveURL(/\/login/);
+    const session = () => page.evaluate(async () => {
+      const response = await fetch('/api/v1/session');
+      return { status: response.status, body: await response.json() };
+    });
+    expect((await session()).body.auth_method).toBe('passkey');
+    const { credentials } = await cdp.send('WebAuthn.getCredentials', { authenticatorId });
+    expect(credentials).toHaveLength(1);
+    expect(credentials[0].rpId).toBe('localhost');
+
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(page).toHaveURL(/\/login/);
+    expect((await session()).status).toBe(401);
+
+    const authRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes('/auth/')) authRequests.push(new URL(request.url()).pathname);
+    });
+    await page.evaluate(() => {
+      Object.defineProperty(navigator.credentials, 'get', {
+        configurable: true,
+        value: () => Promise.reject(new DOMException('Canceled by test', 'NotAllowedError')),
+      });
+    });
+    await page.getByRole('button', { name: 'Continue with passkey', exact: true }).click();
+    await expect(page.getByText('Passkey request canceled.', { exact: true })).toBeVisible();
+    expect(authRequests).toEqual(['/api/v1/auth/passkey/start']);
+    expect((await session()).status).toBe(401);
+    await expect(page).toHaveURL(/\/login/);
+    await page.evaluate(() => Reflect.deleteProperty(navigator.credentials, 'get'));
+
+    await cdp.send('WebAuthn.setResponseOverrideBits', { authenticatorId, isBogusSignature: true });
+    const rejected = page.waitForResponse((response) => response.url().endsWith('/auth/passkey/finish'));
+    await page.getByRole('button', { name: 'Continue with passkey', exact: true }).click();
+    const rejection = await rejected;
+    expect(rejection.status()).toBeGreaterThanOrEqual(400);
+    expect((await rejection.json()).error.code).toBe('authentication_failed');
+    await expect(page.getByText('This passkey is not enrolled on this server.', { exact: true })).toBeVisible();
+    expect((await session()).status).toBe(401);
+    await expect(page).toHaveURL(/\/login/);
+    expect(authRequests).not.toContain('/api/v1/auth/nostr/start');
+
+    await cdp.send('WebAuthn.setResponseOverrideBits', { authenticatorId, isBogusSignature: false });
+    const signedIn = page.waitForResponse((response) => response.url().endsWith('/auth/passkey/finish'));
+    await page.getByRole('button', { name: 'Continue with passkey', exact: true }).click();
+    expect((await signedIn).status()).toBe(200);
+    await expect(page).not.toHaveURL(/\/login/);
+    expect((await session()).body.auth_method).toBe('passkey');
+    expect(authRequests.filter((url) => url.includes('/enrollment/'))).toEqual([]);
+    const afterLogin = await cdp.send('WebAuthn.getCredentials', { authenticatorId });
+    expect(afterLogin.credentials.map((credential) => credential.credentialId)).toEqual([credentials[0].credentialId]);
+    expect(afterLogin.credentials[0].signCount).toBeGreaterThan(credentials[0].signCount);
+
+    const overview = async (navigate: () => Promise<unknown>) => {
+      const balances = page.waitForResponse((response) => response.url().endsWith('/nodes/lnd-grpc/balances'));
+      await navigate();
+      expect((await balances).status()).toBe(200);
+      await expect(page.getByRole('heading', { name: NODE_GRPC, exact: true })).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Balances', exact: true })).toBeVisible();
+    };
+    await overview(() => page.goto('/nodes/lnd-grpc'));
+    const beforeReload = await session();
+    expect(beforeReload.status).toBe(200);
+    await overview(() => page.reload());
+    await expect(page).toHaveURL(/\/nodes\/lnd-grpc$/);
+    const afterReload = await session();
+    expect(afterReload.status).toBe(200);
+    expect(afterReload.body.auth_method).toBe('passkey');
+    expect(afterReload.body.csrf_token).toBe(beforeReload.body.csrf_token);
+    expect(await page.evaluate(async () => (await fetch('/api/v1/nodes/lnd-grpc/info')).status)).toBe(200);
+  } finally {
+    await cdp.send('WebAuthn.removeVirtualAuthenticator', { authenticatorId });
+    await cdp.detach();
+  }
+});
+
 test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, close', async ({ page }) => {
   test.setTimeout(900_000);
-  expect(TOKEN).toMatch(/^[0-9a-f]{64}$/);
+  const token = enrollmentToken();
   expect(LND).toMatch(/^[0-9a-f]{66}$/);
   expect(CLN).toMatch(/^[0-9a-f]{66}$/);
 
@@ -144,7 +250,10 @@ test('real Polar regtest journey: reads, invoice, channel, payment, on-chain, cl
   const signer = await installNostrSigner(page);
 
   await page.goto('/login');
-  await page.getByLabel('Enrollment token').fill(TOKEN!);
+  const enroll = page.getByRole('button', { name: 'Enroll a sign-in method', exact: true });
+  await expect(enroll.or(page.getByLabel('Enrollment token'))).toBeVisible();
+  if (await enroll.isVisible()) await enroll.click();
+  await page.getByLabel('Enrollment token').fill(token);
   await page.getByRole('radio', { name: 'Nostr', exact: true }).click();
   await page.getByRole('button', { name: 'Sign with Nostr', exact: true }).click();
   await expect(page).not.toHaveURL(/\/login/);
