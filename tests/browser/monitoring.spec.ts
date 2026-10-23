@@ -1,6 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { installMonitoringApi } from './monitoring-api';
 import { fixture } from './synthetic-api';
+
+async function doubleText(page: Page) {
+  await page.evaluate(() => {
+    const sizes = [...document.body.querySelectorAll<HTMLElement>('*')].map((element) => ({
+      element,
+      font: parseFloat(getComputedStyle(element).fontSize),
+      line: parseFloat(getComputedStyle(element).lineHeight),
+    }));
+    for (const { element, font, line } of sizes) {
+      element.style.setProperty('font-size', `${font * 2}px`, 'important');
+      if (Number.isFinite(line)) element.style.setProperty('line-height', `${line * 2}px`, 'important');
+    }
+  });
+}
 
 test('Bitcoin workspace has monitoring sections, peers and no Lightning actions', async ({ page }) => {
   const requests: string[] = [];
@@ -121,6 +135,28 @@ test('offline Bitcoin retains configured peer navigation', async ({ page }) => {
   await expect(nav.getByRole('link', { name: 'Peers', exact: true })).toBeVisible();
 });
 
+test('Lightning overview actions and reads agree with unavailable surfaces', async ({ page }) => {
+  await installMonitoringApi(page, { restricted: true });
+  const reads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/nodes/lnd-lab/')) reads.push(new URL(request.url()).pathname);
+  });
+  await page.goto('/nodes/lnd-lab');
+  await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Pay invoice', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Receive', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Recent payments', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Go to' });
+  for (const name of ['Payments', 'Pay invoice…', 'Unresolved operations']) {
+    await expect(palette.getByRole('option', { name, exact: true })).toHaveCount(0);
+  }
+  await page.keyboard.press('Escape');
+  await page.goto('/nodes/lnd-lab/payments');
+  await expect(page.getByText('Not available for this node', { exact: true })).toBeVisible();
+  expect(reads.filter((path) => /\/(payments|operations)$/.test(path))).toEqual([]);
+});
+
 test('palette agrees with Bitcoin surfaces and phone More preserves the peer tab', async ({ page }) => {
   await installMonitoringApi(page);
   await page.goto('/nodes/bitcoin-lab');
@@ -199,17 +235,7 @@ test('@layout phone tab text fits its targets at 200% text size', async ({ page 
   await installMonitoringApi(page);
   await page.goto('/nodes/bitcoin-lab');
   await expect(page.getByRole('heading', { name: 'Mempool', exact: true })).toBeVisible();
-  await page.evaluate(() => {
-    const sizes = [...document.body.querySelectorAll<HTMLElement>('*')].map((element) => ({
-      element,
-      font: parseFloat(getComputedStyle(element).fontSize),
-      line: parseFloat(getComputedStyle(element).lineHeight),
-    }));
-    for (const { element, font, line } of sizes) {
-      element.style.setProperty('font-size', `${font * 2}px`, 'important');
-      if (Number.isFinite(line)) element.style.setProperty('line-height', `${line * 2}px`, 'important');
-    }
-  });
+  await doubleText(page);
   const labels = await page
     .getByRole('navigation', { name: 'Sections' })
     .getByRole('link')
@@ -240,4 +266,28 @@ test('@layout phone tab text fits its targets at 200% text size', async ({ page 
   const observed = await page.getByRole('main').getByText('Observed 1 minute ago', { exact: true }).boundingBox();
   const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
   expect(observed && tabs && observed.y + observed.height <= tabs.y - 12).toBe(true);
+});
+
+test('@layout enlarged Bitcoin peer tables scroll inside the workspace', async ({ page }) => {
+  await installMonitoringApi(page, { long: true });
+  for (const width of [768, 1024]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/nodes/bitcoin-lab/peers?selected=1');
+    await expect(page.getByRole('heading', { name: 'Peer', exact: true })).toBeVisible();
+    await doubleText(page);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
+    ).toBeLessThanOrEqual(1);
+    const scrollsInside = await page.getByRole('table', { name: 'Bitcoin peers' }).evaluate((table) => {
+      for (let ancestor = table.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        if (
+          ['auto', 'scroll'].includes(getComputedStyle(ancestor).overflowX) &&
+          ancestor.scrollWidth > ancestor.clientWidth
+        )
+          return true;
+      }
+      return false;
+    });
+    expect(scrollsInside).toBe(true);
+  }
 });

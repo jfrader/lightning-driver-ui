@@ -20,6 +20,17 @@ export const NODE_DESTINATIONS = {
 
 export type NodeDestination = keyof typeof NODE_DESTINATIONS;
 
+export const ACTION_SURFACES: Record<CapabilityKey, NodeDestination> = {
+  pay_invoice: 'payments',
+  create_invoice: 'invoices',
+  new_address: 'onchain',
+  send_onchain: 'onchain',
+  connect_peer: 'peers',
+  disconnect_peer: 'peers',
+  open_channel: 'channels',
+  close_channel: 'channels',
+};
+
 export type PhoneTab = 'overview' | 'wallet' | 'channels' | 'peers' | 'more';
 
 export interface DestinationGroup {

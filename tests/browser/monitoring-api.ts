@@ -10,6 +10,7 @@ export interface MonitoringOptions {
   error?: boolean;
   long?: boolean;
   truncated?: boolean;
+  restricted?: boolean;
 }
 
 export async function installMonitoringApi(page: Page, options: MonitoringOptions = {}) {
@@ -18,6 +19,12 @@ export async function installMonitoringApi(page: Page, options: MonitoringOption
   const lnd = fixture('node_lnd');
   const enabled = { enabled: true, reason: null };
   const towerAvailability = options.denied ? { enabled: false, reason: 'permission_denied' } : enabled;
+  const restrictedReads = options.restricted
+    ? {
+        payments: { enabled: false, reason: 'permission_denied' },
+        operations: { enabled: false, reason: 'permission_denied' },
+      }
+    : {};
   const nodes = [
     {
       ...bitcoin,
@@ -27,6 +34,7 @@ export async function installMonitoringApi(page: Page, options: MonitoringOption
       ...lnd,
       read_availability: {
         ...lnd.read_availability,
+        ...restrictedReads,
         watchtower_client: towerAvailability,
         watchtower_server: towerAvailability,
       },

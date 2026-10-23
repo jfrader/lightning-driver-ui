@@ -12,6 +12,7 @@ import { useNow } from '../../lib/use-now';
 import { NotReported } from '../display/NotReported';
 import { StateWord } from '../display/StateWord';
 import { BACKEND_LABEL, NETWORK_LABEL, NODE_STATUS, capabilitySummary, syncLabel, accessLabel } from './labels';
+import { surfacesFor } from '../shell/nav-model';
 
 const NodeName = styled.span(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
 
@@ -74,7 +75,7 @@ function Observed({ node, now }: { node: NodeSummary; now: number }) {
 function Unresolved({ node }: { node: NodeSummary }) {
   if (node.kind === 'bitcoin') return <>—</>;
   const count = parseWireDecimal(node.unresolved_operation_count);
-  if (count === 0n) return <Muted>0</Muted>;
+  if (count === 0n || !surfacesFor(node).includes('operations')) return <Muted>{formatInteger(count)}</Muted>;
   return (
     <TextLink to="/nodes/$nodeId/operations" params={{ nodeId: node.id }} search={{ state: 'nonterminal' }}>
       <Count>{formatInteger(count)}</Count> unresolved

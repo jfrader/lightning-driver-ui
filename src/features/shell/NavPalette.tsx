@@ -5,7 +5,7 @@ import { fleetQueryOptions } from '../../api/node-queries';
 import { keysOf } from '../../lib/guards';
 import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
-import { FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, surfacesFor, destinationOf } from './nav-model';
+import { ACTION_SURFACES, FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, surfacesFor } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
 interface NavPaletteProps {
@@ -50,9 +50,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
   }
   if (nodeId !== null && node) {
     for (const form of FORM_DESTINATIONS.filter(
-      (form) =>
-        node.kind === 'lightning' &&
-        surfacesFor(node).includes(destinationOf(form.to.replace('$nodeId', nodeId)) ?? 'overview'),
+      (form) => node.kind === 'lightning' && surfacesFor(node).includes(ACTION_SURFACES[form.capability]),
     )) {
       items.push({
         value: `form-${form.capability}`,
