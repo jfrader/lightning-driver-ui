@@ -76,18 +76,30 @@ export interface RecordedRequest {
 const json = (route: Route, body: unknown, status = 200) =>
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
+/** The browser test preview server; the screenshot run serves its own build and passes its origin. */
+export const APP_ORIGIN = 'http://127.0.0.1:4317';
+
+export interface SyntheticOptions {
+  /** Screenshot runs replace the info fixture's sentinel alias and version with demo values. */
+  nodeInfo?: Partial<Fixtures['node_info']['value']>;
+}
+
 /**
  * Serves the frozen contract fixtures at the browser's network boundary and records every
  * non-GET request. Anything outside the app origin is aborted, so no external host is reached.
  */
-export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]> {
+export async function installSyntheticApi(
+  page: Page,
+  appOrigin = APP_ORIGIN,
+  options: SyntheticOptions = {},
+): Promise<RecordedRequest[]> {
   const mutations: RecordedRequest[] = [];
   // Counts the one unresolved operation the journal list serves.
   const node = { ...fixture('node_lnd'), unresolved_operation_count: '1' };
   const page$ = (nodeId: string) => ({ node_id: nodeId, network: node.network, observed_at: '2026-10-21T12:00:00Z' });
 
   await page.clock.setFixedTime(FIXTURE_NOW);
-  await page.context().route(/^(?!http:\/\/127\.0\.0\.1:4317\/)/, (route) => route.abort());
+  await page.context().route((url) => !url.href.startsWith(`${appOrigin}/`), (route) => route.abort());
   await page.route('**/api/v1/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname.replace('/api/v1', '');
@@ -103,7 +115,7 @@ export async function installSyntheticApi(page: Page): Promise<RecordedRequest[]
     if (path === '/nodes') return json(route, { ...fixture('nodes_page'), items: [node], next_cursor: null, truncated: false });
     if (resource !== 'nodes' || nodeId !== node.id) return json(route, { error: { code: 'not_found', message: 'Not found.', request_id: '00000000-0000-4000-8000-0000000009fe', operation_id: null, outcome: 'not_applicable' } }, 404);
     if (sub === undefined) return json(route, node);
-    if (sub === 'info') return json(route, { ...fixture('node_info'), node });
+    if (sub === 'info') return json(route, { ...fixture('node_info'), ...options.nodeInfo, node });
     if (sub === 'balances') return json(route, fixture('balances'));
     if (sub === 'policy') return json(route, fixture('node_policy'));
     if (sub === 'fee-estimates') return json(route, fixture('fee_estimates'));

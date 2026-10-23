@@ -8,6 +8,18 @@ TanStack Query. The Rust API server is authoritative: it holds node credentials,
 policy, journals every operation and performs all node actions. The browser only talks to
 `/api/v1` on its own origin.
 
+![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
+
+## Screenshots
+
+| Channels and the channel inspector | Reviewing a payment |
+| --- | --- |
+| ![Channels with one selected, the inspector showing capacity, balances and state](docs/screenshots/channels.png) | ![A payment review with its fee cap, recipient and the passkey confirmation](docs/screenshots/review.png) |
+
+<img src="docs/screenshots/phone-channels.png" alt="Channels as cards on a phone" width="280">
+
+`npm run screenshots` rewrites them.
+
 ## Setup
 
 Requires Node 24 and npm.
@@ -51,13 +63,15 @@ run `npm run api:generate`.
 | `npm run budget` | Builds and fails if the first-load JS or the lazy chart chunk exceeds `bundle-budget.json` |
 | `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build, including 44 px targets, forced colors, 200% zoom, reduced motion and the phone tab-bar clearance |
 | `npm run verify` | All of the above in order |
+| `npm run screenshots` | Rewrites the README images in `docs/screenshots` from a fresh production build at 1440×1000 and 390×844; not part of `verify`, because it writes files |
 
 `test:browser` needs a Chromium for Playwright: either `npx playwright install chromium`, or an
 existing binary through `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. It starts and stops
-its own preview server on `127.0.0.1:4317`.
+its own preview server on `127.0.0.1:4317`; `screenshots` uses its own on `127.0.0.1:4318`.
 
 Tests serve the frozen contract fixtures at the network boundary (MSW in Vitest, `page.route` in
-Playwright). They do not exercise the real backend, real passkeys or real nodes.
+Playwright). They do not exercise the real backend, real passkeys or real nodes; the README
+screenshots are served the same fixtures.
 
 ## Amount entry
 
