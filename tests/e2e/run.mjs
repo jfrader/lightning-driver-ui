@@ -28,7 +28,7 @@ const PROJECT = 'lightning-driver-e2e';
 const BACKEND = process.env.LIGHTNING_DRIVER_BACKEND;
 const DATA = process.env.E2E_DATA ?? path.join(os.tmpdir(), `lightning-driver-e2e-${Date.now()}`);
 const KEEP = process.env.E2E_KEEP === '1';
-const API_PORT = 8080;
+const API_PORT = Number(process.env.E2E_API_PORT ?? 8080);
 const UI_PORT = 5174;
 const env = { ...process.env, E2E_DATA: DATA };
 const children = [];
@@ -207,6 +207,7 @@ async function main() {
   writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
 
   const uiLog = path.join(DATA, 'ui.log');
+  env.LIGHTNING_DRIVER_DEV_API_ORIGIN = `http://127.0.0.1:${API_PORT}`;
   start('ui', process.execPath, ['node_modules/vite/bin/vite.js', '--host', 'localhost', '--port', String(UI_PORT), '--strictPort'], UI_ROOT, uiLog);
   await waitFor('ui', async () => (await fetch(`http://localhost:${UI_PORT}/`, { signal: AbortSignal.timeout(1000) })).status === 200);
 
@@ -216,16 +217,13 @@ async function main() {
     const response = await fetch(`http://localhost:${UI_PORT}/api/v1/auth/bootstrap`, { signal: AbortSignal.timeout(1000) });
     return response.status === 200;
   });
-  const token = execFileSync(path.join(BACKEND, 'target/release/api-server'),
-    ['auth', 'enrollment', '--config', configPath], { encoding: 'utf8' }).trim();
-  if (!/^[0-9a-f]{64}$/.test(token)) throw new Error('enrollment token was not issued');
-
-  const test = spawn('npx', ['playwright', 'test', '--config', 'tests/e2e/playwright.config.ts'], {
+  const test = spawn('npx', ['playwright', 'test', '--config', 'tests/e2e/playwright.config.ts', ...process.argv.slice(2)], {
     cwd: UI_ROOT,
     env: {
       ...env,
       E2E_BASE_URL: `http://localhost:${UI_PORT}`,
-      E2E_TOKEN: token,
+      E2E_BACKEND_BINARY: path.join(BACKEND, 'target/release/api-server'),
+      E2E_CONFIG: configPath,
       E2E_PROJECT: PROJECT,
       E2E_COMPOSE_FILE: COMPOSE,
       E2E_DATA: DATA,

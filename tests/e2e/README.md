@@ -5,19 +5,36 @@ containers. It is not part of `npm run verify`.
 
 ```sh
 LIGHTNING_DRIVER_BACKEND=/absolute/path/to/lightning-driver npm run test:e2e
+# Passkey scenario only (also starts and tears down the regtest stack):
+LIGHTNING_DRIVER_BACKEND=/absolute/path/to/lightning-driver npm run test:e2e:passkey
 ```
 
-Requirements: Docker, `openssl`, `/usr/bin/chromium`, and a release
+Requirements: Docker with Compose, `openssl`, Chromium installed by
+`npx playwright install chromium` (or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`), and a release
 `api-server` already built at `$LIGHTNING_DRIVER_BACKEND/target/release/api-server`.
+Build it from the backend checkout with `CARGO_BUILD_JOBS=2 cargo build --release -p api-server`.
 The runner generates a test CA, starts bitcoind + LND + CLN, funds them, issues
-an enrollment token, starts the API and Vite, then runs
-`tests/e2e/real.spec.ts`. All data is disposable; `E2E_KEEP=1` keeps it on
-failure.
+a fresh host enrollment token per scenario using `api-server auth enrollment --config …`,
+starts the API and Vite, then runs both scenarios in `tests/e2e/real.spec.ts`.
+All data is disposable; failures always keep their data and print its location.
+`E2E_KEEP=1` also keeps data on success. Enrollment tokens are never logged.
+The API defaults to port 8080; set `E2E_API_PORT` if another local API uses it.
+The UI uses port 5174. Both ports must be free.
 
-The journey covers every read route on LND gRPC, LND REST and CLN REST; the
+The first scenario uses Chromium's CDP WebAuthn virtual authenticator (CTAP2,
+internal transport, resident-key support and user verification). It enrolls through
+the real `/login` UI, signs out, signs back in with the same credential without
+re-enrollment, reads the LND node overview and reloads it with the same session.
+No WebAuthn or API response is stubbed on the successful path. Negative checks
+reject `navigator.credentials.get` to simulate cancellation and ask the virtual
+authenticator for a bogus assertion signature: neither may establish a session
+or silently fall back to Nostr. The Rust API must reject the bogus signature with
+`authentication_failed`, and the UI must show the failed sign-in.
+
+The second, Nostr journey covers every read route on LND gRPC, LND REST and CLN REST; the
 eight mutation kinds through LND gRPC and LND REST; a real CLN invoice;
 `fundchannel` and `xpay` through the CLN adapter; a cooperative CLN `close`; and
-two channel open/close cycles. Authentication uses an injected NIP-07 signer; no
+two channel open/close cycles. Its authentication uses an injected NIP-07 signer; no
 real identity or credentials are involved.
 
 `polarlightning/clightning:25.12` cannot fund a channel in this stack: its
@@ -56,4 +73,3 @@ The real e2e is a manual `workflow_dispatch` job (`e2e: true`); it needs a runne
 with Docker and a `LIGHTNING_DRIVER_CHECKOUT_TOKEN` secret that can read
 `jfrader/lightning-driver`, because the backend checkout is a second repository.
 Image digests are pinned in `tests/e2e/stack/docker-compose.yml`.
-
