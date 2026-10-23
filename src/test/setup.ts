@@ -31,6 +31,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   clearSessionCsrfToken();
+  delete window.nostr;
   vi.useRealTimers();
 });
 

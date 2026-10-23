@@ -22,7 +22,7 @@ const PHONE = { width: 390, height: 844 };
 const appOrigin = () => test.info().project.use.baseURL as string;
 
 test.beforeEach(async ({ page }) => {
-  await installSyntheticApi(page, appOrigin(), DEMO);
+  await installSyntheticApi(page, { appOrigin: appOrigin(), ...DEMO });
 });
 
 async function capture(page: Page, path: string, name: string) {

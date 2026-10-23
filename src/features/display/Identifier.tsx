@@ -32,18 +32,26 @@ interface IdentifierProps {
   prominent?: boolean;
   /** Group hex keys, hashes and addresses; a value with its own structure (`host:port`) stays whole. */
   grouped?: boolean;
+  /** Show head…tail only (full value in the title); copy still takes the whole value. */
+  truncated?: boolean;
+}
+
+function identifierText(value: string, grouped: boolean, truncated: boolean) {
+  if (truncated) return <Whole>{shortForm(value)}</Whole>;
+  if (!grouped) return <Whole>{value}</Whole>;
+  return (value.match(GROUPS) ?? []).map((group, index) => <span key={index}>{group}</span>);
 }
 
 /**
  * A full identifier in 6-character groups that wrap only between groups, with a copy button.
  * The groups are adjacent spans, so selecting the text still copies the exact string.
  */
-export function Identifier({ value, label, prominent = false, grouped = true }: IdentifierProps) {
+export function Identifier({ value, label, prominent = false, grouped = true, truncated = false }: IdentifierProps) {
   const size = useControlSize();
   return (
     <Row>
       <Groups prominent={prominent} title={value}>
-        {grouped ? (value.match(GROUPS) ?? []).map((group, index) => <span key={index}>{group}</span>) : <Whole>{value}</Whole>}
+        {identifierText(value, grouped, truncated)}
       </Groups>
       <CopyButton
         iconOnly
@@ -70,8 +78,11 @@ const Short = styled.span(({ theme }) => ({
 const SHORT_HEAD = 8;
 const SHORT_TAIL = 6;
 
+function shortForm(value: string): string {
+  return value.length > SHORT_HEAD + SHORT_TAIL ? `${value.slice(0, SHORT_HEAD)}…${value.slice(-SHORT_TAIL)}` : value;
+}
+
 /** List-cell form of an identifier: head…tail, full value in the title. Copy lives in the inspector. */
 export function ShortIdentifier({ value }: { value: string }) {
-  const short = value.length > SHORT_HEAD + SHORT_TAIL ? `${value.slice(0, SHORT_HEAD)}…${value.slice(-SHORT_TAIL)}` : value;
-  return <Short title={value}>{short}</Short>;
+  return <Short title={value}>{shortForm(value)}</Short>;
 }

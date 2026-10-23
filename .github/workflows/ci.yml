@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      e2e:
+        description: Run the real regtest e2e (needs Docker on the runner)
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify
+        run: npm run verify
+
+  real-e2e:
+    if: github.event_name == 'workflow_dispatch' && inputs.e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: jfrader/lightning-driver
+          path: backend
+          token: ${{ secrets.LIGHTNING_DRIVER_CHECKOUT_TOKEN }}
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Docker
+        run: docker info
+      - run: npm ci
+      - name: Build the API
+        run: cargo build --release -p api-server
+        working-directory: backend
+      - name: Real regtest e2e
+        env:
+          LIGHTNING_DRIVER_BACKEND: ${{ github.workspace }}/backend
+          E2E_DATA: ${{ runner.temp }}/lightning-driver-e2e
+        run: npm run test:e2e

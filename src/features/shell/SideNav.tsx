@@ -3,7 +3,8 @@ import { styled, type NavigationGroupRecord } from '@jfrader/ui';
 import { useRouter } from '@tanstack/react-router';
 import { RouterNavigation } from '../../components/RouterNavigation';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
-import { DESTINATION_GROUPS, NODE_DESTINATIONS, type NodeDestination } from './nav-model';
+import { keysOf } from '../../lib/guards';
+import { DESTINATION_GROUPS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, type NodeDestination } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
 const Label = styled.span(({ theme }) => ({
@@ -21,7 +22,7 @@ const Count = styled.span(({ theme }) => ({
   color: theme.color.warning,
 }));
 
-/** Grouped node sections, then Fleet. Without a node in the URL only Fleet is a destination. */
+/** Grouped node sections, then global destinations. */
 export function SideNav() {
   const router = useRouter();
   const { nodeId, node, destination, pathname } = useShellNode();
@@ -51,8 +52,17 @@ export function SideNav() {
             active: key === destination,
           })),
         }));
-  const fleetHref = router.buildLocation({ to: '/fleet' }).href;
-  const groups = [...nodeGroups, { key: 'fleet', items: [{ key: 'fleet', label: 'Fleet', href: fleetHref, active: pathname === fleetHref }] }];
+  const groups = [
+    ...nodeGroups,
+    {
+      key: 'global',
+      items: keysOf(GLOBAL_DESTINATIONS).map((key) => {
+        const { label, to } = GLOBAL_DESTINATIONS[key];
+        const href = router.buildLocation({ to }).href;
+        return { key, label, href, active: pathname === href };
+      }),
+    },
+  ];
 
   return <RouterNavigation label="Node sections" groups={groups} />;
 }

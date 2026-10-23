@@ -1,22 +1,13 @@
 import { Button } from '@jfrader/ui';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { clearSessionCsrfToken } from '../../api/csrf';
+import { useMutation } from '@tanstack/react-query';
 import { useControlSize } from '../shell/use-shell-layout';
 import { logout } from './api';
+import { useSignedOut } from './use-signed-out';
 
 export function LogoutButton({ variant = 'ghost' }: { variant?: 'ghost' | 'outline' }) {
   const size = useControlSize();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const mutation = useMutation({
-    mutationFn: logout,
-    onSettled: () => {
-      clearSessionCsrfToken();
-      queryClient.clear();
-      void navigate({ to: '/login', search: { notice: 'signed_out' }, replace: true });
-    },
-  });
+  const signedOut = useSignedOut();
+  const mutation = useMutation({ mutationFn: logout, onSettled: signedOut });
   return (
     <Button size={size} variant={variant} loading={mutation.isPending} onClick={() => mutation.mutate()}>
       Sign out

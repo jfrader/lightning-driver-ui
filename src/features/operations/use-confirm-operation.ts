@@ -5,36 +5,82 @@ import { ContractError } from '../../api/errors';
 import { nodeKeys } from '../../api/node-queries';
 import {
   confirmOperation,
+  finishNostrAuthorization,
   finishOperationAuthorization,
+  startNostrAuthorization,
   startOperationAuthorization,
 } from '../../api/operation-api';
-import type { Operation } from '../../api/types';
+import type {
+  AuthMethod,
+  AuthenticationChallenge,
+  NostrChallenge,
+  Operation,
+  OperationAuthorization,
+} from '../../api/types';
 import { throwIfAbandoned, useAttempt, type Attempt } from '../../lib/use-attempt';
+import { signNostrEvent } from '../auth/nostr';
 import { requestPasskeyAssertion } from '../auth/passkey';
+import { sessionQueryOptions } from '../auth/queries';
 import { invalidateAffectedReads } from './affected-reads';
 import { markConfirmAnswered, markConfirmSent } from './confirming';
 import { UnansweredConfirmationError, isUnansweredConfirmation } from './unanswered';
+
+type Grant = OperationAuthorization;
+
+/** How a session of one sign-in method answers the operation challenge with a fresh proof. */
+interface StepUp<Challenge> {
+  start: (nodeId: string, operationId: string, digest: string, signal: AbortSignal) => Promise<
+    { status: 'authorized'; authorization: Grant } | { status: 'challenge_required'; challenge: Challenge }
+  >;
+  prove: (operation: Operation, challenge: Challenge, attempt: Attempt) => Promise<Grant>;
+}
+
+const passkeyStepUp: StepUp<AuthenticationChallenge> = {
+  start: startOperationAuthorization,
+  prove: async ({ id, node_id: nodeId, review }, challenge, attempt) => {
+    const credential = await requestPasskeyAssertion(challenge.options, attempt.signal);
+    throwIfAbandoned(attempt);
+    return finishOperationAuthorization(
+      nodeId,
+      id,
+      { challenge_id: challenge.challenge_id, review_digest: review.digest, credential },
+      attempt.signal,
+    );
+  },
+};
+
+const nostrStepUp: StepUp<NostrChallenge> = {
+  start: startNostrAuthorization,
+  prove: async ({ id, node_id: nodeId, review }, challenge, attempt) => {
+    // The extension prompt cannot be aborted; a closed review stops right after it answers.
+    const event = await signNostrEvent(challenge.event);
+    throwIfAbandoned(attempt);
+    return finishNostrAuthorization(
+      nodeId,
+      id,
+      { challenge_id: challenge.challenge_id, review_digest: review.digest, event },
+      attempt.signal,
+    );
+  },
+};
 
 /**
  * Server step-up for a sensitive operation: a one-use grant bound to this operation and digest.
  * Every await checks the attempt, so a closed review never continues to the next step.
  */
-async function authorize(operation: Operation, attempt: Attempt): Promise<string> {
-  const { id, node_id: nodeId } = operation;
-  const digest = operation.review.digest;
-  const start = await startOperationAuthorization(nodeId, id, digest, attempt.signal);
+async function authorize<Challenge>(operation: Operation, attempt: Attempt, stepUp: StepUp<Challenge>): Promise<string> {
+  const start = await stepUp.start(operation.node_id, operation.id, operation.review.digest, attempt.signal);
   throwIfAbandoned(attempt);
   if (start.status === 'authorized') return checkedGrant(start.authorization, operation);
-  const credential = await requestPasskeyAssertion(start.challenge.options, attempt.signal);
-  throwIfAbandoned(attempt);
-  const grant = await finishOperationAuthorization(
-    nodeId,
-    id,
-    { challenge_id: start.challenge.challenge_id, review_digest: digest, credential },
-    attempt.signal,
-  );
+  const grant = await stepUp.prove(operation, start.challenge, attempt);
   return checkedGrant(grant, operation);
 }
+
+/** A passkey session proves with WebAuthn, a Nostr session with a signature from its key. */
+const AUTHORIZE: Record<AuthMethod, (operation: Operation, attempt: Attempt) => Promise<string>> = {
+  passkey: (operation, attempt) => authorize(operation, attempt, passkeyStepUp),
+  nostr: (operation, attempt) => authorize(operation, attempt, nostrStepUp),
+};
 
 function checkedGrant(
   grant: { authorization_id: string; operation_id: string; node_id: string; review_digest: string },
@@ -68,7 +114,12 @@ export function useConfirmOperation(operation: Operation) {
 
   const mutation = useMutation({
     mutationFn: async ({ reviewed, attempt }: ConfirmAttempt) => {
-      const authorizationId = reviewed.review.sensitive ? await authorize(reviewed, attempt) : null;
+      let authorizationId: string | null = null;
+      if (reviewed.review.sensitive) {
+        const session = await queryClient.ensureQueryData(sessionQueryOptions);
+        throwIfAbandoned(attempt);
+        authorizationId = await AUTHORIZE[session.auth_method](reviewed, attempt);
+      }
       throwIfAbandoned(attempt);
       markConfirmSent(queryClient, reviewed.id);
       try {
@@ -84,9 +135,10 @@ export function useConfirmOperation(operation: Operation) {
       }
     },
     onSuccess: (confirmed, { attempt }) => {
-      // The node accepted it whether or not this screen is still open: what it changes is stale.
-      void invalidateAffectedReads(queryClient, confirmed);
-      if (!attempt.isCurrent()) return;
+      if (!attempt.isCurrent()) {
+        void invalidateAffectedReads(queryClient, confirmed);
+        return;
+      }
       queryClient.setQueryData(nodeKeys.operation(nodeId, operationId), confirmed);
     },
     onError: (error, { attempt }) => {
@@ -101,8 +153,8 @@ export function useConfirmOperation(operation: Operation) {
         });
       }
     },
-    onSettled: () => {
-      inFlight.current = false;
+    onSettled: (_data, error) => {
+      if (error) inFlight.current = false;
     },
   });
 

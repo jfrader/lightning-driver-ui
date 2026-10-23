@@ -1,4 +1,12 @@
-import type { CapabilityKey, CapabilityReason, Network, NodeStatus, NodeSummary, PublicPolicy } from '../../api/types';
+import type {
+  AuthMethod,
+  CapabilityKey,
+  CapabilityReason,
+  Network,
+  NodeStatus,
+  NodeSummary,
+  PublicPolicy,
+} from '../../api/types';
 import { keysOf } from '../../lib/guards';
 import type { StateLabel } from '../display/StateWord';
 
@@ -105,9 +113,16 @@ export function nodeChoiceLabel(node: NodeSummary): string {
   return [node.label, NETWORK_LABEL[node.network], ...flags.filter((flag) => flag !== null)].join(' · ');
 }
 
-export const REAUTH_LABEL: Record<PublicPolicy['reauth']['mode'], string> = {
-  every_operation: 'Passkey for every payment',
-  recent: 'Passkey if not used recently',
+/** The confirmation policy as the session meets it: with its passkey or its Nostr key. */
+export const REAUTH_LABEL: Record<AuthMethod, Record<PublicPolicy['reauth']['mode'], string>> = {
+  passkey: {
+    every_operation: 'Passkey for every payment',
+    recent: 'Passkey if not used recently',
+  },
+  nostr: {
+    every_operation: 'Nostr signature for every payment',
+    recent: 'Nostr signature if not used recently',
+  },
 };
 
 export function syncLabel(synced: boolean | null): string {

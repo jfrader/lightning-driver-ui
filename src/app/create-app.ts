@@ -4,6 +4,7 @@ import { clearSessionCsrfToken, sessionCsrfToken } from '../api/csrf';
 import { isSessionLoss } from '../api/errors';
 import { READ_STALE_MS } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
+import { observeOperationTransitions } from '../features/operations/observe-operation-transitions';
 import { createAppRouter, type AppRouter } from './router';
 
 /**
@@ -25,6 +26,7 @@ export function createApp(history?: RouterHistory): { queryClient: QueryClient; 
       mutations: { retry: 0, networkMode: 'always' },
     },
   });
+  observeOperationTransitions(queryClient);
   const router = createAppRouter(queryClient, history);
 
   function handleSessionLoss() {
