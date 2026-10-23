@@ -10,6 +10,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:browser": "playwright test",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts",
     "api:generate": "node scripts/api-contract.mjs",
     "api:check": "node scripts/api-contract.mjs --check",
     "budget": "node scripts/bundle-budget.mjs",
