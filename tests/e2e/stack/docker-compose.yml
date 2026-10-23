@@ -68,6 +68,7 @@ services:
       - --clnrest-protocol=https
       - --clnrest-certs=/home/clightning/.lightning/certs
       - --log-level=info
+      - --log-file=/home/clightning/.lightning/lightningd.log
     volumes:
       - ${E2E_DATA:?E2E_DATA is required}/cln:/home/clightning/.lightning
     ports:
