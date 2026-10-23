@@ -1,12 +1,13 @@
 # Lightning Driver UI
 
-Browser UI for the Lightning node manager: one operator, several server-configured nodes (LND gRPC,
-LND REST, Core Lightning REST), passkey sign-in, per-node read-only policy.
+Browser UI for [lightning-driver](https://github.com/jfrader/lightning-driver), the Rust Lightning node
+manager: one operator, several server-configured nodes (LND gRPC, LND REST, Core Lightning REST),
+passkey sign-in, per-node read-only policy.
 
-Vite single-page app on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/tokens, TanStack Router and
-TanStack Query. The Rust API server is authoritative: it holds node credentials, enforces read-only
-policy, journals every operation and performs all node actions. The browser only talks to
-`/api/v1` on its own origin.
+The Rust API server is authoritative: it holds node credentials, enforces read-only policy, journals
+every operation and performs all node actions. The browser only talks to `/api/v1` on its own origin.
+The app is Vite, TanStack Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and
+@jfrader/tokens.
 
 ![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
 
