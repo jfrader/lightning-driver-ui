@@ -1,7 +1,7 @@
 import type { CapabilityKey, NodeSummary } from '../../api/types';
 import { keysOf } from '../../lib/guards';
 
-/** Node workspace destinations. `segment` is the first path segment after `/nodes/$nodeId`. */
+/** Node workspace destinations. `segment` is the path prefix after `/nodes/$nodeId`. */
 export const NODE_DESTINATIONS = {
   overview: { label: 'Overview', to: '/nodes/$nodeId', segment: '' },
   payments: { label: 'Payments', to: '/nodes/$nodeId/payments', segment: 'payments' },

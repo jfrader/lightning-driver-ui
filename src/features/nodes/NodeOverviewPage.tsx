@@ -12,12 +12,12 @@ import { useCurrentNode } from './use-current-node';
 import { BitcoinOverview } from '../../app/lazy-screens';
 import { surfacesFor } from '../shell/nav-model';
 
-/** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
 export function NodeOverviewPage() {
   const node = useCurrentNode();
   return node.kind === 'bitcoin' ? <BitcoinOverview /> : <LightningOverview />;
 }
 
+/** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
 function LightningOverview() {
   const node = useCurrentNode();
   const surfaces = surfacesFor(node);

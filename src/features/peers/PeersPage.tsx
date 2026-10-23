@@ -74,12 +74,12 @@ function PeerRow({ peer, open }: { peer: Peer; open: Open }) {
   );
 }
 
-/** Peers of the node; the contract has no alias, latency or channel count for them, so none is shown. */
 export function PeersPage() {
   const node = useCurrentNode();
   return node.kind === 'bitcoin' ? <BitcoinPeersPage /> : <LightningPeersPage />;
 }
 
+/** Lightning peers have no reported alias, latency or channel count. */
 function LightningPeersPage() {
   const node = useCurrentNode();
   const size = useControlSize();
