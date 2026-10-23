@@ -13,6 +13,7 @@ import { linkNostr, unlinkNostr } from './ceremonies';
 import { NOSTR_FAILURE_MESSAGE, hasNostrExtension } from './nostr';
 import { nostrIdentitiesQueryOptions, sessionQueryOptions } from './queries';
 import { SignerError } from './SignerError';
+import { useSessionStart } from './use-session-start';
 import { useSignedOut } from './use-signed-out';
 
 const Line = styled.p({ margin: 0 });
@@ -99,10 +100,15 @@ export function SignInMethods() {
   const methods = useQuery(nostrIdentitiesQueryOptions);
   const session = useQuery(sessionQueryOptions);
   const extension = hasNostrExtension();
+  const startSession = useSessionStart();
   const reasonId = useId();
   const link = useMutation({
     // A stale session signs in again first; that replaces the session, its CSRF and its reads.
-    mutationFn: () => linkNostr(session.data!.auth_method),
+    mutationFn: async () => {
+      const { identity, replaced } = await linkNostr(session.data!.auth_method);
+      if (replaced) startSession(replaced);
+      return identity;
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: nostrIdentitiesQueryOptions.queryKey });
       void queryClient.invalidateQueries({ queryKey: sessionQueryOptions.queryKey });

@@ -103,9 +103,10 @@ describe('More: sign-in methods', () => {
       () => HttpResponse.json({ identity: nostrIdentity(1) }),
       { reauthOnce: true },
     );
+    const rotated = { ...fixture('session'), csrf_token: 'ROTATED_SESSION_CSRF' };
     server.use(
       http.post(api('/auth/passkey/start'), () => HttpResponse.json(fixture('login_challenge'))),
-      http.post(api('/auth/passkey/finish'), () => HttpResponse.json(fixture('session'))),
+      http.post(api('/auth/passkey/finish'), () => HttpResponse.json(rotated)),
     );
     webauthn.startAuthentication.mockResolvedValue(assertion);
 
@@ -117,6 +118,7 @@ describe('More: sign-in methods', () => {
     expect(await within(region).findByTitle(NOSTR_KEYS[1].npub)).toBeInTheDocument();
     expect(webauthn.startAuthentication).toHaveBeenCalledTimes(1);
     expect(calls.starts.map((call) => (call.body as { purpose: string }).purpose)).toEqual(['link', 'link']);
+    expect(calls.starts.map((call) => call.csrf)).toEqual([fixture('session').csrf_token, rotated.csrf_token]);
     expect(signEvent).toHaveBeenCalledTimes(1);
   });
 

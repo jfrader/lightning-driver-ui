@@ -1,4 +1,5 @@
 import type { CsrfSource } from '../../api/client';
+import { setSessionCsrfToken } from '../../api/csrf';
 import { errorCode } from '../../api/errors';
 import { NostrIdentityResponse, NostrRemoved, Session as isSession, type ContractValidator } from '../../api/generated/validators';
 import type { AuthMethod, NostrIdentity, NostrStart, Session } from '../../api/types';
@@ -56,22 +57,30 @@ async function proveCurrentMethod(method: AuthMethod): Promise<Session> {
   return method === 'passkey' ? signInWithPasskey() : signInWithNostr();
 }
 
+export interface NostrLink {
+  identity: NostrIdentity;
+  /** The session the step-up replaced, when the server asked for one; the caller installs it. */
+  replaced: Session | null;
+}
+
 /**
  * Adds the extension's key to the signed-in operator. The server requires a session that
  * proved its own method moments ago, so a stale session signs in again first and the link
  * is retried once on the rotated session.
  */
-export async function linkNostr(method: AuthMethod): Promise<NostrIdentity> {
+export async function linkNostr(method: AuthMethod): Promise<NostrLink> {
   const link = async () => {
     const { identity } = await nostrCeremony({ kind: 'session' }, { purpose: 'link' }, NostrIdentityResponse);
     return identity;
   };
   try {
-    return await link();
+    return { identity: await link(), replaced: null };
   } catch (error) {
     if (errorCode(error) !== 'reauth_required') throw error;
-    await proveCurrentMethod(method);
-    return link();
+    const replaced = await proveCurrentMethod(method);
+    // The retry must carry the rotated session's token; the previous one died with the old session.
+    setSessionCsrfToken(replaced.csrf_token);
+    return { identity: await link(), replaced };
   }
 }
 
