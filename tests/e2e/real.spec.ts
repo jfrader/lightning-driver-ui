@@ -1,31 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
 import { installNostrSigner } from '../browser/nostr-signer';
+import { composeCommand, enrollmentToken } from './harness';
 
 const LND = process.env.E2E_LND_PUBKEY;
 const CLN = process.env.E2E_CLN_PUBKEY;
-const PROJECT = process.env.E2E_PROJECT;
-const COMPOSE = process.env.E2E_COMPOSE_FILE;
-const DATA = process.env.E2E_DATA;
 const NODE_CLN = 'Polar CLN';
 const NODE_GRPC = 'Polar LND gRPC';
 const NODE_REST = 'Polar LND REST';
 
-function enrollmentToken() {
-  const binary = process.env.E2E_BACKEND_BINARY;
-  const config = process.env.E2E_CONFIG;
-  if (!binary || !config) throw new Error('Run this suite through npm run test:e2e');
-  const token = execFileSync(binary, ['auth', 'enrollment', '--config', config], { encoding: 'utf8' }).trim();
-  expect(token).toMatch(/^[0-9a-f]{64}$/);
-  return token;
-}
-
 function compose(...args: string[]) {
-  return execFileSync(
-    'docker',
-    ['compose', '-p', PROJECT!, '-f', COMPOSE!, 'exec', '-T', ...args],
-    { encoding: 'utf8', env: { ...process.env, E2E_DATA: DATA } },
-  ).trim();
+  return composeCommand('exec', '-T', ...args);
 }
 
 function bitcoin(...args: string[]) {

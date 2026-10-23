@@ -16,8 +16,9 @@
     "budget": "node scripts/bundle-budget.mjs",
     "verify": "npm run api:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run budget && npm run test:browser",
     "preview": "vite preview",
-    "test:e2e": "node tests/e2e/run.mjs",
-    "test:e2e:passkey": "node tests/e2e/run.mjs --grep \"real passkey\""
+    "test:e2e": "node tests/e2e/run.mjs real.spec.ts",
+    "test:e2e:passkey": "node tests/e2e/run.mjs --grep \"real passkey\"",
+    "test:e2e:restart": "node tests/e2e/run.mjs restart.spec.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

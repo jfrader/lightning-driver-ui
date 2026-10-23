@@ -20,6 +20,7 @@ import {
 import { openSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createServer } from 'node:net';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const UI_ROOT = path.resolve(import.meta.dirname, '..', '..');
@@ -32,6 +33,7 @@ const API_PORT = Number(process.env.E2E_API_PORT ?? 8080);
 const UI_PORT = 5174;
 const env = { ...process.env, E2E_DATA: DATA };
 const children = [];
+let stackOwned = false;
 
 if (!BACKEND || !existsSync(path.join(BACKEND, 'target/release/api-server'))) {
   console.error('Set LIGHTNING_DRIVER_BACKEND to a checkout with target/release/api-server built.');
@@ -74,12 +76,11 @@ async function waitFor(label, fn, seconds = 120) {
 }
 
 async function free(port) {
-  try {
-    await fetch(`http://localhost:${port}/`, { signal: AbortSignal.timeout(1000) });
-    return false;
-  } catch {
-    return true;
-  }
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once('error', () => resolve(false));
+    server.listen(port, () => server.close(() => resolve(true)));
+  });
 }
 
 function certs() {
@@ -110,6 +111,7 @@ async function main() {
   }
   certs();
   writeFileSync(path.join(DATA, 'compose.log'), '');
+  stackOwned = true;
   docker(['down', '-v', '--remove-orphans'], { stdio: ['ignore', 'pipe', 'pipe'] });
   docker(['up', '-d']);
   await waitFor('bitcoind', () => docker(['exec', '-T', 'bitcoind', 'bitcoin-cli', '-regtest', '-rpcuser=polar', '-rpcpassword=polar', 'getblockchaininfo']));
@@ -135,6 +137,8 @@ async function main() {
   lnd(['connect', `${clnInfo.id}@cln:9735`]);
 
   const rune = JSON.parse(cln(['createrune'])).rune;
+  const bitcoinCredential = path.join(DATA, 'bitcoin.credential');
+  writeFileSync(bitcoinCredential, 'polar:polar\n', { mode: 0o600 });
   writeFileSync(path.join(DATA, 'cln', 'rune'), `${rune}\n`, { mode: 0o600 });
   chmodSync(path.join(DATA, 'lnd', 'data/chain/bitcoin/regtest/admin.macaroon'), 0o600);
 
@@ -181,6 +185,11 @@ async function main() {
       limits: { rpc_seconds: 30, preauth_seconds: 3600, session_idle_seconds: 3600, session_absolute_seconds: 28800 },
     },
     nodes: [
+      {
+        id: 'bitcoind', label: 'Polar Bitcoin Core', backend: 'bitcoin_rpc',
+        endpoint: 'http://127.0.0.1:18443', credential_file: bitcoinCredential,
+        expected_genesis: btc(['getblockhash', '0']), network: 'regtest',
+      },
       node('lnd-grpc', 'Polar LND gRPC', 'lnd_grpc', 'https://localhost:10009',
         path.join(DATA, 'certs', 'ca.crt'),
         path.join(DATA, 'lnd/data/chain/bitcoin/regtest/admin.macaroon'), lndInfo.identity_pubkey),
@@ -251,7 +260,9 @@ try {
   for (const { child } of children) {
     try { child.kill('SIGKILL'); } catch {}
   }
-  try { docker(['down', '-v', '--remove-orphans'], { stdio: ['ignore', 'pipe', 'pipe'] }); } catch {}
+  if (stackOwned) {
+    try { docker(['down', '-v', '--remove-orphans'], { stdio: ['ignore', 'pipe', 'pipe'] }); } catch {}
+  }
   if (!KEEP && !failed) rmSync(DATA, { recursive: true, force: true });
   else console.log(`kept e2e data at ${DATA}`);
 }
