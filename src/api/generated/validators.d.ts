@@ -7,6 +7,12 @@ export interface ContractValidator<T> {
   errors?: readonly { instancePath: string; message?: string }[] | null;
 }
 
+export declare const BitcoinNodeInfo: ContractValidator<components['schemas']['BitcoinNodeInfo']>;
+export declare const BitcoinPeersPage: ContractValidator<components['schemas']['BitcoinPeersPage']>;
+export declare const WatchtowerServerInfo: ContractValidator<components['schemas']['WatchtowerServerInfo']>;
+export declare const WatchtowerClientInfo: ContractValidator<components['schemas']['WatchtowerClientInfo']>;
+export declare const WatchtowerTowersPage: ContractValidator<components['schemas']['WatchtowerTowersPage']>;
+export declare const WatchtowerTowerDetail: ContractValidator<components['schemas']['WatchtowerTowerDetail']>;
 export declare const AuthBootstrap: ContractValidator<components['schemas']['AuthBootstrap']>;
 export declare const AuthenticationChallenge: ContractValidator<components['schemas']['AuthenticationChallenge']>;
 export declare const RegistrationChallenge: ContractValidator<components['schemas']['RegistrationChallenge']>;

@@ -7,6 +7,7 @@ import { ErrorNotice } from './ErrorNotice';
 import { ListPager } from './ListPager';
 import { LoadingState } from './LoadingState';
 import { ResourceList } from './ResourceList';
+import { useControlSize } from '../features/shell/use-shell-layout';
 
 type ListProps<T> = Omit<ComponentProps<typeof ResourceList<T>>, 'rows'>;
 
@@ -19,13 +20,14 @@ interface PagedListProps<T> extends ListProps<T> {
 
 /** Loading, error, expired-cursor, empty and populated states of one node list snapshot. */
 export function PagedList<T>({ query, emptyTitle, cursor, onCursor, ...list }: PagedListProps<T>) {
+  const size = useControlSize();
   if (query.isPending) return <LoadingState label={`Loading ${list.caption.toLowerCase()}`} />;
   if (query.isError) {
     if (errorCode(query.error) === 'cursor_expired') {
       return (
         <Alert tone="info" title="This list expired">
-          <Button size="sm" variant="outline" onClick={() => onCursor(undefined)}>
-            Load the first page
+          <Button size={size} variant="outline" onClick={() => onCursor(undefined)}>
+            Load first page
           </Button>
         </Alert>
       );

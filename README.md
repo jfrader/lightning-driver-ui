@@ -1,8 +1,9 @@
 # Lightning Driver UI
 
 Browser UI for [lightning-driver](https://github.com/jfrader/lightning-driver), the Rust Lightning node
-manager: one operator, several server-configured nodes (LND gRPC, LND REST, Core Lightning REST),
-passkey sign-in with optional NIP-07 Nostr sign-in, per-node read-only policy.
+manager: one operator, several server-configured nodes (LND gRPC, LND REST, Core Lightning REST, and
+Bitcoin Core nodes watched read-only), passkey sign-in with optional NIP-07 Nostr sign-in, per-node
+read-only policy.
 
 The Rust API server is authoritative: it holds node credentials, enforces read-only policy, journals
 every operation and performs all node actions. The browser only talks to `/api/v1` on its own origin.
@@ -87,5 +88,9 @@ other numerals) stays as typed and is rejected. Amounts are displayed with the b
   backend need browser QA.
 - Nostr sign-in uses a NIP-07 browser extension. NIP-46 remote signing and mobile bunkers are not
   implemented; the login page shows `No Nostr extension found.` when the browser has none.
-- The initial route is one chunk (about 1 MB, 266 kB gzip), including the generated validators.
+- A Bitcoin Core node is watched, not managed: chain, peers, mempool and storage, with no wallet
+  balances, peer controls or operations.
+- A node that serves as a watchtower reports its identity, listeners and URIs. LND exposes no client,
+  session or backup list for the serving side.
+- The initial route is one chunk (about 1 MB, 273 kB gzip), including the generated validators.
   Recharts lives only in the lazy `src/charts/` chunk (about 87 kB gzip), loaded on the first chart.

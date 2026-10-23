@@ -4,7 +4,7 @@ import { useRouter } from '@tanstack/react-router';
 import { RouterNavigation } from '../../components/RouterNavigation';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { keysOf } from '../../lib/guards';
-import { DESTINATION_GROUPS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, type NodeDestination } from './nav-model';
+import { DESTINATION_GROUPS, groupsFor, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, type NodeDestination } from './nav-model';
 import { useShellNode } from './use-shell-node';
 
 const Label = styled.span(({ theme }) => ({
@@ -42,7 +42,7 @@ export function SideNav() {
   const nodeGroups: NavigationGroupRecord[] =
     nodeId === null
       ? []
-      : DESTINATION_GROUPS.map((group) => ({
+      : (node ? groupsFor(node) : DESTINATION_GROUPS.filter((group) => group.key === 'records')).map((group) => ({
           key: group.key,
           label: group.label,
           items: group.items.map((key) => ({

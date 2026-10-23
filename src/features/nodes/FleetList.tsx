@@ -11,11 +11,16 @@ import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { useNow } from '../../lib/use-now';
 import { NotReported } from '../display/NotReported';
 import { StateWord } from '../display/StateWord';
-import { BACKEND_LABEL, NETWORK_LABEL, NODE_STATUS, capabilitySummary, syncLabel } from './labels';
+import { BACKEND_LABEL, NETWORK_LABEL, NODE_STATUS, capabilitySummary, syncLabel, accessLabel } from './labels';
+import { surfacesFor } from '../shell/nav-model';
 
 const NodeName = styled.span(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
 
-const Id = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.xs, color: theme.color.textMuted }));
+const Id = styled.span(({ theme }) => ({
+  fontFamily: theme.font.mono,
+  fontSize: theme.textSize.xs,
+  color: theme.color.textMuted,
+}));
 
 const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontFamily: theme.font.mono }));
 
@@ -68,8 +73,9 @@ function Observed({ node, now }: { node: NodeSummary; now: number }) {
 
 /** Unresolved operations of one node; links to them when there are any. Never summed across nodes. */
 function Unresolved({ node }: { node: NodeSummary }) {
+  if (node.kind === 'bitcoin') return <>—</>;
   const count = parseWireDecimal(node.unresolved_operation_count);
-  if (count === 0n) return <Muted>0</Muted>;
+  if (count === 0n || !surfacesFor(node).includes('operations')) return <Muted>{formatInteger(count)}</Muted>;
   return (
     <TextLink to="/nodes/$nodeId/operations" params={{ nodeId: node.id }} search={{ state: 'nonterminal' }}>
       <Count>{formatInteger(count)}</Count> unresolved
@@ -94,7 +100,7 @@ function columns(now: number): ResourceColumn<NodeSummary>[] {
     { id: 'status', header: 'Status', cell: (node) => <StateWord state={NODE_STATUS[node.status.status]} /> },
     { id: 'sync', header: 'Chain sync', cell: (node) => syncLabel(node.status.synced_to_chain) },
     { id: 'observed', header: 'Observed', cell: (node) => <Observed node={node} now={now} /> },
-    { id: 'access', header: 'Access', cell: (node) => (node.read_only ? 'Read-only' : 'Writable') },
+    { id: 'access', header: 'Access', cell: accessLabel },
     { id: 'actions', header: 'Actions', cell: (node) => capabilitySummary(node) },
     { id: 'unresolved', header: 'Unresolved', numeric: true, cell: (node) => <Unresolved node={node} /> },
   ];
@@ -111,12 +117,18 @@ function FleetRow({ node, now }: { node: NodeSummary; now: number }) {
       <Meta>
         <NetworkPill node={node} />
         <span>{BACKEND_LABEL[node.backend]}</span>
-        <span>{node.read_only ? 'Read-only' : 'Writable'}</span>
+        <span>{accessLabel(node)}</span>
       </Meta>
       <Line>
         <Observed node={node} now={now} />
         {node.unresolved_operation_count !== '0' && <Unresolved node={node} />}
       </Line>
+      {node.kind === 'bitcoin' && (
+        <Meta>
+          <span>Actions None</span>
+          <span>Unresolved —</span>
+        </Meta>
+      )}
     </RowBody>
   );
 }

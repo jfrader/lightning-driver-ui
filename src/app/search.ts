@@ -29,6 +29,11 @@ export function pubkeyParam(value: unknown): string | undefined {
   return typeof value === 'string' && PUBKEY.test(value) ? value : undefined;
 }
 
+export function decimalParam(value: unknown): string | undefined {
+  const text = typeof value === 'number' && Number.isSafeInteger(value) ? String(value) : value;
+  return typeof text === 'string' && /^(0|[1-9][0-9]*)$/.test(text) ? text : undefined;
+}
+
 const RESOURCE_ID_MAX_LENGTH = 256;
 
 /** An opaque resource id from the server (channel id), or nothing. */
@@ -45,7 +50,10 @@ export interface SortSearch<T extends string> {
 }
 
 /** Client-side sort of the loaded snapshot, kept in the URL; only the list's own columns are accepted. */
-export function sortSearch<T extends object>(search: Record<string, unknown>, columns: T): SortSearch<Extract<keyof T, string>> {
+export function sortSearch<T extends object>(
+  search: Record<string, unknown>,
+  columns: T,
+): SortSearch<Extract<keyof T, string>> {
   const sort = enumParam(search.sort, columns);
   return { sort, dir: sort ? enumParam(search.dir, SORT_DIRECTIONS) : undefined };
 }

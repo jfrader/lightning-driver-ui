@@ -31,8 +31,8 @@ const Item = createLink(ItemAnchor);
 
 /** Phone only: the sibling destinations of a tab (Wallet: Payments, Invoices, On-chain). */
 export function GroupLinks() {
-  const { nodeId, destination } = useShellNode();
-  const group = destination ? groupOf(destination) : undefined;
+  const { nodeId, node, destination } = useShellNode();
+  const group = destination ? groupOf(destination, node) : undefined;
   if (nodeId === null || !destination || !group?.label || group.items.length < 2) return null;
   return (
     <Row aria-label={group.label}>

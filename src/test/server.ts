@@ -8,6 +8,7 @@ export const api = (path: string) => `${API_BASE_PATH}${path}`;
 export const writableNode = fixture('node_lnd');
 export const readOnlyNode = fixture('node_lnd_rest_readonly_offline');
 export const clnNode = fixture('node_cln');
+export const bitcoinNode = fixture('node_bitcoin');
 
 const nodes = [writableNode, readOnlyNode, clnNode];
 
@@ -22,6 +23,12 @@ export function safeError(code: string, message: string, outcome = 'not_applicab
 
 /** Default contract-shaped responses. Tests override single routes with `server.use`. */
 export const handlers = [
+  http.get(api('/nodes/:nodeId/bitcoin'), ({ params }) => HttpResponse.json({ ...fixture('bitcoin_info'), node_id: String(params.nodeId) })),
+  http.get(api('/nodes/:nodeId/bitcoin/peers'), ({ params }) => HttpResponse.json({ ...fixture('bitcoin_peers_page'), node_id: String(params.nodeId) })),
+  http.get(api('/nodes/:nodeId/watchtower/server'), ({ params }) => HttpResponse.json({ ...fixture('watchtower_server'), node_id: String(params.nodeId) })),
+  http.get(api('/nodes/:nodeId/watchtower/client'), ({ params }) => HttpResponse.json({ ...fixture('watchtower_client'), node_id: String(params.nodeId) })),
+  http.get(api('/nodes/:nodeId/watchtower/client/towers'), ({ params }) => HttpResponse.json({ ...fixture('watchtower_towers_page'), node_id: String(params.nodeId) })),
+  http.get(api('/nodes/:nodeId/watchtower/client/towers/:pubkey'), () => HttpResponse.json(fixture('watchtower_tower_detail'))),
   http.get(api('/auth/bootstrap'), () => HttpResponse.json(fixture('bootstrap'))),
   http.get(api('/session'), () => HttpResponse.json(fixture('session'))),
   // The frozen session signed in with a passkey; no Nostr key is linked.
@@ -31,7 +38,7 @@ export const handlers = [
     HttpResponse.json({ ...fixture('nodes_page'), items: nodes, next_cursor: null, truncated: false }),
   ),
   http.get(api('/nodes/:nodeId'), ({ params }) => {
-    const node = nodes.find((item) => item.id === params.nodeId);
+    const node = [...nodes, bitcoinNode].find((item) => item.id === params.nodeId);
     return node ? HttpResponse.json(node) : HttpResponse.json(safeError('not_found', 'Node not found.'), { status: 404 });
   }),
   http.get(api('/nodes/:nodeId/info'), ({ params }) => {

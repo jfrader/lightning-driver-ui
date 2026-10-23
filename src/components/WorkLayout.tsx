@@ -4,6 +4,8 @@ import { ASIDE_MEDIA, ASIDE_WIDTH } from '../config';
 
 const Grid = styled.div<{ measure: string }>(({ theme, measure }) => ({
   display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  minInlineSize: 0,
   gap: theme.space[8],
   alignItems: 'start',
   [ASIDE_MEDIA]: { gridTemplateColumns: `minmax(0, ${measure}) ${ASIDE_WIDTH}`, gap: theme.space[10] },
@@ -18,6 +20,7 @@ const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
 
 const Aside = styled.aside(({ theme }) => ({
   display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
   gap: theme.space[8],
   minInlineSize: 0,
   [ASIDE_MEDIA]: { paddingInlineStart: theme.space[8], borderInlineStart: `1px solid ${theme.color.border}` },

@@ -9,10 +9,18 @@ import { NodeContext } from '../overview/NodeContext';
 import { QuickActions } from '../overview/QuickActions';
 import { RecentPayments } from '../overview/RecentPayments';
 import { useCurrentNode } from './use-current-node';
+import { BitcoinOverview } from '../../app/lazy-screens';
+import { surfacesFor } from '../shell/nav-model';
 
-/** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
 export function NodeOverviewPage() {
   const node = useCurrentNode();
+  return node.kind === 'bitcoin' ? <BitcoinOverview /> : <LightningOverview />;
+}
+
+/** Attention first, balances second, actions third, recent payments fourth; node facts aside. */
+function LightningOverview() {
+  const node = useCurrentNode();
+  const surfaces = surfacesFor(node);
   const besideContent = useMediaQuery(ASIDE_QUERY);
   const context = <NodeContext node={node} />;
   return (
@@ -20,12 +28,12 @@ export function NodeOverviewPage() {
       asideLabel="Node details"
       main={
         <>
-          <AttentionList nodeId={node.id} />
+          {surfaces.includes('operations') && <AttentionList nodeId={node.id} />}
           <Section title="Balances">
             <BalanceGroups nodeId={node.id} />
           </Section>
           <QuickActions node={node} />
-          <RecentPayments nodeId={node.id} />
+          {surfaces.includes('payments') && <RecentPayments nodeId={node.id} />}
         </>
       }
       aside={

@@ -22,12 +22,19 @@ import { NodeChooserPage } from '../features/nodes/NodeChooserPage';
 import { NodeLayout } from '../features/nodes/NodeLayout';
 import { NodeNotFound } from '../features/nodes/NodeNotFound';
 import { NodeOverviewPage } from '../features/nodes/NodeOverviewPage';
-import { forgetRememberedNodeId, isNodeId, readRememberedNodeId, rememberNodeId } from '../features/nodes/remembered-node';
+import {
+  forgetRememberedNodeId,
+  isNodeId,
+  readRememberedNodeId,
+  rememberNodeId,
+} from '../features/nodes/remembered-node';
 import { OPERATION_KIND, OPERATION_LIST_STATE } from '../features/operations/labels';
 import { PAYMENT_STATE } from '../features/payments/labels';
 import { AppShell } from '../features/shell/AppShell';
 import {
   ChannelsPage,
+  WatchtowerClientPage,
+  WatchtowerServerPage,
   CloseChannelPage,
   ConnectPeerPage,
   FleetPage,
@@ -46,7 +53,18 @@ import {
 } from './lazy-screens';
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
-import { enumParam, hashParam, pagedSearch, pubkeyParam, resourceIdParam, sortSearch, stringParam, type PagedSearch, type SortSearch } from './search';
+import {
+  decimalParam,
+  enumParam,
+  hashParam,
+  pagedSearch,
+  pubkeyParam,
+  resourceIdParam,
+  sortSearch,
+  stringParam,
+  type PagedSearch,
+  type SortSearch,
+} from './search';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -111,14 +129,24 @@ const fleetRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/fleet',
   validateSearch: pagedSearch,
+  loader: ({ context }) => loadRememberedNode(context.queryClient),
   component: FleetPage,
 });
 
 const moreRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/more',
+  loader: ({ context }) => loadRememberedNode(context.queryClient),
   component: MorePage,
 });
+
+async function loadRememberedNode(queryClient: QueryClient) {
+  const nodeId = readRememberedNodeId();
+  if (!nodeId) return;
+  await queryClient.ensureQueryData(nodeQueryOptions(nodeId)).catch((error: unknown) => {
+    if (isSessionLoss(error)) throw error;
+  });
+}
 
 const nodeRoute = createRoute({
   getParentRoute: () => authedRoute,
@@ -148,6 +176,15 @@ const node = <TPath extends string>(path: TPath) => ({ getParentRoute: () => con
 const history = <TPath extends string>(path: TPath) => ({ getParentRoute: () => nodeRoute, path });
 
 const nodeOverviewRoute = createRoute({ ...node('/'), component: NodeOverviewPage });
+const watchtowerClientRoute = createRoute({
+  ...node('/watchtower'),
+  validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
+    ...pagedSearch(search),
+    selected: pubkeyParam(search.selected),
+  }),
+  component: WatchtowerClientPage,
+});
+const watchtowerServerRoute = createRoute({ ...node('/watchtower/server'), component: WatchtowerServerPage });
 const invoicesRoute = createRoute({
   ...node('/invoices'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { status?: InvoiceState; selected?: string } => ({
@@ -175,7 +212,7 @@ const peersRoute = createRoute({
   ...node('/peers'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
     ...pagedSearch(search),
-    selected: pubkeyParam(search.selected),
+    selected: pubkeyParam(search.selected) ?? decimalParam(search.selected),
   }),
   component: PeersPage,
 });
@@ -234,6 +271,8 @@ const routeTree = rootRoute.addChildren([
     nodeRoute.addChildren([
       configuredNodeRoute.addChildren([
         nodeOverviewRoute,
+        watchtowerClientRoute,
+        watchtowerServerRoute,
         invoicesRoute,
         receiveInvoiceRoute,
         paymentsRoute,

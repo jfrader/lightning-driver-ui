@@ -5,6 +5,7 @@ const Root = styled.section({ minInlineSize: 0 });
 
 const Header = styled.div(({ theme }) => ({
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
   gap: theme.space[3],
   minBlockSize: theme.space[8],

@@ -4,7 +4,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
-import { NODE_DESTINATIONS } from './nav-model';
+import { NODE_DESTINATIONS, surfacesFor } from './nav-model';
 import { useControlSize } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
 import { visuallyHidden } from './visually-hidden';
@@ -52,7 +52,11 @@ export function NodeChooser() {
           void navigate({ to: '/fleet' });
           return;
         }
-        const to = keepsDestination ? NODE_DESTINATIONS[destination].to : NODE_DESTINATIONS.overview.to;
+        const target = nodes.find((item) => item.id === next);
+        const to =
+          keepsDestination && target && surfacesFor(target).includes(destination)
+            ? NODE_DESTINATIONS[destination].to
+            : NODE_DESTINATIONS.overview.to;
         void navigate({ to, params: { nodeId: next } });
       }}
       slotProps={{

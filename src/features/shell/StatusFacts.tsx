@@ -3,7 +3,7 @@ import type { NodeSummary } from '../../api/types';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { formatAge, formatClockTime } from '../../lib/time';
 import { useNow } from '../../lib/use-now';
-import { NODE_STATUS } from '../nodes/labels';
+import { NODE_STATUS, accessLabel } from '../nodes/labels';
 
 const List = styled.ul(({ theme }) => ({
   display: 'flex',
@@ -52,7 +52,7 @@ export function StatusFacts({ node, compact }: StatusFactsProps) {
   return (
     <List aria-label="Node status">
       <Fact>
-        <Strong>{node.read_only ? 'Read-only' : 'Writable'}</Strong>
+        <Strong>{accessLabel(node)}</Strong>
       </Fact>
       <Fact>
         <Marker online={status.status === 'online'} aria-hidden="true" />

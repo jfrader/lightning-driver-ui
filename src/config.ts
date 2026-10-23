@@ -43,6 +43,7 @@ export const SHELL_QUERY = '(min-width: 64rem)';
 export const SIDEBAR_WIDTH = '15rem';
 export const STRIP_HEIGHT = '3.25rem';
 export const TAB_BAR_HEIGHT = '3.5rem';
+export const TAB_BAR_CLEARANCE = '2em';
 /** Smallest touch target on the phone layout: 44px at the default root size. */
 export const TOUCH_TARGET = '2.75rem';
 

@@ -22,10 +22,11 @@ export function useShellNode(): ShellNode {
   const nodeId = isNodeId(params.nodeId) ? params.nodeId : null;
   // The node route owns this read; the shell only displays what it cached.
   const node = useCachedQueryData(nodeId === null ? null : nodeQueryOptions(nodeId).queryKey);
+  const tabNodeId = nodeId ?? readRememberedNodeId();
   return {
     nodeId,
     node: node ?? null,
-    tabNodeId: nodeId ?? readRememberedNodeId(),
+    tabNodeId,
     destination: destinationOf(pathname),
     pathname,
   };

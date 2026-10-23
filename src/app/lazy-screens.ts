@@ -8,6 +8,9 @@ import { lazyRouteComponent } from '@tanstack/react-router';
  * chunk, and code shared between screens lands in shared chunks, never in per-screen copies.
  */
 export const FleetPage = lazyRouteComponent(() => import('../features/nodes/FleetPage'), 'FleetPage');
+export const BitcoinOverview = lazyRouteComponent(() => import('../features/bitcoin/BitcoinOverview'), 'BitcoinOverview');
+export const WatchtowerClientPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerClientPage'), 'WatchtowerClientPage');
+export const WatchtowerServerPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerServerPage'), 'WatchtowerServerPage');
 export const MorePage = lazyRouteComponent(() => import('../features/shell/MorePage'), 'MorePage');
 
 export const PaymentsPage = lazyRouteComponent(() => import('../features/payments/PaymentsPage'), 'PaymentsPage');
