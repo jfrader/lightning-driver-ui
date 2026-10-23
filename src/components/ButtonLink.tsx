@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { Button, type ButtonProps } from '@jfrader/ui';
 import { createLink } from '@tanstack/react-router';
+import { wrappingControlText } from './control-styles';
 
 interface ButtonAnchorProps extends ComponentPropsWithRef<'a'> {
   variant?: ButtonProps['variant'];
@@ -16,6 +17,7 @@ function ButtonAnchor({ variant, tone, size, startIcon, children, onClick, ref, 
       tone={tone}
       size={size}
       startIcon={startIcon}
+      sx={wrappingControlText(size)}
       render={({ onClick: buttonClick, ...buttonProps }) => (
         <a
           {...anchor}

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { styled } from '@jfrader/ui';
-import { NARROW_LAYOUT_MEDIA } from '../config';
 
 export interface DetailItem {
   label: string;
@@ -11,7 +10,7 @@ export interface DetailItem {
   stacked?: boolean;
 }
 
-const List = styled.dl({ margin: 0, display: 'grid', minInlineSize: 0 });
+const List = styled.dl({ margin: 0, display: 'grid', minInlineSize: 0, containerType: 'inline-size' });
 
 const Pair = styled.div<{ stacked: boolean }>(({ theme, stacked }) => ({
   display: 'grid',
@@ -22,7 +21,7 @@ const Pair = styled.div<{ stacked: boolean }>(({ theme, stacked }) => ({
   paddingBlock: theme.space[2],
   borderBlockEnd: `1px solid ${theme.color.borderSubtle}`,
   '&:last-of-type': { borderBlockEnd: 'none' },
-  [NARROW_LAYOUT_MEDIA]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  '@container (max-width: 30em)': { gridTemplateColumns: 'minmax(0, 1fr)' },
 }));
 
 const Term = styled.dt(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));

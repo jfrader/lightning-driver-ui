@@ -6,18 +6,21 @@ import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useControlSize } from '../shell/use-shell-layout';
 
 const Bar = styled.div(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'flex-start',
   gap: theme.space[2],
-  [TABLE_MEDIA]: { display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' },
+  '& > a': { flex: '1 1 auto' },
+  [TABLE_MEDIA]: { '& > a': { flex: '0 1 auto' } },
 }));
 
 const Secondary = styled.div(({ theme }) => ({
-  gridColumn: '1 / -1',
+  flexBasis: '100%',
   display: 'flex',
   flexWrap: 'wrap',
   gap: theme.space[2],
   [TABLE_MEDIA]: {
+    flexBasis: 'auto',
     paddingInlineStart: theme.space[3],
     marginInlineStart: theme.space[1],
     borderInlineStart: `1px solid ${theme.color.border}`,

@@ -6,7 +6,7 @@ import { NotReported } from './NotReported';
 const Ratio = styled.span(({ theme }) => ({
   fontFamily: theme.font.mono,
   fontVariantNumeric: 'tabular-nums',
-  whiteSpace: 'nowrap',
+  overflowWrap: 'anywhere',
   color: theme.color.textMuted,
 }));
 

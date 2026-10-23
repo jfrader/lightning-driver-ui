@@ -19,7 +19,8 @@ const Title = styled.h2(({ theme }) => ({
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: theme.color.textMuted,
-  whiteSpace: 'nowrap',
+  minInlineSize: 0,
+  overflowWrap: 'anywhere',
 }));
 
 const Rule = styled.span(({ theme }) => ({

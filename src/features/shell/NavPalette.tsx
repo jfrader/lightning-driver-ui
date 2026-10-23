@@ -7,6 +7,8 @@ import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
 import { ACTION_SURFACES, FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, surfacesFor } from './nav-model';
 import { useShellNode } from './use-shell-node';
+import { TOUCH_TARGET } from '../../config';
+import { useDesktopShell } from './use-shell-layout';
 
 interface NavPaletteProps {
   open: boolean;
@@ -18,6 +20,7 @@ interface NavPaletteProps {
  * navigates; nothing here creates, authorizes or confirms an operation.
  */
 export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
+  const desktop = useDesktopShell();
   const navigate = useNavigate();
   const { nodeId, node } = useShellNode();
   const fleet = useQuery(fleetQueryOptions());
@@ -89,6 +92,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       open={open}
       onOpenChange={onOpenChange}
       onSelect={() => onOpenChange(false)}
+      slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } } }}
     />
   );
 }
