@@ -44,7 +44,7 @@ import {
   OperationPage,
   OperationsPage,
   PayInvoicePage,
-  PaymentsPage,
+  PaymentsLayout,
   PeersPage,
   ReceiveAddressPage,
   ReceiveInvoicePage,
@@ -205,9 +205,9 @@ const paymentsRoute = createRoute({
     status: enumParam(search.status, PAYMENT_STATE),
     selected: hashParam(search.selected),
   }),
-  component: PaymentsPage,
+  component: PaymentsLayout,
 });
-const payInvoiceRoute = createRoute({ ...node('/payments/new'), component: PayInvoicePage });
+const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', component: PayInvoicePage });
 const peersRoute = createRoute({
   ...node('/peers'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
@@ -275,8 +275,7 @@ const routeTree = rootRoute.addChildren([
         watchtowerServerRoute,
         invoicesRoute,
         receiveInvoiceRoute,
-        paymentsRoute,
-        payInvoiceRoute,
+        paymentsRoute.addChildren([payInvoiceRoute]),
         peersRoute,
         connectPeerRoute,
         channelsRoute,

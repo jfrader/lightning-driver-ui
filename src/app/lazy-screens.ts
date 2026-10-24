@@ -13,7 +13,7 @@ export const WatchtowerClientPage = lazyRouteComponent(() => import('../features
 export const WatchtowerServerPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerServerPage'), 'WatchtowerServerPage');
 export const MorePage = lazyRouteComponent(() => import('../features/shell/MorePage'), 'MorePage');
 
-export const PaymentsPage = lazyRouteComponent(() => import('../features/payments/PaymentsPage'), 'PaymentsPage');
+export const PaymentsLayout = lazyRouteComponent(() => import('../features/payments/PaymentsLayout'), 'PaymentsLayout');
 export const PayInvoicePage = lazyRouteComponent(() => import('../features/payments/PayInvoicePage'), 'PayInvoicePage');
 export const InvoicesPage = lazyRouteComponent(() => import('../features/invoices/InvoicesPage'), 'InvoicesPage');
 export const ReceiveInvoicePage = lazyRouteComponent(

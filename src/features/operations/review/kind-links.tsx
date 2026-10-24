@@ -1,4 +1,6 @@
 import type { MouseEvent } from 'react';
+import { Button } from '@jfrader/ui';
+import { useOperationSheet } from '../sheet-context';
 import type { Operation } from '../../../api/types';
 import { ButtonLink } from '../../../components/ButtonLink';
 import { useControlSize } from '../../shell/use-shell-layout';
@@ -18,7 +20,9 @@ const inert = (disabled: boolean) => (event: MouseEvent) => {
 
 /** Back to a node's list (Payments, Invoices, On-chain, Channels, Peers) from a form or a review. */
 export function ListLink({ nodeId, list }: { nodeId: string; list: ActionList }) {
+  const sheet = useOperationSheet();
   const props = { params: { nodeId }, search: {}, size: useControlSize(), variant: 'ghost' as const };
+  if (sheet) return null;
   const label = BACK_LABEL[list];
   switch (list) {
     case 'payments':
@@ -36,7 +40,9 @@ export function ListLink({ nodeId, list }: { nodeId: string; list: ActionList })
 
 /** The form that creates this kind of operation; disconnect has none and returns to Peers. */
 export function FormLink({ operation, label, variant = 'outline', disabled = false }: KindLinkProps) {
+  const sheet = useOperationSheet();
   const size = useControlSize();
+  if (sheet) return <Button size={size} variant={variant} disabled={disabled} onClick={sheet.discard}>{label}</Button>;
   const nodeId = operation.node_id;
   const props = { size, variant, 'aria-disabled': disabled || undefined, onClick: inert(disabled) };
   const { request } = operation;

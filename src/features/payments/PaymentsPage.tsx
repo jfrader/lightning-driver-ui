@@ -87,7 +87,7 @@ export function PaymentsPage() {
         title="Payments"
         actions={
           <CapabilityAction node={node} capability="pay_invoice">
-            <ButtonLink to="/nodes/$nodeId/payments/new" params={{ nodeId: node.id }} size={size} tone="accent" variant="solid">
+            <ButtonLink to="/nodes/$nodeId/payments/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
               Pay invoice
             </ButtonLink>
           </CapabilityAction>

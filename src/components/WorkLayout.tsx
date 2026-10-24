@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { styled } from '@jfrader/ui';
 import { ASIDE_MEDIA, ASIDE_WIDTH } from '../config';
 
-const Grid = styled.div<{ measure: string }>(({ theme, measure }) => ({
+const Grid = styled.div<{ measure: string; stacked: boolean }>(({ theme, measure, stacked }) => ({
   display: 'grid',
   gridTemplateColumns: 'minmax(0, 1fr)',
   minInlineSize: 0,
   gap: theme.space[8],
   alignItems: 'start',
-  [ASIDE_MEDIA]: { gridTemplateColumns: `minmax(0, ${measure}) ${ASIDE_WIDTH}`, gap: theme.space[10] },
+  [ASIDE_MEDIA]: stacked ? {} : { gridTemplateColumns: `minmax(0, ${measure}) ${ASIDE_WIDTH}`, gap: theme.space[10] },
 }));
 
 const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
@@ -18,12 +18,12 @@ const Column = styled.div<{ measure: string }>(({ theme, measure }) => ({
   minInlineSize: 0,
 }));
 
-const Aside = styled.aside(({ theme }) => ({
+const Aside = styled.aside<{ stacked: boolean }>(({ theme, stacked }) => ({
   display: 'grid',
   gridTemplateColumns: 'minmax(0, 1fr)',
   gap: theme.space[8],
   minInlineSize: 0,
-  [ASIDE_MEDIA]: { paddingInlineStart: theme.space[8], borderInlineStart: `1px solid ${theme.color.border}` },
+  [ASIDE_MEDIA]: stacked ? {} : { paddingInlineStart: theme.space[8], borderInlineStart: `1px solid ${theme.color.border}` },
 }));
 
 interface WorkLayoutProps {
@@ -32,14 +32,15 @@ interface WorkLayoutProps {
   asideLabel: string;
   /** Reading width for forms and reviews; lists use the full width. */
   mainWidth?: string;
+  stacked?: boolean;
 }
 
 /** Task column plus supporting context: beside it from 80rem, after it below that. */
-export function WorkLayout({ main, aside, asideLabel, mainWidth = '1fr' }: WorkLayoutProps) {
+export function WorkLayout({ main, aside, asideLabel, mainWidth = '1fr', stacked = false }: WorkLayoutProps) {
   return (
-    <Grid measure={mainWidth}>
+    <Grid measure={mainWidth} stacked={stacked}>
       <Column measure={mainWidth}>{main}</Column>
-      <Aside aria-label={asideLabel}>{aside}</Aside>
+      <Aside stacked={stacked} aria-label={asideLabel}>{aside}</Aside>
     </Grid>
   );
 }

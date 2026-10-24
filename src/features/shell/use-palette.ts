@@ -11,12 +11,14 @@ function isPaletteShortcut(event: KeyboardEvent): boolean {
 export function usePalette() {
   const [open, setOpenState] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
+  const invoker = useRef<HTMLElement | null>(null);
 
   const setOpen = useCallback((next: boolean) => {
     if (next) {
       // A repeated shortcut while open must not replace the original opener with the palette input.
       if (returnFocus.current === null && document.activeElement instanceof HTMLElement) {
         returnFocus.current = document.activeElement;
+        invoker.current = document.activeElement;
       }
       setOpenState(true);
       return;
@@ -37,5 +39,5 @@ export function usePalette() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [setOpen]);
 
-  return { open, setOpen };
+  return { open, setOpen, invoker };
 }
