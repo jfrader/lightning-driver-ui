@@ -2,9 +2,6 @@ import { expect, test, type Page } from '@playwright/test';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { installSyntheticApi } from './synthetic-api';
 
-/** Integration defects 1 and 2: views agree with the latest reads without a page reload. */
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
-
 /** Counts full document loads, so a test can prove the app never reloaded. */
 async function countLoads(page: Page) {
   let loads = 0;
@@ -66,12 +63,7 @@ test('a created invoice is on the invoice list when the operator returns to it, 
   await page.getByRole('button', { name: 'Create invoice' }).click();
   await expect(page.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
 
-  if (isPhone(page)) {
-    await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Wallet' }).click();
-    await page.getByRole('navigation', { name: 'Wallet' }).getByRole('link', { name: 'Invoices' }).click();
-  } else {
-    await page.getByRole('navigation', { name: 'Node sections' }).getByRole('link', { name: 'Invoices' }).click();
-  }
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
 
   const hash = examples.fixtures.invoices_page.value.items[0].payment_hash;
   await expect(page.getByRole('link', { name: new RegExp(`\\(Open invoice ${hash.slice(0, 8)}\\)$`) }).first()).toBeVisible();

@@ -37,11 +37,14 @@ export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, chi
   const isDesktop = useDesktopShell();
   const [desktop] = useState(isDesktop);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const paletteInvoker = useContext(OverlayInvokerContext);
+  const overlayInvoker = useContext(OverlayInvokerContext);
   const [invoker] = useState(() => {
     const active = document.activeElement;
-    if (active instanceof HTMLElement && active !== document.body && !active.closest('dialog')) return active;
-    return paletteInvoker?.current ?? null;
+    if (active instanceof HTMLElement && active !== document.body && !active.closest('dialog')) {
+      if (overlayInvoker) overlayInvoker.current = active;
+      return active;
+    }
+    return overlayInvoker?.current ?? null;
   });
   useLayoutEffect(() => () => {
     requestAnimationFrame(() => {

@@ -111,9 +111,10 @@ describe('read-only node', () => {
     'onchain/send',
   ])('rejects the %s deep link without rendering a form', async (path) => {
     renderApp(`/nodes/${RO}/${path}`);
+    const sheet = within(await screen.findByRole('dialog'));
     expect((await screen.findAllByText('This node is read-only.')).length).toBeGreaterThan(0);
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Create|Review|Connect|Decode/ })).not.toBeInTheDocument();
+    expect(sheet.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(sheet.queryByRole('button', { name: /Create|Review|Connect|Decode/ })).not.toBeInTheDocument();
     expect(operationPosts).toBe(0);
   });
 });

@@ -129,7 +129,7 @@ export function ChannelsPage() {
         title="Channels"
         actions={
           <CapabilityAction node={node} capability="open_channel">
-            <ButtonLink to="/nodes/$nodeId/channels/new" params={{ nodeId: node.id }} size={size} variant="outline">
+            <ButtonLink to="/nodes/$nodeId/channels/new" params={{ nodeId: node.id }} search={search} size={size} variant="outline">
               Open channel…
             </ButtonLink>
           </CapabilityAction>

@@ -1,4 +1,5 @@
 import { CommandPalette, type CommandPaletteItemRecord } from '@jfrader/ui';
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
@@ -22,6 +23,8 @@ interface NavPaletteProps {
 export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
   const desktop = useDesktopShell();
   const navigate = useNavigate();
+  const selected = useRef(false);
+  const destination = { replace: true, state: { paletteEntry: false } } as const;
   const { nodeId, node } = useShellNode();
   const fleet = useQuery(fleetQueryOptions());
   const switchLocked = useConfirmInFlight();
@@ -34,7 +37,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
         value: `go-${key}`,
         label,
         group: 'Go to',
-        onSelect: () => void navigate({ to, params: { nodeId } }),
+        onSelect: () => void navigate({ ...destination, to, params: { nodeId }, search: {} }),
       });
     }
     if (!node || surfacesFor(node).includes('operations'))
@@ -44,12 +47,12 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
         group: 'Go to',
         keywords: 'unknown pending',
         onSelect: () =>
-          void navigate({ to: '/nodes/$nodeId/operations', params: { nodeId }, search: { state: 'nonterminal' } }),
+          void navigate({ ...destination, to: '/nodes/$nodeId/operations', params: { nodeId }, search: { state: 'nonterminal' } }),
       });
   }
   for (const key of keysOf(GLOBAL_DESTINATIONS)) {
     const { label, to, keywords } = GLOBAL_DESTINATIONS[key];
-    items.push({ value: `go-${key}`, label, group: 'Go to', keywords, onSelect: () => void navigate({ to }) });
+    items.push({ value: `go-${key}`, label, group: 'Go to', keywords, onSelect: () => void navigate({ ...destination, to, search: {} }) });
   }
   if (nodeId !== null && node) {
     for (const form of FORM_DESTINATIONS.filter(
@@ -62,7 +65,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
         group: 'Open form',
         keywords: form.keywords,
         disabled: reason !== null,
-        onSelect: () => void navigate({ to: form.to, params: { nodeId }, search: true }),
+        onSelect: () => void navigate({ ...destination, to: form.to, params: { nodeId }, search: (previous) => ({ ...previous, palette: undefined }) }),
       });
     }
   }
@@ -73,7 +76,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       label: nodeChoiceLabel(other),
       group: 'Switch node',
       disabled: switchLocked,
-      onSelect: () => void navigate({ to: '/nodes/$nodeId', params: { nodeId: other.id } }),
+      onSelect: () => void navigate({ ...destination, to: '/nodes/$nodeId', params: { nodeId: other.id }, search: {} }),
     });
   }
   items.push({
@@ -81,7 +84,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
     label: 'All nodes',
     group: 'Switch node',
     disabled: switchLocked,
-    onSelect: () => void navigate({ to: '/fleet' }),
+    onSelect: () => void navigate({ ...destination, to: '/fleet', search: {} }),
   });
 
   return (
@@ -91,8 +94,8 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       emptyMessage="No matching destination"
       items={items}
       open={open}
-      onOpenChange={onOpenChange}
-      onSelect={() => onOpenChange(false)}
+      onOpenChange={(next) => { if (!selected.current) onOpenChange(next); }}
+      onSelect={() => { selected.current = true; }}
       slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } } }}
     />
   );

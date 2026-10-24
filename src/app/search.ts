@@ -2,8 +2,13 @@ import { isKeyOf } from '../lib/guards';
 
 const CURSOR_MAX_LENGTH = 1024;
 
+export const booleanCodec = {
+  parse: (value: unknown): boolean => value === 1 || value === '1',
+  serialize: (value: boolean): 1 | undefined => value ? 1 : undefined,
+};
+
 export function booleanParam(value: unknown): 1 | undefined {
-  return value === 1 || value === '1' ? 1 : undefined;
+  return booleanCodec.serialize(booleanCodec.parse(value));
 }
 
 const OPERATION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;

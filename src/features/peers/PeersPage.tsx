@@ -120,7 +120,7 @@ function LightningPeersPage() {
         title="Peers"
         actions={
           <CapabilityAction node={node} capability="connect_peer">
-            <ButtonLink to="/nodes/$nodeId/peers/new" params={{ nodeId: node.id }} size={size} tone="accent" variant="solid">
+            <ButtonLink to="/nodes/$nodeId/peers/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
               Connect peer
             </ButtonLink>
           </CapabilityAction>

@@ -1,5 +1,8 @@
 import { lazyRouteComponent } from '@tanstack/react-router';
 
+export const OperationFormRoute = lazyRouteComponent(() => import('../features/operations/OperationRouteSheet'), 'OperationFormRoute');
+export const OperationReviewRoute = lazyRouteComponent(() => import('../features/operations/OperationRouteSheet'), 'OperationReviewRoute');
+
 /**
  * Screens loaded on first visit (implementation spec §12). The entry keeps only the shell and the
  * landing screens: node chooser, node overview, and sign-in. Sign-in stays in the entry because a
@@ -13,9 +16,8 @@ export const WatchtowerClientPage = lazyRouteComponent(() => import('../features
 export const WatchtowerServerPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerServerPage'), 'WatchtowerServerPage');
 export const MorePage = lazyRouteComponent(() => import('../features/shell/MorePage'), 'MorePage');
 
-export const PaymentsLayout = lazyRouteComponent(() => import('../features/payments/PaymentsLayout'), 'PaymentsLayout');
+export const PaymentsPage = lazyRouteComponent(() => import('../features/payments/PaymentsPage'), 'PaymentsPage');
 export const PayInvoicePage = lazyRouteComponent(() => import('../features/payments/PayInvoicePage'), 'PayInvoicePage');
-export const PayReviewPage = lazyRouteComponent(() => import('../features/payments/PayReviewPage'), 'PayReviewPage');
 export const InvoicesPage = lazyRouteComponent(() => import('../features/invoices/InvoicesPage'), 'InvoicesPage');
 export const ReceiveInvoicePage = lazyRouteComponent(
   () => import('../features/invoices/ReceiveInvoicePage'),

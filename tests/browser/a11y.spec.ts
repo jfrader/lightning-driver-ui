@@ -206,7 +206,7 @@ test.describe('keyboard', () => {
       await page.keyboard.press('Tab');
       const label = await page.evaluate(() => {
         const element = document.activeElement;
-        if (!element?.closest('main')) return null;
+        if (!element?.closest('dialog')) return null;
         const label = element instanceof HTMLInputElement ? element.labels?.[0]?.textContent : null;
         return element.getAttribute('aria-label') ?? label ?? element.textContent ?? '';
       });
