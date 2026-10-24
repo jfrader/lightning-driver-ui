@@ -14,7 +14,10 @@ interface OperationSheetProps {
 }
 
 export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, children }: OperationSheetProps) {
-  const desktop = useDesktopShell();
+  // The surface is fixed when the sheet opens: swapping Drawer for BottomSheet mid-edit unmounts the
+  // form and loses what was typed. A resize keeps the surface until the sheet closes.
+  const isDesktop = useDesktopShell();
+  const [desktop] = useState(isDesktop);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const paletteInvoker = useContext(OverlayInvokerContext);
   const [invoker] = useState(() => {
