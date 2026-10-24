@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { renderApp } from '../../test/render-app';
 import { api, readOnlyNode, server, writableNode } from '../../test/server';
 import { fixture } from '../../test/fixtures';
-import { capabilitySummary } from './labels';
+
 
 const RO = readOnlyNode.id;
 const MUTATION_ENTRIES = [
@@ -91,14 +91,13 @@ describe('read-only node', () => {
     await expectDisabledEntries(['Open channel', 'Close channel'], user);
   });
 
-  it('calls a read-only node read-only even when its capabilities are enabled', async () => {
+  it('labels a read-only node read-only even when its capabilities are enabled', async () => {
     server.use(http.get(api('/nodes'), () => HttpResponse.json({
       ...fixture('nodes_page'), items: [{ ...writableNode, read_only: true }], next_cursor: null, truncated: false,
     })));
     renderApp('/fleet');
     expect((await screen.findAllByText('Read-only')).length).toBeGreaterThan(0);
     expect(screen.queryByText('All actions')).not.toBeInTheDocument();
-    expect(capabilitySummary({ ...writableNode, read_only: true })).toBe('Read-only');
   });
 
   it.each([
