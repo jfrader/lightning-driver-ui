@@ -5,10 +5,8 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 import { LoadingState } from '../../components/LoadingState';
 import { publicPolicyQueryOptions } from '../auth/queries';
 import { useNodeLookup } from '../nodes/use-current-node';
-import { PaymentReview } from '../payments/review/PaymentReview';
 import { isInFlight } from './labels';
-import { OperationDetail } from './OperationDetail';
-import { KindReview } from './review/KindReview';
+import { OperationView } from './OperationView';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations/$operationId');
 
@@ -33,12 +31,5 @@ export function OperationPage() {
   if (operation.isPending) return <LoadingState label="Loading operation" />;
   if (operation.isError) return <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} />;
 
-  const current = operation.data;
-  if (current.state !== 'awaiting_confirmation' || unanswered) {
-    return <OperationDetail operation={current} node={node} unanswered={unanswered} />;
-  }
-  if (current.request.kind === 'pay_invoice') {
-    return <PaymentReview key={current.id} operation={current} bolt11={current.request.params.bolt11} node={node} />;
-  }
-  return <KindReview key={current.id} operation={current} node={node} />;
+  return <OperationView operation={operation.data} node={node} unanswered={unanswered} />;
 }

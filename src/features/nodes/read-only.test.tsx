@@ -51,6 +51,7 @@ async function expectDisabledEntries(names: string[], user: ReturnType<typeof re
   for (const name of MUTATION_ENTRIES) {
     expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
     for (const control of screen.queryAllByRole('button', { name })) {
+      if (control.getAttribute('aria-haspopup') === 'dialog') continue;
       expect(control).toBeDisabled();
     }
   }

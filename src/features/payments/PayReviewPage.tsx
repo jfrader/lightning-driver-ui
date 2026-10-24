@@ -1,5 +1,5 @@
 import { useIsMutating, useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { getRouteApi } from '@tanstack/react-router';
+import { getRouteApi, useSearch } from '@tanstack/react-router';
 import { operationQueryOptions } from '../../api/node-queries';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { LoadingState } from '../../components/LoadingState';
@@ -15,6 +15,7 @@ const route = getRouteApi('/_authed/nodes/$nodeId/_configured/payments/review/$o
 
 /** The review and result of one payment over its list; the address bar names the operation. */
 export function PayReviewPage() {
+  const search = useSearch({ strict: false });
   const node = useCurrentNode();
   const { operationId } = route.useParams();
   const navigate = route.useNavigate();
@@ -38,6 +39,7 @@ export function PayReviewPage() {
   ) : (
     <OperationDetail operation={operation.data} node={node} unanswered={false} />
   );
+  if (search.send || search.receive || search.operation) return null;
   return (
     <OperationSheetContext value={{ onCreated: () => {}, onUnanswered: list, discard: form }}>
       <OperationSheet title="Pay invoice" hasReview={operation.data === undefined || operation.data.state === 'awaiting_confirmation'} busy={busy} onClose={list} onDiscard={form}>

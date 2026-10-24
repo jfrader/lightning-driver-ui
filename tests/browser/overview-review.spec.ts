@@ -58,13 +58,16 @@ for (const path of ['/nodes/lnd-lab', `/nodes/lnd-lab/payments?selected=${PAYMEN
   });
 }
 
-test('the phone review primary action sits at least 12px above the tab bar', async ({ page }) => {
+test('the keyboard-focused phone review primary action sits at least 12px above the tab bar', async ({ page }) => {
   test.skip(!isPhone(page), 'phone shell only');
   await installSyntheticApi(page);
   await page.goto(REVIEW_PATH);
   const pay = page.getByRole('button', { name: 'Pay with passkey' });
   await expect(pay).toBeVisible();
-
+  await pay.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(pay).toBeFocused();
   const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
   const action = await pay.boundingBox();
   if (!tabs || !action) throw new Error('Missing geometry');

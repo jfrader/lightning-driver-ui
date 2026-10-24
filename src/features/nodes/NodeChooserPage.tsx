@@ -1,7 +1,10 @@
 import { Flex } from '@jfrader/ui';
+import { lazy, Suspense } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
-import { FleetList } from './FleetList';
+import { LoadingState } from '../../components/LoadingState';
+
+const FleetList = lazy(() => import('./FleetList').then((module) => ({ default: module.FleetList })));
 
 const route = getRouteApi('/_authed/');
 
@@ -12,7 +15,9 @@ export function NodeChooserPage() {
   return (
     <Flex direction="column" gap="md">
       <PageHeader title="Choose a node" level={1} />
-      <FleetList cursor={cursor} onPage={(next) => void navigate({ search: { cursor: next } })} />
+      <Suspense fallback={<LoadingState label="Loading nodes" />}>
+        <FleetList cursor={cursor} onPage={(next) => void navigate({ search: { cursor: next } })} />
+      </Suspense>
     </Flex>
   );
 }

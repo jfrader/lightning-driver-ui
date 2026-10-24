@@ -1,4 +1,4 @@
-import { getRouteApi } from '@tanstack/react-router';
+import { getRouteApi, useSearch } from '@tanstack/react-router';
 import { OperationSheet } from '../../components/OperationSheet';
 import { FlowFrame } from '../forms/FlowFrame';
 import { useCurrentNode } from '../nodes/use-current-node';
@@ -9,6 +9,7 @@ const route = getRouteApi('/_authed/nodes/$nodeId/_configured/payments/new');
 
 /** The pay form over its list. Creating a review replaces this entry with the review's URL. */
 export function PayInvoicePage() {
+  const search = useSearch({ strict: false });
   const node = useCurrentNode();
   const navigate = route.useNavigate();
   const list = () => void navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: node.id }, search: (previous) => previous });
@@ -18,6 +19,7 @@ export function PayInvoicePage() {
     search: (previous) => previous,
     replace: true,
   });
+  if (search.send || search.receive || search.operation) return null;
   return (
     <OperationSheetContext value={{ onCreated: (created) => review(created.id), onUnanswered: list, discard: list }}>
       <OperationSheet title="Pay invoice" hasReview={false} busy={false} onClose={list} onDiscard={list}>

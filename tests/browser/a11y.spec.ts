@@ -112,6 +112,7 @@ test.describe('forced colors', () => {
   test('colour keys and state markers keep their fill, beside their words', async ({ page }) => {
     await page.goto('/nodes/lnd-lab');
     await expect(page.getByText('Confirmed', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Open payment/ }).first()).toBeVisible();
     // Swatches and state markers opt out of forced colors; each keeps its fill and sits beside a word.
     const keys = await page.locator('body').evaluate((body) =>
       [...body.querySelectorAll('span')]
@@ -286,11 +287,15 @@ test.describe('phone targets', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(MIN_TOUCH_PX);
   });
 
-  test('the review primary action still clears the tab bar', async ({ page }) => {
+  test('the keyboard-focused review primary action clears the tab bar', async ({ page }) => {
     await installSyntheticApi(page);
     await page.goto(REVIEW_PATH);
     const pay = page.getByRole('button', { name: 'Pay with passkey' });
     await expect(pay).toBeVisible();
+    await pay.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(pay).toBeFocused();
     const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
     const action = await pay.boundingBox();
     if (!tabs || !action) throw new Error('Missing geometry');

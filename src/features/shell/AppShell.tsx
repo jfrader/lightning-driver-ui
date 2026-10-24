@@ -1,12 +1,14 @@
 import { Suspense, lazy } from 'react';
 import { Button, styled } from '@jfrader/ui';
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useSearch } from '@tanstack/react-router';
+import { useCachedQueryData } from '../../api/use-cached-query-data';
 import { Wordmark } from '../../components/Wordmark';
 import { OverlayInvokerContext } from '../../components/overlay-invoker-context';
 import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT, TAB_BAR_CLEARANCE, TOUCH_TARGET } from '../../config';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { LogoutButton } from '../auth/LogoutButton';
 import { useSessionExpiry } from '../auth/use-session-expiry';
+import { sessionQueryOptions } from '../auth/queries';
 import { ContentRegion } from './ContentRegion';
 import { GroupLinks } from './GroupLinks';
 import { NodeChooser } from './NodeChooser';
@@ -18,10 +20,12 @@ import { UnresolvedButton } from './UnresolvedButton';
 import { usePalette } from './use-palette';
 import { useDesktopShell } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
+import { GlobalMoneyActions } from './GlobalMoneyActions';
 
 const CONTENT_ID = 'content';
 const NODE_CHOICE_MEASURE = '8em';
 const NavPalette = lazy(() => import('./NavPalette').then((module) => ({ default: module.NavPalette })));
+const GlobalMoneySheet = lazy(() => import('./GlobalMoneySheet').then((module) => ({ default: module.GlobalMoneySheet })));
 
 const SkipLink = styled.a(({ theme }) => ({
   position: 'absolute',
@@ -140,7 +144,10 @@ export function AppShell() {
   const desktop = useDesktopShell();
   const palette = usePalette();
   const { node, pathname } = useShellNode();
+  const search = useSearch({ strict: false });
+  const session = useCachedQueryData(sessionQueryOptions.queryKey);
   useSessionExpiry();
+  if (!session) return null;
   const content = (
     <ContentRegion screenKey={pathname}>
       <Outlet />
@@ -189,6 +196,7 @@ export function AppShell() {
                 </svg>
               </Button>
               {node && <UnresolvedButton node={node} />}
+              <GlobalMoneyActions node={node} />
             </PhoneHeaderRow>
             {node && <StatusFacts node={node} compact />}
           </PhoneHeader>
@@ -209,6 +217,7 @@ export function AppShell() {
       )}
       <Suspense fallback={null}>
         {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
+        {node && (search.send || search.receive || search.operation) && <GlobalMoneySheet key={node.id} node={node} />}
       </Suspense>
     </OverlayInvokerContext>
   );

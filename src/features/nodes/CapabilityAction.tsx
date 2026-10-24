@@ -13,19 +13,20 @@ interface CapabilityActionProps {
   capability: CapabilityKey;
   /** The enabled entry point, usually a ButtonLink. */
   children: ReactNode;
+  showUnavailable?: boolean;
 }
 
 /**
  * A blocked entry stays visible, disabled, with
  * its reason as adjacent text (never a tooltip).
  */
-export function CapabilityAction({ node, capability, children }: CapabilityActionProps) {
+export function CapabilityAction({ node, capability, children, showUnavailable = false }: CapabilityActionProps) {
   const reasonId = useId();
   const size = useControlSize();
-  if (!surfacesFor(node).includes(ACTION_SURFACES[capability])) return null;
+  if (!showUnavailable && !surfacesFor(node).includes(ACTION_SURFACES[capability])) return null;
   const reason = capabilityBlock(node, capability);
   if (reason === null) return children;
-  if (reason === 'monitor_only') return null;
+  if (!showUnavailable && reason === 'monitor_only') return null;
   return (
     <Flex direction="column" gap="xs">
       <Button size={size} variant="outline" sx={wrappingControlText(size)} disabled aria-describedby={reasonId}>
