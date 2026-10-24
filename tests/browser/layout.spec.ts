@@ -50,6 +50,30 @@ test('@layout read-only actions retain complete labels and adjacent reasons at e
   expect(mutations.filter(request => request.method === 'POST' && request.path.endsWith('/operations'))).toEqual([]);
 });
 
+test('row links retain their visible label in the accessible name at normal and enlarged text sizes', async ({ page }) => {
+  test.setTimeout(120_000);
+  await installSyntheticApi(page);
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const resource of ['payments', 'peers']) {
+      for (const enlarged of [false, true]) {
+        await page.goto(`${root}/${resource}`);
+        const links = page.locator('a[data-row-primary]');
+        await expect(links.first()).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        if (enlarged) await doubleText(page);
+        for (const link of await links.all()) {
+          await expect(link).not.toHaveAttribute('aria-label');
+          const name = await link.evaluate(element => element.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+          await expect(link).toHaveAccessibleName(name);
+        }
+        const result = await new AxeBuilder({ page }).analyze();
+        expect.soft(result.violations.filter(item => item.impact === 'serious' || item.impact === 'critical'), `${resource} ${width} ${enlarged ? '200%' : '100%'}`).toEqual([]);
+      }
+    }
+  }
+});
+
 test('channel close keeps accessible destructive-action contrast in both themes', async ({ page }) => {
   await installSyntheticApi(page);
   const path = `${root}/channels/${fixture('channels_page').items[0].id}/close`;
@@ -69,6 +93,8 @@ test('channel close keeps accessible destructive-action contrast in both themes'
 for (const locale of ['en-US', 'de-DE']) test.describe(locale, () => {
   test.use({ locale });
   test('@layout enlarged Lightning details and fee choices stay inside the workspace', async ({ page }) => {
+    // Thirteen paths at 200% text: 14-20 s warm and over the 30 s default under parallel load.
+    test.slow();
     await installSyntheticApi(page);
     for (const { width, path } of cases) {
       await page.setViewportSize({ width, height: 1000 });

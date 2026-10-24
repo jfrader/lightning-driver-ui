@@ -12,6 +12,7 @@ import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
+import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { useNow } from '../../lib/use-now';
 import { Amount } from '../display/Amount';
 import { ShortIdentifier } from '../display/Identifier';
@@ -86,10 +87,10 @@ export function InvoicesPage() {
     <TextLink
       from="/nodes/$nodeId/invoices"
       search={(previous) => ({ ...previous, selected: invoice.payment_hash })}
-      aria-label={`Open invoice ${invoice.payment_hash.slice(0, 8)}`}
       {...ROW_PRIMARY_LINK}
     >
       {label}
+      <VisuallyHidden>{` (Open invoice ${invoice.payment_hash.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
   );
   const selected = search.selected

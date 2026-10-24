@@ -10,6 +10,7 @@ import { ResourceList } from '../../components/ResourceList';
 import { Section } from '../../components/Section';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
+import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { RECENT_PAYMENTS_LIMIT } from '../../config';
 import { useNow } from '../../lib/use-now';
 import { paymentColumns } from '../payments/payment-columns';
@@ -26,10 +27,10 @@ export function RecentPayments({ nodeId }: { nodeId: string }) {
       to="/nodes/$nodeId/payments"
       params={{ nodeId }}
       search={{ selected: payment.payment_hash }}
-      aria-label={`Open payment ${payment.payment_hash.slice(0, 8)}`}
       {...ROW_PRIMARY_LINK}
     >
       {label}
+      <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
   );
 

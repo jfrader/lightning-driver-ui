@@ -10,6 +10,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
+import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { InspectorLayout } from '../../components/InspectorLayout';
 import { isKeyOf } from '../../lib/guards';
 import { useNow } from '../../lib/use-now';
@@ -36,10 +37,10 @@ export function PaymentsPage() {
     <TextLink
       from="/nodes/$nodeId/payments"
       search={(previous) => ({ ...previous, selected: payment.payment_hash })}
-      aria-label={`Open payment ${payment.payment_hash.slice(0, 8)}`}
       {...ROW_PRIMARY_LINK}
     >
       {label}
+      <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
   );
   const columns = paymentColumns(now, open);
