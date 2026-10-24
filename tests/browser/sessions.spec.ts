@@ -19,6 +19,9 @@ for (const width of [390, 1440]) {
       const section = page.getByRole('region', { name: 'Sessions', exact: true });
       const marker = section.getByText('Current session', { exact: true });
       await expect(marker).toBeVisible();
+      const methods = page.getByRole('region', { name: 'Sign-in methods', exact: true });
+      await expect(methods.locator('[aria-busy="true"]')).toHaveCount(0);
+      await expect(methods.getByLabel('Nostr signer', { exact: true })).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       if (enlarged) await doubleText(page);
       await section.scrollIntoViewIfNeeded();

@@ -50,6 +50,20 @@ function devApiOrigin(): string {
 export default defineConfig(({ command }) => ({
   plugins: [stripContractValidators(), react({ jsxImportSource: '@emotion/react' })],
   define: { __APP_VERSION__: JSON.stringify(version ?? '') },
+  build: {
+    rollupOptions: {
+      output: {
+        advancedChunks: {
+          groups: [
+            { name: 'vendor-react', test: /\/node_modules\/(react|react-dom|scheduler)\//, priority: 40 },
+            { name: 'vendor-tanstack', test: /\/node_modules\/@tanstack\//, priority: 30 },
+            { name: 'vendor-motion', test: /\/node_modules\/(motion|framer-motion|motion-dom|motion-utils)\//, priority: 20 },
+            { name: 'vendor-ui', test: /\/node_modules\/@jfrader\/(ui|tokens)\//, priority: 10 },
+          ],
+        },
+      },
+    },
+  },
   server: {
     host: '127.0.0.1',
     strictPort: true,

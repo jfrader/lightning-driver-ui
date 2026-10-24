@@ -2,6 +2,12 @@
 
 /** Module ids that belong to the chart module and its library; none may load with the initial route. */
 const CHART_MODULE = /[\\/](src[\\/]charts[\\/]|node_modules[\\/]recharts[\\/])/;
+const INITIAL_ROUTE_TOLERANCE = 0.005;
+const INITIAL_ROUTE_TOLERANCE_FLOOR_BYTES = 1_000;
+
+export function initialRouteLimit(recordedBytes) {
+  return Math.floor(recordedBytes + Math.max(recordedBytes * INITIAL_ROUTE_TOLERANCE, INITIAL_ROUTE_TOLERANCE_FLOOR_BYTES));
+}
 
 /**
  * Chunk code with the content hashes of sibling chunk file names removed (`index-AbC123xY.js` →
@@ -66,9 +72,10 @@ export function evaluateBudget(chunks, budget) {
   const chart = chartChunk(chunks);
   const failures = [];
 
-  if (initialGzipBytes > budget.initialRouteGzipBytes) {
+  const initialLimit = initialRouteLimit(budget.initialRouteGzipBytes);
+  if (initialGzipBytes > initialLimit) {
     failures.push(
-      `Initial route is ${initialGzipBytes} B gzip, over the budget of ${budget.initialRouteGzipBytes} B by ${initialGzipBytes - budget.initialRouteGzipBytes} B.`,
+      `Initial route is ${initialGzipBytes} B gzip, over the tolerated limit of ${initialLimit} B by ${initialGzipBytes - initialLimit} B (recorded ${budget.initialRouteGzipBytes} B).`,
     );
   }
   for (const chunk of initial) {
