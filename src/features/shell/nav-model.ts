@@ -112,7 +112,7 @@ export function groupsFor(node: NodeSummary): DestinationGroup[] {
 }
 
 export function phoneTabsFor(node: NodeSummary | null): typeof PHONE_TABS {
-  if (!node) return PHONE_TABS;
+  if (!node) return PHONE_TABS.filter((tab) => tab.destination === null);
   const groups = groupsFor(node);
   const tabs =
     node.kind === 'bitcoin'

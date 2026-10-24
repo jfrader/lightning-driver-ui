@@ -7,6 +7,25 @@ const TAB_BAR_CLEARANCE_PX = 12;
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
+test('@layout missing-node recovery is touch-sized and opens the fleet', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await installSyntheticApi(page);
+  for (const enlarged of [false, true]) {
+    await page.goto('/nodes/unconfigured-synthetic-node');
+    await expect(page.getByRole('heading', { name: 'Node not found', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: /^(Overview|Wallet|Channels)$/ })).toHaveCount(0);
+    if (enlarged) await doubleText(page);
+    const recovery = page.getByRole('link', { name: 'Open fleet', exact: true });
+    const box = await recovery.boundingBox();
+    if (!box) throw new Error('Missing node recovery geometry');
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    await recovery.click();
+    await expect(page.getByRole('heading', { name: 'Fleet', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: /^(Overview|Wallet|Channels)$/ })).toHaveCount(0);
+  }
+});
+
 test('phone node choices have usable targets and keyboard selection reaches the fleet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installSyntheticApi(page);
