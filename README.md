@@ -1,14 +1,15 @@
 # Lightning Driver UI
 
-Browser UI for [lightning-driver](https://github.com/jfrader/lightning-driver), the Rust Lightning node
-manager: one operator, several server-configured nodes (LND gRPC, LND REST, Core Lightning REST, and
-Bitcoin Core nodes watched read-only), passkey sign-in with optional NIP-07 Nostr sign-in, per-node
-read-only policy.
+Browser UI for [lightning-driver](https://github.com/jfrader/lightning-driver). It shows status,
+balances, channels, invoices, payments and pending operations for LND (gRPC or REST) and Core
+Lightning (REST) nodes, plus read-only chain, mempool, storage and peer data for Bitcoin Core. The
+nodes come from the backend's configuration.
 
-The Rust API server is authoritative: it holds node credentials, enforces read-only policy, journals
-every operation and performs all node actions. The browser only talks to `/api/v1` on its own origin.
-The app is Vite, TanStack Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and
-@jfrader/tokens.
+The backend is the Rust API server: it holds the node credentials, enforces each node's policy and
+performs every node action. The browser only talks to `/api/v1` on its own origin.
+
+Sign in with a passkey, or with a Nostr key through a NIP-07 extension. The app is Vite, TanStack
+Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/tokens.
 
 ![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
 
@@ -64,17 +65,18 @@ run `npm run api:generate`.
 | `npm run build` | Typecheck and production build |
 | `npm run budget` | Builds and fails if the first-load JS or the lazy chart chunk exceeds `bundle-budget.json` |
 | `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build, including 44 px targets, forced colors, 200% zoom, reduced motion and the phone tab-bar clearance |
-| `npm run test:e2e` | Opt-in real Polar/Docker regtest journey (bitcoind + LND gRPC/REST + CLN REST); requires `LIGHTNING_DRIVER_BACKEND` and a built release API; not part of `npm run verify` |
-| `npm run verify` | All of the above in order |
+| `npm run verify` | `api:check`, `lint`, `typecheck`, `test`, `build`, `budget` and `test:browser`, in that order |
+| `npm run test:e2e`, `test:e2e:passkey`, `test:e2e:restart` | Opt-in real-node suite against disposable Polar/Docker regtest containers: both journeys, the passkey scenario alone, or the daemon restart drill. Needs Docker, Chromium and `LIGHTNING_DRIVER_BACKEND` pointing at a checkout with a built release API; not part of `verify` |
 | `npm run screenshots` | Rewrites the README images in `docs/screenshots` from a fresh production build at 1440×1000 and 390×844; not part of `verify`, because it writes files |
 
 `test:browser` needs a Chromium for Playwright: either `npx playwright install chromium`, or an
 existing binary through `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. It starts and stops
 its own preview server on `127.0.0.1:4317`; `screenshots` uses its own on `127.0.0.1:4318`.
 
-Tests serve the frozen contract fixtures at the network boundary (MSW in Vitest, `page.route` in
-Playwright). They do not exercise the real backend, real passkeys or real nodes; the README
-screenshots are served the same fixtures.
+The default Vitest and Playwright tests serve the frozen contract fixtures at the network boundary
+(MSW in Vitest, `page.route` in Playwright). The opt-in e2e suite is what exercises the real backend,
+real passkeys and real nodes; the README screenshots use the same fixtures as the default tests.
+`tests/e2e/README.md` covers the stack, the scenarios and the CI dispatch.
 
 ## Amount entry
 
@@ -84,11 +86,11 @@ other numerals) stays as typed and is rejected. Amounts are displayed with the b
 
 ## Limitations
 
-- Passkey ceremonies are tested with a stubbed browser helper; WebAuthn round-trips against the
-  backend need browser QA.
+- Passkey ceremonies in `npm run test:browser` use a stubbed helper. The opt-in `test:e2e:passkey`
+  runs a real WebAuthn round-trip against the backend with Chromium's virtual authenticator.
 - Nostr sign-in uses a NIP-07 browser extension. NIP-46 remote signing and mobile bunkers are not
   implemented; the login page shows `No Nostr extension found.` when the browser has none.
-- A Bitcoin Core node is watched, not managed: chain, peers, mempool and storage, with no wallet
+- A Bitcoin Core node is read-only in this UI: chain, peers, mempool and storage. There are no wallet
   balances, peer controls or operations.
 - A node that serves as a watchtower reports its identity, listeners and URIs. LND exposes no client,
   session or backup list for the serving side.
