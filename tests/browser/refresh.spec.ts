@@ -74,7 +74,7 @@ test('a created invoice is on the invoice list when the operator returns to it, 
   }
 
   const hash = examples.fixtures.invoices_page.value.items[0].payment_hash;
-  await expect(page.getByRole('link', { name: `Open invoice ${hash.slice(0, 8)}` }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: new RegExp(`\\(Open invoice ${hash.slice(0, 8)}\\)$`) }).first()).toBeVisible();
   await expect(page.getByText('No invoices on this node.')).toHaveCount(0);
   expect(loads()).toBe(1);
 });

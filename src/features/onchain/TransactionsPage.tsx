@@ -11,6 +11,7 @@ import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
+import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { useNow } from '../../lib/use-now';
 import { Amount } from '../display/Amount';
 import { ShortIdentifier } from '../display/Identifier';
@@ -98,10 +99,10 @@ export function TransactionsPage() {
     <TextLink
       from="/nodes/$nodeId/onchain"
       search={(previous) => ({ ...previous, selected: transaction.txid })}
-      aria-label={`Open transaction ${transaction.txid.slice(0, 8)}`}
       {...ROW_PRIMARY_LINK}
     >
       {label}
+      <VisuallyHidden>{` (Open transaction ${transaction.txid.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
   );
   const selected = search.selected

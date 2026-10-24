@@ -74,7 +74,7 @@ describe('reads a confirmed operation affects', () => {
 
     await view.router.navigate({ to: '/nodes/$nodeId/invoices', params: { nodeId: 'lnd-lab' } });
     const hash = fixture('invoices_page').items[0].payment_hash;
-    await waitFor(() => expect(screen.getAllByRole('link', { name: `Open invoice ${hash.slice(0, 8)}` }).length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByRole('link', { name: new RegExp(`\\(Open invoice ${hash.slice(0, 8)}\\)$`) }).length).toBeGreaterThan(0));
     expect(screen.queryByText('No invoices on this node.')).not.toBeInTheDocument();
   });
 });
