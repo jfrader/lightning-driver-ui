@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useContext, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { BottomSheet, Button, Drawer, theme } from '@jfrader/ui';
 import { useDesktopShell } from '../features/shell/use-shell-layout';
@@ -11,6 +11,24 @@ interface OperationSheetProps {
   onClose: () => void;
   onDiscard: () => void;
   children: ReactNode;
+}
+
+function containTab(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== 'Tab') return;
+  const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [tabindex]')]
+    .filter((element) => element.tabIndex >= 0 && !element.matches(':disabled, [inert], [inert] *') && element.getClientRects().length > 0);
+  const first = controls[0];
+  const last = controls.at(-1);
+  const active = document.activeElement;
+  const atBoundary = event.shiftKey ? active === first || !(active instanceof HTMLElement && controls.includes(active)) : active === last;
+  if (!first || !last) {
+    event.preventDefault();
+    return;
+  }
+  if (atBoundary) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
 }
 
 export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, children }: OperationSheetProps) {
@@ -37,7 +55,7 @@ export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, chi
   const Surface = desktop ? Drawer : BottomSheet;
   return createPortal(
     <Surface open onOpenChange={(open) => { if (!open && canDismiss) onClose(); }} {...(desktop ? { size: 'lg' as const } : { detents: [1] })}>
-      <Surface.Content withDescription={false} onCancel={(event) => { if (!canDismiss) event.preventDefault(); }}>
+      <Surface.Content withDescription={false} onKeyDown={containTab} onCancel={(event) => { if (!canDismiss) event.preventDefault(); }}>
         <Surface.Panel appearance="default">
           <Surface.Header sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: theme.space[2] }}>
             <Surface.Title ref={titleRef} tabIndex={-1}>{title}</Surface.Title>

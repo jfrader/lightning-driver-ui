@@ -14,6 +14,41 @@ for (const width of [390, 1440]) {
   test.describe(`payment sheet at ${width}`, () => {
     test.use({ viewport: { width, height: 900 } });
 
+    test('inspector keyboard opening and hiding preserves the row node and list scroll', async ({ page }) => {
+      await installSyntheticApi(page);
+      const payments = fixture('payments_page');
+      payments.items = Array.from({ length: 30 }, (_, index) => ({
+        ...payments.items[0], payment_hash: index.toString(16).padStart(64, '0'),
+      }));
+      await page.route('**/api/v1/nodes/lnd-lab/payments?*', (route) => route.fulfill({ json: payments }));
+      await page.goto('/nodes/lnd-lab/payments');
+      const link = page.locator('[data-row-primary]').nth(20);
+      await link.focus();
+      const original = await link.elementHandle();
+      if (!original) throw new Error('Missing row link');
+      const scroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+      expect(scroll.y).toBeGreaterThan(0);
+      await page.keyboard.press('Enter');
+      const inspector = page.getByRole('complementary', { name: 'Selected payment' });
+      await expect(inspector).toBeFocused();
+      expect(await original.evaluate((element) => element.isConnected)).toBe(true);
+      await page.keyboard.press('Tab');
+      await expect(inspector.getByRole('link', { name: 'Hide', exact: true })).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(inspector).toHaveCount(0);
+      expect(await original.evaluate((element) => element.isConnected && element === document.activeElement)).toBe(true);
+      await expect.poll(() => page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(scroll);
+      await original.dispose();
+    });
+
+    test('a direct inspector URL does not take focus on load', async ({ page }) => {
+      await installSyntheticApi(page);
+      await page.goto(`/nodes/lnd-lab/payments?selected=${fixture('payments_page').items[0].payment_hash}`);
+      const inspector = page.getByRole('complementary', { name: 'Selected payment' });
+      await expect(inspector).toBeVisible();
+      expect(await inspector.evaluate((element) => element.contains(document.activeElement))).toBe(false);
+    });
+
     test('keyboard opens over the list, traps focus, preserves state and returns focus on Escape', async ({ page }) => {
       await installSyntheticApi(page);
       const hash = fixture('payments_page').items[0].payment_hash;
@@ -25,12 +60,20 @@ for (const width of [390, 1440]) {
       const dialog = page.getByRole('dialog', { name: 'Pay invoice' });
       await expect(dialog).toBeVisible();
       await expect(page).toHaveURL(path.replace('/payments?', '/payments/new?'));
+      await dialog.getByRole('textbox', { name: /^Invoice/ }).fill('SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
       for (const direction of ['Tab', 'Shift+Tab']) {
         for (let index = 0; index < 10; index++) {
           await page.keyboard.press(direction);
-          expect(await dialog.evaluate((element) => document.activeElement === document.body || element.contains(document.activeElement))).toBe(true);
+          expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
         }
       }
+      const first = dialog.getByRole('button', { name: 'Close', exact: true });
+      const last = dialog.getByRole('button', { name: 'Check invoice', exact: true });
+      await last.focus();
+      await page.keyboard.press('Tab');
+      await expect(first).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(last).toBeFocused();
       await page.keyboard.press('Escape');
       await expect(dialog).toHaveCount(0);
       await expect(page).toHaveURL(path);

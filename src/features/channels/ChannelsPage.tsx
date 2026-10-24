@@ -92,6 +92,7 @@ export function ChannelsPage() {
       search={(previous) => ({ ...previous, selected: channel.id })}
       aria-label={`Open channel ${channelName(channel)} with ${channel.peer_pubkey.slice(0, 8)}`}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       {label}
     </TextLink>
@@ -148,6 +149,7 @@ export function ChannelsPage() {
                   size={size}
                   from="/nodes/$nodeId/channels"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                 >
                   Hide
                 </ButtonLink>

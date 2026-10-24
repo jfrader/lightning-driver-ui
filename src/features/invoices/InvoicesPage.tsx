@@ -88,6 +88,7 @@ export function InvoicesPage() {
       from="/nodes/$nodeId/invoices"
       search={(previous) => ({ ...previous, selected: invoice.payment_hash })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       {label}
       <VisuallyHidden>{` (Open invoice ${invoice.payment_hash.slice(0, 8)})`}</VisuallyHidden>
@@ -144,6 +145,7 @@ export function InvoicesPage() {
                   size={size}
                   from="/nodes/$nodeId/invoices"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                 >
                   Hide
                 </ButtonLink>

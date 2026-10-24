@@ -93,6 +93,7 @@ function LightningPeersPage() {
       from="/nodes/$nodeId/peers"
       search={(previous) => ({ ...previous, selected: peer.pubkey })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       {label}
       <VisuallyHidden>{` (Open peer ${peer.pubkey.slice(0, 8)})`}</VisuallyHidden>
@@ -139,6 +140,7 @@ function LightningPeersPage() {
                   size={size}
                   from="/nodes/$nodeId/peers"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                 >
                   Hide
                 </ButtonLink>

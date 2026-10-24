@@ -33,6 +33,7 @@ function TowerInspector({ nodeId, pubkey }: { nodeId: string; pubkey: string }) 
       size={size}
       from="/nodes/$nodeId/watchtower"
       search={(previous) => ({ ...previous, selected: undefined })}
+      resetScroll={false}
       variant="ghost"
     >
       Hide
@@ -91,6 +92,7 @@ function Towers({ nodeId }: { nodeId: string }) {
       from="/nodes/$nodeId/watchtower"
       search={(previous) => ({ ...previous, selected: pubkey })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       <ShortIdentifier value={pubkey} />
     </TextLink>

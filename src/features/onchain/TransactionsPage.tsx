@@ -100,6 +100,7 @@ export function TransactionsPage() {
       from="/nodes/$nodeId/onchain"
       search={(previous) => ({ ...previous, selected: transaction.txid })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       {label}
       <VisuallyHidden>{` (Open transaction ${transaction.txid.slice(0, 8)})`}</VisuallyHidden>
@@ -155,6 +156,7 @@ export function TransactionsPage() {
                   size={size}
                   from="/nodes/$nodeId/onchain"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                 >
                   Hide
                 </ButtonLink>
