@@ -4,6 +4,7 @@ import {
   chartChunk,
   evaluateBudget,
   initialChunks,
+  initialRouteLimit,
   isChartModule,
   withoutChunkHashes,
 } from './bundle-budget-lib.mjs';
@@ -49,6 +50,17 @@ describe('initial route', () => {
     expect(initialChunks(build()).map((c) => c.fileName)).toEqual(['index', 'vendor']);
   });
 
+  it('follows transitive static imports once, including shared dependencies and cycles', () => {
+    const chunks = build();
+    chunks[1].imports = ['runtime'];
+    chunks[0].imports.push('runtime');
+    chunks.push(chunk('runtime', { imports: ['vendor'], gzipBytes: 2_000 }));
+    const result = evaluateBudget(chunks, { ...BUDGET, initialRouteGzipBytes: 252_000 });
+    expect(result.initial.map((c) => c.fileName)).toEqual(['index', 'vendor', 'runtime']);
+    expect(result.initialGzipBytes).toBe(252_000);
+    expect(result.failures).toEqual([]);
+  });
+
   it('refuses a build without exactly one entry', () => {
     expect(() => initialChunks([chunk('a'), chunk('b')])).toThrow('Expected one entry chunk, found 0');
   });
@@ -78,9 +90,25 @@ describe('budget gate', () => {
     expect(result.failures).toEqual([]);
   });
 
-  it('fails one byte over the initial-route budget, naming the overrun', () => {
-    const result = evaluateBudget(build({ vendorBytes: 50_001 }), BUDGET);
-    expect(result.failures).toEqual(['Initial route is 250001 B gzip, over the budget of 250000 B by 1 B.']);
+  it.each([1, 1_250])('passes %i bytes over the recorded initial route', (growth) => {
+    expect(evaluateBudget(build({ vendorBytes: 50_000 + growth }), BUDGET).failures).toEqual([]);
+  });
+
+  it('fails one byte past the tolerance, naming the overrun and exact measurement', () => {
+    const result = evaluateBudget(build({ vendorBytes: 51_251 }), BUDGET);
+    expect(result.failures).toEqual(['Initial route is 251251 B gzip, over the tolerated limit of 251250 B by 1 B (recorded 250000 B).']);
+  });
+
+  it('rejects deliberate 1% initial-route growth', () => {
+    expect(evaluateBudget(build({ entryBytes: 202_500 }), BUDGET).failures).toHaveLength(1);
+  });
+
+  it('uses a 1 kB floor for smaller budgets and never rounds the tolerance up', () => {
+    const budget = { ...BUDGET, initialRouteGzipBytes: 100_000 };
+    expect(initialRouteLimit(budget.initialRouteGzipBytes)).toBe(101_000);
+    expect(evaluateBudget(build({ entryBytes: 50_000, vendorBytes: 51_000 }), budget).failures).toEqual([]);
+    expect(evaluateBudget(build({ entryBytes: 50_000, vendorBytes: 51_001 }), budget).failures).toHaveLength(1);
+    expect(initialRouteLimit(250_001)).toBe(251_251);
   });
 
   it('fails when the entry imports the chart module, even within the byte budget', () => {

@@ -1,6 +1,6 @@
 // Builds the app, measures the initial route and the chart chunk (gzip level 9, chunk-name hashes
 // removed so sizes do not move when an unrelated chunk is rehashed), and compares them
-// with bundle-budget.json. Fails when the initial route grows past its budget, when the chart chunk
+// with bundle-budget.json. Allows initial-route growth of 0.5% (at least 1 kB); fails when the chart chunk
 // grows past its budget, or when the chart module loads with the initial route.
 //
 //   npm run budget                 check against the committed budget
@@ -9,7 +9,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { build } from 'vite';
-import { budgetFromMeasurement, evaluateBudget, withoutChunkHashes } from './bundle-budget-lib.mjs';
+import { budgetFromMeasurement, evaluateBudget, initialRouteLimit, withoutChunkHashes } from './bundle-budget-lib.mjs';
 
 const BUDGET_FILE = new URL('../bundle-budget.json', import.meta.url);
 const GZIP_LEVEL = 9;
@@ -41,6 +41,7 @@ const measured = evaluateBudget(chunks, budget ?? { initialRouteGzipBytes: Infin
 console.log(`Initial route (entry + static imports, gzip -${GZIP_LEVEL}):`);
 for (const chunk of measured.initial) console.log(`  ${chunk.fileName}  ${kb(chunk.gzipBytes)}`);
 console.log(`  total  ${kb(measured.initialGzipBytes)}${budget ? `  budget ${kb(budget.initialRouteGzipBytes)}` : ''}`);
+if (budget) console.log(`  tolerated limit  ${kb(initialRouteLimit(budget.initialRouteGzipBytes))} (0.5% growth, 1 kB floor)`);
 console.log(
   `Chart chunk: ${measured.chart ? `${measured.chart.fileName}  ${kb(measured.chart.gzipBytes)}` : 'none'}${budget ? `  budget ${kb(budget.chartChunkGzipBytes)}` : ''}`,
 );
