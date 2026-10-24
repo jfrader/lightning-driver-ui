@@ -97,7 +97,11 @@ const authedRoute = createRoute({
   id: '_authed',
   beforeLoad: async ({ context, location }) => {
     try {
-      await context.queryClient.ensureQueryData(sessionQueryOptions);
+      // The session and the public policy are independent reads: one round trip, not two.
+      await Promise.all([
+        context.queryClient.ensureQueryData(sessionQueryOptions),
+        context.queryClient.ensureQueryData(publicPolicyQueryOptions),
+      ]);
     } catch (error) {
       if (isSessionLoss(error)) {
         throw redirect({ to: '/login', search: { redirect: safeRedirectPath(location.href) } });
@@ -105,7 +109,6 @@ const authedRoute = createRoute({
       throw error;
     }
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(publicPolicyQueryOptions),
   component: AppShell,
 });
 
@@ -298,6 +301,7 @@ export function createAppRouter(queryClient: QueryClient, history?: RouterHistor
     routeTree,
     history,
     context: { queryClient },
+    defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
     defaultPendingComponent: RoutePending,
