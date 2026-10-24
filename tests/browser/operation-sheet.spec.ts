@@ -38,6 +38,8 @@ for (const width of [390, 1440]) {
     });
 
     test('keyboard checks, reviews and confirms with the review in the URL; review refuses Escape', async ({ page }) => {
+      // Tabs through the whole sheet and the review: slow under parallel load.
+      test.slow();
       const requests = await installSyntheticApi(page);
       await page.goto('/nodes/lnd-lab/payments/new?sort=amount');
       const dialog = page.getByRole('dialog', { name: 'Pay invoice' });
