@@ -52,6 +52,7 @@ export function BitcoinPeersPage() {
       from="/nodes/$nodeId/peers"
       search={(previous) => ({ ...previous, selected: peer.id })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       <ShortIdentifier value={peer.addr || `Peer ${peer.id}`} />
     </TextLink>
@@ -95,6 +96,7 @@ export function BitcoinPeersPage() {
                   size={size}
                   from="/nodes/$nodeId/peers"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                   variant="ghost"
                 >
                   Hide

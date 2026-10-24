@@ -77,7 +77,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
     expect(screen.queryByText(/password|one-time|TOTP/i)).not.toBeInTheDocument();
   });
 
-  it('L2 → enrollment and back: focus follows the operator, no route change', async () => {
+  it('L2 → enrollment and back: focus follows the operator and the mode is in search', async () => {
     hostAllows(true, true);
     const view = renderApp('/login');
     await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
@@ -85,6 +85,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Enrollment token/)).toHaveFocus();
     expect(view.router.state.location.pathname).toBe('/login');
+    expect(view.router.state.location.search).toEqual({ enroll: 1 });
 
     await view.user.click(screen.getByRole('button', { name: 'Back to sign in' }));
     expect(continueButton()).toHaveFocus();
@@ -135,10 +136,12 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
     expect(screen.queryByText(/Session ended|Signed out/)).not.toBeInTheDocument();
   });
 
-  it('forwards the retired /enroll route to /login', async () => {
-    const view = renderApp('/enroll');
-    await screen.findByRole('button', { name: 'Continue with passkey' });
+  it('forwards the retired /enroll route to the login enrollment mode preserving redirect', async () => {
+    hostAllows(true, true);
+    const view = renderApp('/enroll?redirect=%2Fnodes%2Flnd-lab');
+    await screen.findByRole('heading', { name: 'Enroll' });
     expect(view.router.state.location.pathname).toBe('/login');
+    expect(view.router.state.location.search).toEqual({ redirect: '/nodes/lnd-lab', enroll: 1 });
   });
 });
 

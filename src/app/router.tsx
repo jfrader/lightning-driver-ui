@@ -55,6 +55,7 @@ import {
 import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
 import {
+  booleanParam,
   decimalParam,
   moneySearch,
   enumParam,
@@ -77,9 +78,10 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({ component: Outle
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  validateSearch: (search: Record<string, unknown>): { redirect?: string; notice?: LoginNotice } => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; notice?: LoginNotice; enroll?: 1 } => ({
     redirect: stringParam(search.redirect),
     notice: enumParam(search.notice, LOGIN_NOTICE),
+    enroll: booleanParam(search.enroll),
   }),
   component: LoginPage,
 });
@@ -88,8 +90,9 @@ const loginRoute = createRoute({
 const enrollRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/enroll',
-  beforeLoad: () => {
-    throw redirect({ to: '/login', replace: true });
+  validateSearch: (search: Record<string, unknown>) => ({ redirect: stringParam(search.redirect) }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/login', search: { redirect: search.redirect, enroll: 1 }, replace: true });
   },
 });
 

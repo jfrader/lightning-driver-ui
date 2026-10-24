@@ -1,8 +1,8 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getRouteApi, useNavigate } from '@tanstack/react-router';
+import { getRouteApi, useNavigate, useRouter } from '@tanstack/react-router';
 import type { AuthMethod, Session } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { wrappingControlText } from '../../components/control-styles';
@@ -34,12 +34,14 @@ const SIGN_IN: Record<AuthMethod, () => Promise<Session>> = {
 
 /** Screens spec §6: `/login` holds sign-in, enrollment and the host-only recovery wording. */
 export function LoginPage() {
-  const { redirect, notice } = route.useSearch();
+  const { redirect, notice, enroll } = route.useSearch();
   const navigate = useNavigate();
+  const router = useRouter();
   const startSession = useSessionStart();
   const size = useControlSize();
   const bootstrap = useQuery(bootstrapQueryOptions);
-  const [enrolling, setEnrolling] = useState(false);
+  const enrolling = enroll === 1;
+  const enteredEnrollment = useRef(false);
   // Leaving enrollment returns focus to the sign-in action the operator came from.
   const [backFromEnroll, setBackFromEnroll] = useState(false);
   const cooldown = useCooldown();
@@ -64,7 +66,11 @@ export function LoginPage() {
     </Button>
   );
   const enrollmentAction = bootstrap.data?.enrollment_available && (
-    <Button variant="ghost" size={size} sx={wrappingControlText(size)} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
+    <Button variant="ghost" size={size} sx={wrappingControlText(size)} onClick={() => {
+      enteredEnrollment.current = true;
+      setBackFromEnroll(true);
+      void navigate({ to: '/login', search: { redirect, notice, enroll: 1 } });
+    }} disabled={signIn.isPending}>
       Enroll a sign-in method
     </Button>
   );
@@ -112,13 +118,14 @@ export function LoginPage() {
             onBack={
               bootstrap.data?.login_available
                 ? () => {
-                    setEnrolling(false);
+                    if (enteredEnrollment.current) router.history.back();
+                    else void navigate({ to: '/login', search: { redirect, notice }, replace: true });
                     setBackFromEnroll(true);
                   }
                 : null
             }
             onSession={enter}
-            autoFocus={enrolling}
+            autoFocus={enteredEnrollment.current}
           />
         </AuthLayout>
       );

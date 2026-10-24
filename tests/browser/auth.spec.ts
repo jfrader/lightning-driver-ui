@@ -100,7 +100,7 @@ for (const size of SIZES) {
       await page.keyboard.press('Enter');
 
       await expect(page.getByRole('heading', { level: 1, name: 'Enroll' })).toBeVisible();
-      await expect(page).toHaveURL(/\/login$/);
+      await expect(page).toHaveURL(/\/login\?enroll=1$/);
       const token = page.getByLabel(/^Enrollment token/);
       await expect(token).toBeFocused();
       await expectTouchTarget(page, token);
@@ -124,6 +124,48 @@ for (const size of SIZES) {
       await expect(page.getByText('api-server auth enrollment --config <path>')).toBeVisible();
       await expectTouchTarget(page, page.getByRole('button', { name: 'Reload' }));
       await expectNoHorizontalOverflow(page);
+    });
+
+    test('enrollment mode survives reload and browser history without putting the token in the URL', async ({ page }) => {
+      await installSyntheticApi(page);
+      await hostAllows(page, true, true);
+      const redirect = '/nodes/lnd-lab/payments?sort=amount';
+      await page.goto(`/login?redirect=${encodeURIComponent(redirect)}`);
+      await page.getByRole('button', { name: 'Enroll a sign-in method' }).click();
+      const token = page.getByLabel(/^Enrollment token/);
+      await expect(token).toBeFocused();
+      await token.fill('SYNTHETIC_PRIVATE_ENROLLMENT_TOKEN');
+      expect(new URL(page.url()).searchParams.get('redirect')).toBe(redirect);
+      expect([...new URL(page.url()).searchParams.keys()].sort()).toEqual(['enroll', 'redirect']);
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Enroll', exact: true })).toBeVisible();
+      await expect(token).toHaveValue('');
+      await page.goBack();
+      await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+      expect(new URL(page.url()).searchParams.has('enroll')).toBe(false);
+      await page.goForward();
+      await expect(page.getByRole('heading', { name: 'Enroll', exact: true })).toBeVisible();
+      expect(new URL(page.url()).searchParams.get('enroll')).toBe('1');
+      expect(new URL(page.url()).searchParams.get('redirect')).toBe(redirect);
+      expect(page.url()).not.toContain('SYNTHETIC_PRIVATE_ENROLLMENT_TOKEN');
+    });
+
+    test('legacy enrollment redirects with replacement and validates mode against server availability', async ({ page }) => {
+      await installSyntheticApi(page);
+      await hostAllows(page, true, true);
+      await page.goto('/login');
+      await page.goto('/enroll?redirect=%2Fnodes%2Flnd-lab');
+      await expect(page.getByRole('heading', { name: 'Enroll', exact: true })).toBeVisible();
+      expect(new URL(page.url()).searchParams.get('redirect')).toBe('/nodes/lnd-lab');
+      expect(new URL(page.url()).pathname).toBe('/login');
+      await page.goBack();
+      await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+      await page.goto('/login?enroll=invalid');
+      await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+      await hostAllows(page, true, false);
+      await page.goto('/login?enroll=1');
+      await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+      await expect(page.getByLabel(/^Enrollment token/)).toHaveCount(0);
     });
 
     for (const nostrAvailable of [false, true]) {

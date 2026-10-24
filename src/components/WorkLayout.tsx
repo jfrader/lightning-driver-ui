@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { styled } from '@jfrader/ui';
 import { ASIDE_MEDIA, ASIDE_WIDTH } from '../config';
 
@@ -33,14 +33,16 @@ interface WorkLayoutProps {
   /** Reading width for forms and reviews; lists use the full width. */
   mainWidth?: string;
   stacked?: boolean;
+  asideRef?: Ref<HTMLElement>;
+  asideTabIndex?: number;
 }
 
 /** Task column plus supporting context: beside it from 80rem, after it below that. */
-export function WorkLayout({ main, aside, asideLabel, mainWidth = '1fr', stacked = false }: WorkLayoutProps) {
+export function WorkLayout({ main, aside, asideLabel, mainWidth = '1fr', stacked = false, asideRef, asideTabIndex }: WorkLayoutProps) {
   return (
-    <Grid measure={mainWidth} stacked={stacked}>
+    <Grid measure={mainWidth} stacked={stacked || aside == null}>
       <Column measure={mainWidth}>{main}</Column>
-      <Aside stacked={stacked} aria-label={asideLabel}>{aside}</Aside>
+      {aside != null && <Aside ref={asideRef} tabIndex={asideTabIndex} stacked={stacked} aria-label={asideLabel}>{aside}</Aside>}
     </Grid>
   );
 }

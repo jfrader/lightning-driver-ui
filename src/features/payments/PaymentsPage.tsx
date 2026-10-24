@@ -38,6 +38,7 @@ export function PaymentsPage() {
       from="/nodes/$nodeId/payments"
       search={(previous) => ({ ...previous, selected: payment.payment_hash })}
       {...ROW_PRIMARY_LINK}
+      resetScroll={false}
     >
       {label}
       <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
@@ -107,6 +108,7 @@ export function PaymentsPage() {
                   size={size}
                   from="/nodes/$nodeId/payments"
                   search={(previous) => ({ ...previous, selected: undefined })}
+                  resetScroll={false}
                 >
                   Hide
                 </ButtonLink>
