@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Select } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
@@ -23,7 +24,9 @@ export function NodeChooser() {
   const navigate = useNavigate();
   const size = useControlSize();
   const { nodeId, node, destination, pathname } = useShellNode();
-  const fleet = useQuery(fleetQueryOptions());
+  // The fleet feeds the open listbox only; every screen already has its own node summary.
+  const [opened, setOpened] = useState(false);
+  const fleet = useQuery({ ...fleetQueryOptions(), enabled: opened });
 
   // The open node reads from its own summary, the read the header shows and refetches with every
   // observation; the fleet page may predate that observation.
@@ -47,6 +50,7 @@ export function NodeChooser() {
       description={locked ? 'Sending…' : undefined}
       options={options}
       value={nodeId ?? ALL_NODES}
+      onOpenChange={(open) => { if (open) setOpened(true); }}
       onValueChange={(next) => {
         if (next === (nodeId ?? ALL_NODES)) return;
         if (next === ALL_NODES) {
