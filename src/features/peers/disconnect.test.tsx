@@ -70,11 +70,14 @@ describe('disconnect peer', () => {
     expect(posts).toEqual([CREATE_PATH]);
   });
 
-  it('offers no disconnect for a connected peer of a read-only node', async () => {
-    renderApp(PEER_PATH(readOnlyNode.id));
+  it('disables disconnect for a connected peer of a read-only node and says why', async () => {
+    const { user } = renderApp(PEER_PATH(readOnlyNode.id));
 
     expect((await withinSection('Peer')).getByTitle(PEER)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Disconnect/ })).not.toBeInTheDocument();
+    const disconnect = screen.getByRole('button', { name: 'Disconnect peer' });
+    expect(disconnect).toBeDisabled();
+    expect(disconnect).toHaveAccessibleDescription('This node is read-only.');
+    await user.click(disconnect);
     expect(posts).toEqual([]);
   });
 

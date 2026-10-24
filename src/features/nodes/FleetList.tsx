@@ -125,7 +125,7 @@ function FleetRow({ node, now }: { node: NodeSummary; now: number }) {
       </Line>
       {node.kind === 'bitcoin' && (
         <Meta>
-          <span>Actions None</span>
+          <span>Actions {capabilitySummary(node)}</span>
           <span>Unresolved —</span>
         </Meta>
       )}
