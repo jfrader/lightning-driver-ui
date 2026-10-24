@@ -6,6 +6,7 @@ import { createOperation } from '../../api/operation-api';
 import type { CreateOperationRequest } from '../../api/types';
 import { useAttempt, type Attempt } from '../../lib/use-attempt';
 import { useIntentKey } from './use-intent-key';
+import { useOperationSheet } from './sheet-context';
 
 interface Submission {
   request: CreateOperationRequest;
@@ -19,6 +20,7 @@ interface Submission {
  * has ended neither writes the cache nor navigates.
  */
 export function useSubmitOperation(nodeId: string) {
+  const sheet = useOperationSheet();
   const { keyFor, forget } = useIntentKey();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -29,7 +31,8 @@ export function useSubmitOperation(nodeId: string) {
     onSuccess: (operation, { attempt }) => {
       if (!attempt.isCurrent()) return;
       queryClient.setQueryData(nodeKeys.operation(nodeId, operation.id), operation);
-      void navigate({ to: '/nodes/$nodeId/operations/$operationId', params: { nodeId, operationId: operation.id } });
+      if (sheet) sheet.onCreated(operation);
+      else void navigate({ to: '/nodes/$nodeId/operations/$operationId', params: { nodeId, operationId: operation.id } });
     },
     onError: (error) => {
       if (errorCode(error) === 'idempotency_conflict') forget();

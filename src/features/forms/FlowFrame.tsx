@@ -5,6 +5,7 @@ import { READING_WIDTH } from '../../config';
 import { CapabilityGate } from '../nodes/CapabilityGate';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { PolicyLoader } from './PolicyLoader';
+import { useOperationSheet } from '../operations/sheet-context';
 
 const Head = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], justifyItems: 'start' }));
 
@@ -27,12 +28,13 @@ interface FlowFrameProps {
  */
 export function FlowFrame({ title, capability, back, children }: FlowFrameProps) {
   const node = useCurrentNode();
+  const sheet = useOperationSheet();
   return (
     <Flex direction="column" gap="md">
-      <Head>
+      {!sheet && <Head>
         {back}
         <Title>{title}</Title>
-      </Head>
+      </Head>}
       <Body>
         <CapabilityGate node={node} capability={capability} back={null}>
           <PolicyLoader nodeId={node.id}>{(policy) => children({ node, policy })}</PolicyLoader>

@@ -8,6 +8,7 @@ import { useNow } from '../../../lib/use-now';
 import { ReviewDetails } from '../ReviewDetails';
 import { ListLink } from './kind-links';
 import { LIST_OF_KIND } from './kind-lists';
+import { useOperationSheet } from '../sheet-context';
 
 const Head = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], justifyItems: 'start' }));
 
@@ -48,6 +49,7 @@ interface ReviewFrameProps {
  * then what is being approved, the one confirm control and the collapsed technical details.
  */
 export function ReviewFrame({ operation, title, consent, confirmation, aside, asideLabel = 'Context', decoded }: ReviewFrameProps) {
+  const sheet = useOperationSheet();
   const now = useNow();
   const expired = isPast(operation.review.expires_at, now);
   const main = (
@@ -70,7 +72,7 @@ export function ReviewFrame({ operation, title, consent, confirmation, aside, as
         </TitleRow>
       </Head>
       {aside ? (
-        <WorkLayout mainWidth={READING_WIDTH} asideLabel={asideLabel} main={main} aside={aside} />
+        <WorkLayout stacked={sheet !== null} mainWidth={READING_WIDTH} asideLabel={asideLabel} main={main} aside={aside} />
       ) : (
         <div style={{ maxInlineSize: READING_WIDTH }}>{main}</div>
       )}

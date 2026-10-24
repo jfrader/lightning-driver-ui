@@ -1,13 +1,14 @@
-import { styled } from '@jfrader/ui';
+import { Suspense, lazy } from 'react';
+import { Button, styled } from '@jfrader/ui';
 import { Outlet } from '@tanstack/react-router';
 import { Wordmark } from '../../components/Wordmark';
+import { OverlayInvokerContext } from '../../components/overlay-invoker-context';
 import { APP_VERSION, SIDEBAR_WIDTH, STRIP_HEIGHT, TAB_BAR_HEIGHT, TAB_BAR_CLEARANCE, TOUCH_TARGET } from '../../config';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { LogoutButton } from '../auth/LogoutButton';
 import { useSessionExpiry } from '../auth/use-session-expiry';
 import { ContentRegion } from './ContentRegion';
 import { GroupLinks } from './GroupLinks';
-import { NavPalette } from './NavPalette';
 import { NodeChooser } from './NodeChooser';
 import { PhoneTabs } from './PhoneTabs';
 import { SideNav } from './SideNav';
@@ -19,6 +20,8 @@ import { useDesktopShell } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
 
 const CONTENT_ID = 'content';
+const NODE_CHOICE_MEASURE = '8em';
+const NavPalette = lazy(() => import('./NavPalette').then((module) => ({ default: module.NavPalette })));
 
 const SkipLink = styled.a(({ theme }) => ({
   position: 'absolute',
@@ -117,7 +120,7 @@ const PhoneHeaderRow = styled.div(({ theme }) => ({
   flexWrap: 'wrap',
   alignItems: 'center',
   gap: theme.space[2],
-  '& > :first-child': { flex: '1 1 max-content', inlineSize: 'auto' },
+  '& > :first-child': { flex: '1 1 0', minInlineSize: `min(100%, ${NODE_CHOICE_MEASURE})`, inlineSize: 'auto' },
 }));
 
 const PhoneMain = styled.main(({ theme }) => ({
@@ -145,7 +148,7 @@ export function AppShell() {
   );
 
   return (
-    <>
+    <OverlayInvokerContext value={palette.invoker}>
       <SkipLink href={`#${CONTENT_ID}`}>Skip to content</SkipLink>
       {desktop ? (
         <Desktop>
@@ -179,6 +182,12 @@ export function AppShell() {
           <PhoneHeader>
             <PhoneHeaderRow>
               <NodeChooser />
+              <Button size="lg" variant="ghost" aria-label="Search" onClick={() => palette.setOpen(true)}>
+                <svg aria-hidden="true" focusable="false" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="10" cy="10" r="6" />
+                  <path d="m15 15 6 6" />
+                </svg>
+              </Button>
               {node && <UnresolvedButton node={node} />}
             </PhoneHeaderRow>
             {node && <StatusFacts node={node} compact />}
@@ -198,7 +207,9 @@ export function AppShell() {
           <PhoneTabs />
         </>
       )}
-      <NavPalette open={palette.open} onOpenChange={palette.setOpen} />
-    </>
+      <Suspense fallback={null}>
+        {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
+      </Suspense>
+    </OverlayInvokerContext>
   );
 }

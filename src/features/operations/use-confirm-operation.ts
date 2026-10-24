@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useOperationSheet } from './sheet-context';
 import { ContractError } from '../../api/errors';
 import { nodeKeys } from '../../api/node-queries';
 import {
@@ -106,6 +107,7 @@ interface ConfirmAttempt {
  * is ignored, and the journal shows the outcome on the next read.
  */
 export function useConfirmOperation(operation: Operation) {
+  const sheet = useOperationSheet();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const startAttempt = useAttempt();
@@ -113,6 +115,7 @@ export function useConfirmOperation(operation: Operation) {
   const { id: operationId, node_id: nodeId } = operation;
 
   const mutation = useMutation({
+    mutationKey: ['confirm-operation', operationId],
     mutationFn: async ({ reviewed, attempt }: ConfirmAttempt) => {
       let authorizationId: string | null = null;
       if (reviewed.review.sensitive) {
@@ -145,6 +148,10 @@ export function useConfirmOperation(operation: Operation) {
       if (!attempt.isCurrent()) return;
       void queryClient.invalidateQueries({ queryKey: nodeKeys.operation(nodeId, operationId) });
       if (error instanceof UnansweredConfirmationError) {
+        if (sheet) {
+          sheet.onUnanswered();
+          return;
+        }
         void navigate({
           to: '/nodes/$nodeId/operations/$operationId',
           params: { nodeId, operationId },

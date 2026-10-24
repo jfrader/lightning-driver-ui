@@ -15,6 +15,7 @@ import { KindConsent } from './review/KindConsent';
 import { OperationStatusNotice } from './OperationStatusNotice';
 import { OperationTimeline } from './OperationTimeline';
 import { ReviewDetails } from './ReviewDetails';
+import { useOperationSheet } from './sheet-context';
 
 const REVIEW_ANCHOR = 'reviewed';
 
@@ -48,6 +49,7 @@ interface OperationDetailProps {
  * the immutable review it came from. Status reads only; nothing here confirms, retries or repeats.
  */
 export function OperationDetail({ operation, node, unanswered }: OperationDetailProps) {
+  const sheet = useOperationSheet();
   const size = useControlSize();
   const nodeId = operation.node_id;
   const outcome = outcomeLabel(operation);
@@ -94,7 +96,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
   return (
     <Flex direction="column" gap="md">
       <Head>
-        <Links>
+        {!sheet && <Links>
           <ButtonLink to="/nodes/$nodeId/operations" params={{ nodeId }} search={{}} size={size} variant="ghost">
             ‹ Operations
           </ButtonLink>
@@ -110,7 +112,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
               Reviewed payment
             </ButtonLink>
           )}
-        </Links>
+        </Links>}
         <TitleRow>
           <Title>{`${OPERATION_NOUN[operation.request.kind]} operation`}</Title>
           <Pill tone={outcome.tone}>{outcome.label}</Pill>
@@ -118,6 +120,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
       </Head>
       {isPayment && node && paymentHash ? (
         <WorkLayout
+          stacked={sheet !== null}
           main={main}
           mainWidth={READING_WIDTH}
           asideLabel="Node record"

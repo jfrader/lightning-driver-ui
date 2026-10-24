@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { keysOf } from '../../lib/guards';
-import { nodeChoiceLabel } from '../nodes/labels';
+import { capabilityBlock, capabilityReasonText, nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
 import { ACTION_SURFACES, FORM_DESTINATIONS, GLOBAL_DESTINATIONS, NODE_DESTINATIONS, surfacesFor } from './nav-model';
 import { useShellNode } from './use-shell-node';
@@ -55,13 +55,14 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
     for (const form of FORM_DESTINATIONS.filter(
       (form) => node.kind === 'lightning' && surfacesFor(node).includes(ACTION_SURFACES[form.capability]),
     )) {
+      const reason = capabilityBlock(node, form.capability);
       items.push({
         value: `form-${form.capability}`,
-        label: form.label,
+        label: reason ? `${form.label} ${capabilityReasonText(reason, node)}` : form.label,
         group: 'Open form',
         keywords: form.keywords,
-        disabled: !node.capabilities[form.capability].enabled,
-        onSelect: () => void navigate({ to: form.to, params: { nodeId } }),
+        disabled: reason !== null,
+        onSelect: () => void navigate({ to: form.to, params: { nodeId }, search: true }),
       });
     }
   }

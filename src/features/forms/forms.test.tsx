@@ -35,7 +35,8 @@ describe('blocked forms', () => {
   ])('renders the reason and no field for %s', async (_label, path, overrides, reason) => {
     serveNode(overrides);
     renderApp(`/nodes/lnd-lab${path}`);
-    expect(await screen.findByText(reason)).toBeInTheDocument();
+    const scope = path === '/payments/new' ? within(await screen.findByRole('dialog', { name: 'Pay invoice' })) : screen;
+    expect(await scope.findByText(reason)).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Review|Check invoice/ })).not.toBeInTheDocument();
   });
