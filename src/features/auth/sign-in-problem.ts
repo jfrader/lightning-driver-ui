@@ -1,7 +1,7 @@
 import { ApiError, errorCode } from '../../api/errors';
 import type { AuthMethod, ErrorCode } from '../../api/types';
 import { formatSeconds } from '../../lib/duration';
-import { NOSTR_FAILURE_MESSAGE, nostrFailure } from './nostr';
+import { NOSTR_FAILURE_MESSAGE, hasNostrExtension, nostrFailure } from './nostr';
 import { PASSKEY_FAILURE_MESSAGE, passkeyFailure } from './passkey';
 
 /** Host command that issues an enrollment token. Recovery has no frozen command, so none is printed (G-9). */
@@ -28,7 +28,9 @@ export const METHOD_COPY: Record<AuthMethod, { canceled: string; notEnrolled: st
     canceled: 'Nostr signature canceled.',
     notEnrolled: 'This Nostr key is not enrolled on this server.',
     expired: 'The sign-in request expired. Sign in with Nostr again.',
-    unsupported: NOSTR_FAILURE_MESSAGE.missing,
+    get unsupported() {
+      return hasNostrExtension() ? NOSTR_FAILURE_MESSAGE.unconfigured : NOSTR_FAILURE_MESSAGE.missing;
+    },
   },
 };
 
