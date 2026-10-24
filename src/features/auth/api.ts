@@ -7,6 +7,7 @@ import {
   PublicPolicy,
   RegistrationChallenge,
   Session,
+  SessionList,
   type ContractValidator,
 } from '../../api/generated/validators';
 import type {
@@ -96,4 +97,12 @@ export function getNostrIdentities(signal?: AbortSignal) {
 
 export function logout() {
   return apiRequestNoContent({ method: 'DELETE', path: '/session' });
+}
+
+export function getSessions(signal?: AbortSignal) {
+  return apiRequest({ method: 'GET', path: '/sessions', response: SessionList, signal });
+}
+
+export function revokeSession(id: string) {
+  return apiRequestNoContent({ method: 'DELETE', path: `/sessions/${encodeURIComponent(id)}` });
 }

@@ -1,8 +1,13 @@
 import { queryOptions } from '@tanstack/react-query';
 import { setSessionCsrfToken } from '../../api/csrf';
-import { getBootstrap, getNostrIdentities, getPublicPolicy, getSession } from './api';
+import { getBootstrap, getNostrIdentities, getPublicPolicy, getSession, getSessions } from './api';
 
 export const sessionQueryKey = ['session'] as const;
+
+export const sessionsQueryOptions = queryOptions({
+  queryKey: ['sessions'],
+  queryFn: ({ signal }) => getSessions(signal),
+});
 
 export const sessionQueryOptions = queryOptions({
   queryKey: sessionQueryKey,

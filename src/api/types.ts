@@ -8,6 +8,7 @@ export type AuthenticationCredential = Schemas['AuthenticationCredential'];
 export type RegistrationChallenge = Schemas['RegistrationChallenge'];
 export type RegistrationCredential = Schemas['RegistrationCredential'];
 export type Session = Schemas['Session'];
+export type ActiveSession = Schemas['ActiveSession'];
 export type AuthMethod = Session['auth_method'];
 export type NostrStart = Schemas['NostrStart'];
 export type NostrChallenge = Schemas['NostrChallenge'];

@@ -191,6 +191,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Current generation's unexpired operator sessions, newest first. Never returns cookie hashes or CSRF tokens. */
+        get: operations["listSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Revoke an active session, including the caller's own, and its ceremonies and grants. No payment reauthentication grant required. Expire the cookie when revoking the caller. */
+        delete: operations["revokeSession"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/config": {
         parameters: {
             query?: never;
@@ -1582,6 +1618,20 @@ export interface components {
         WatchtowerTowersPage: components["schemas"]["PageMeta"] & {
             items: components["schemas"]["WatchtowerTower"][];
         };
+        SessionList: {
+            sessions: components["schemas"]["ActiveSession"][];
+        };
+        ActiveSession: {
+            id: components["schemas"]["Uuid"];
+            created_at: components["schemas"]["Timestamp"];
+            expires_at: components["schemas"]["Timestamp"];
+            idle_expires_at: components["schemas"]["Timestamp"];
+            last_authenticated_at: components["schemas"]["Timestamp"];
+            /** @enum {string} */
+            method: "passkey" | "nostr";
+            nostr_pubkey: components["schemas"]["Hash32"] | null;
+            current: boolean;
+        };
         /** Format: date-time */
         Timestamp: string;
     };
@@ -1998,6 +2048,54 @@ export interface operations {
                 };
                 content?: never;
             };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    listSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active sessions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionList"];
+                };
+            };
+            default: components["responses"]["SafeError"];
+        };
+    };
+    revokeSession: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Browser-supplied exact public HTTPS origin; reject missing/null/mismatch on non-GET. Do not set manually in browser fetch. */
+                Origin: components["parameters"]["Origin"];
+                /** @description Token from preauth bootstrap for anonymous ceremonies, authenticated session for all other non-GET. Rotate on login; constant-time library comparison. */
+                "X-CSRF-Token": components["parameters"]["Csrf"];
+            };
+            path: {
+                id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked; no response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["SafeError"];
             default: components["responses"]["SafeError"];
         };
     };

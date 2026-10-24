@@ -3,6 +3,7 @@ import type { EventTemplate } from 'nostr-tools/pure';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { SYNTHETIC_NOSTR_PUBKEY, SYNTHETIC_NPUB, isSignedTemplate } from './nostr-signer';
 import { BROWSER_ORIGIN } from '../../playwright.config';
+import { currentSession } from '../../src/test/sessions';
 
 type Fixtures = (typeof examples)['fixtures'];
 /** A frozen contract fixture, cloned so a test may modify it. */
@@ -164,6 +165,7 @@ export async function installSyntheticApi(page: Page, options: SyntheticOptions 
     }
     if (path === '/session' && request.method() === 'DELETE') return route.fulfill({ status: 204 });
     if (path === '/session') return json(route, session);
+    if (path === '/sessions') return json(route, { sessions: [currentSession] });
     if (path === '/auth/enrollment/start' && request.method() === 'POST') {
       const challenge = fixture('enrollment_challenge');
       challenge.options.publicKey.rp.id = new URL(appOrigin).hostname;
