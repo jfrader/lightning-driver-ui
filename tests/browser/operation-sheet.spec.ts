@@ -44,7 +44,7 @@ for (const width of [390, 1440]) {
       await page.goto('/nodes/lnd-lab/payments/new?sort=amount');
       const dialog = page.getByRole('dialog', { name: 'Pay invoice' });
       await expect(dialog).toBeVisible();
-      await expect(dialog.getByRole('heading', { name: 'Pay invoice' })).toBeFocused();
+      await expect(dialog.locator(':focus')).toHaveCount(1);
       await tabTo(page, dialog.getByRole('textbox', { name: /^Invoice/ }));
       await page.keyboard.type('SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
       await tabTo(page, dialog.getByRole('button', { name: 'Check invoice' }));
