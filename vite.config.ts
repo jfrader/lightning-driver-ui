@@ -32,6 +32,9 @@ export default defineConfig(({ command }) => ({
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     setupFiles: ['./src/test/setup.ts'],
     maxWorkers: 2,
+    // The cold multi-action pay flow took 13 s with a second Vitest process running.
+    // This is the whole-test allowance; async render/assertion deadlines stay at 5 s or less.
+    testTimeout: 15_000,
     restoreMocks: true,
   },
 }));
