@@ -3,7 +3,7 @@ import { styled } from '@jfrader/ui';
 import type { Transaction } from '../../api/types';
 import { DetailList } from '../../components/DetailList';
 import { Section } from '../../components/Section';
-import { UtcTime } from '../../components/UtcTime';
+import { LiveUtcTime } from '../../components/UtcTime';
 import { Amount } from '../display/Amount';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
@@ -38,12 +38,11 @@ const Index = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, color: 
 interface TransactionInspectorProps {
   /** The selected transaction, or `null` when its txid is not on the loaded page. */
   transaction: Transaction | null;
-  now: number;
   close: ReactNode;
 }
 
 /** One transaction: the wallet change, fee, confirmations, the full txid and its outputs in index order. */
-export function TransactionInspector({ transaction, now, close }: TransactionInspectorProps) {
+export function TransactionInspector({ transaction, close }: TransactionInspectorProps) {
   if (!transaction) {
     return (
       <Section title="Transaction" action={close}>
@@ -62,7 +61,7 @@ export function TransactionInspector({ transaction, now, close }: TransactionIns
             { label: 'Fee', numeric: true, value: <Amount value={transaction.fee_sat} unit="sat" /> },
             { label: 'Confirmations', value: <TransactionConfirmations transaction={transaction} /> },
             { label: 'Block', value: <TransactionBlock transaction={transaction} /> },
-            { label: 'Time', value: <UtcTime value={transaction.occurred_at} now={now} /> },
+            { label: 'Time', value: <LiveUtcTime value={transaction.occurred_at} /> },
             { label: 'Txid', stacked: true, value: <Identifier value={transaction.txid} label="Txid" /> },
           ]}
         />

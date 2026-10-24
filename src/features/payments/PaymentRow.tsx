@@ -30,12 +30,11 @@ const Small = styled.span(({ theme }) => ({
 
 interface PaymentRowProps {
   payment: Payment;
-  now: number;
   open: (payment: Payment, label: ReactNode) => ReactNode;
 }
 
 /** Phone row: amount and state, then destination, then fee and time. */
-export function PaymentRow({ payment, now, open }: PaymentRowProps) {
+export function PaymentRow({ payment, open }: PaymentRowProps) {
   return (
     <Body>
       <Line>
@@ -46,7 +45,7 @@ export function PaymentRow({ payment, now, open }: PaymentRowProps) {
       </Line>
       <Line>
         <PaymentDestination payment={payment} />
-        {open(payment, <PaymentTime payment={payment} now={now} />)}
+        {open(payment, <PaymentTime payment={payment} />)}
       </Line>
       <Small>
         <span>Fee</span>

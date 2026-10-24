@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { EmptyState } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { paymentsQueryOptions } from '../../api/node-queries';
@@ -12,17 +12,17 @@ import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { RECENT_PAYMENTS_LIMIT } from '../../config';
-import { useNow } from '../../lib/use-now';
 import { paymentColumns } from '../payments/payment-columns';
 import { PaymentRow } from '../payments/PaymentRow';
 import { useControlSize } from '../shell/use-shell-layout';
 
+const getRowId = (payment: Payment) => payment.payment_hash;
+
 /** The newest payments as the node reports them; each opens in the Payments inspector. */
 export function RecentPayments({ nodeId }: { nodeId: string }) {
-  const now = useNow();
   const size = useControlSize();
   const payments = useQuery(paymentsQueryOptions(nodeId, {}, { pageSize: RECENT_PAYMENTS_LIMIT }));
-  const open = (payment: Payment, label: ReactNode) => (
+  const open = useCallback((payment: Payment, label: ReactNode) => (
     <TextLink
       to="/nodes/$nodeId/payments"
       params={{ nodeId }}
@@ -32,7 +32,9 @@ export function RecentPayments({ nodeId }: { nodeId: string }) {
       {label}
       <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
-  );
+  ), [nodeId]);
+  const columns = useMemo(() => paymentColumns(open), [open]);
+  const renderRow = useCallback((payment: Payment) => <PaymentRow payment={payment} open={open} />, [open]);
 
   return (
     <Section
@@ -52,9 +54,9 @@ export function RecentPayments({ nodeId }: { nodeId: string }) {
           <ResourceList
             caption="Recent payments"
             rows={payments.data.items}
-            columns={paymentColumns(now, open)}
-            getRowId={(payment) => payment.payment_hash}
-            renderRow={(payment) => <PaymentRow payment={payment} now={now} open={open} />}
+            columns={columns}
+            getRowId={getRowId}
+            renderRow={renderRow}
           />
         ))}
     </Section>

@@ -5,10 +5,9 @@ import { DetailList } from '../../components/DetailList';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { PageHeader } from '../../components/PageHeader';
 import { Section } from '../../components/Section';
-import { UtcTime } from '../../components/UtcTime';
+import { LiveUtcTime, UtcTime } from '../../components/UtcTime';
 import { APP_VERSION } from '../../config';
 import { formatDurationSeconds } from '../../lib/duration';
-import { useNow } from '../../lib/use-now';
 import { ThemeChoice } from '../appearance/ThemeChoice';
 import { AUTH_METHOD_LABEL } from '../auth/labels';
 import { LogoutButton } from '../auth/LogoutButton';
@@ -34,7 +33,6 @@ function confirmationText({ reauth, auth_method: method }: Session): string {
 
 function SessionFacts() {
   const session = useQuery(sessionQueryOptions);
-  const now = useNow();
   const data = session.data;
   const pending = <NotReported>…</NotReported>;
   return (
@@ -43,7 +41,7 @@ function SessionFacts() {
         items={[
           { label: 'Signed in', value: data ? <UtcTime value={data.last_authenticated_at} /> : pending },
           { label: 'Signed in with', value: data ? AUTH_METHOD_LABEL[data.auth_method] : pending },
-          { label: 'Session ends', value: data ? <UtcTime value={data.expires_at} now={now} /> : pending },
+          { label: 'Session ends', value: data ? <LiveUtcTime value={data.expires_at} /> : pending },
           { label: 'Ends if idle', value: data ? <UtcTime value={data.idle_expires_at} /> : pending },
           { label: 'Confirmation', value: data ? confirmationText(data) : pending },
         ]}

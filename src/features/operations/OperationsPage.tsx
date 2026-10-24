@@ -9,7 +9,6 @@ import type { ResourceColumn } from '../../components/ResourceList';
 import { ListTime } from '../../components/ListTime';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
-import { useNow } from '../../lib/use-now';
 import { OPERATION_KIND, OPERATION_LIST_STATE, OPERATION_STAGE, outcomeLabel } from './labels';
 import { OperationAmount } from './OperationAmount';
 
@@ -45,13 +44,13 @@ function OutcomePill({ operation }: { operation: Operation }) {
   return <Pill tone={outcome.tone}>{outcome.label}</Pill>;
 }
 
-function columns(now: number): ResourceColumn<Operation>[] {
+function columns(): ResourceColumn<Operation>[] {
   return [
     {
       id: 'created',
       header: 'Created (UTC)',
       width: '9rem',
-      cell: (operation) => <ListTime at={operation.created_at} now={now} />,
+      cell: (operation) => <ListTime at={operation.created_at} />,
     },
     { id: 'kind', header: 'Action', cell: (operation) => <ActionLink operation={operation} /> },
     { id: 'state', header: 'State', cell: (operation) => <OutcomePill operation={operation} /> },
@@ -60,7 +59,7 @@ function columns(now: number): ResourceColumn<Operation>[] {
   ];
 }
 
-function OperationRow({ operation, now }: { operation: Operation; now: number }) {
+function OperationRow({ operation }: { operation: Operation }) {
   return (
     <RowBody>
       <Line>
@@ -69,7 +68,7 @@ function OperationRow({ operation, now }: { operation: Operation; now: number })
       </Line>
       <Line>
         <OperationAmount operation={operation} />
-        <ListTime at={operation.created_at} now={now} />
+        <ListTime at={operation.created_at} />
       </Line>
       <Stage>{OPERATION_STAGE[operation.stage]}</Stage>
     </RowBody>
@@ -82,9 +81,12 @@ function emptyTitle(state: string | undefined, kind: string | undefined): string
   return 'No operations match these filters.';
 }
 
+const listColumns = columns();
+const getRowId = (operation: Operation) => operation.id;
+const renderRow = (operation: Operation) => <OperationRow operation={operation} />;
+
 /** The durable journal: survives restarts and re-login, and stays readable on read-only and former nodes. */
 export function OperationsPage() {
-  const now = useNow();
   const { nodeId } = route.useParams();
   const search = route.useSearch();
   const navigate = route.useNavigate();
@@ -109,9 +111,9 @@ export function OperationsPage() {
       <PagedList
         caption="Operations"
         query={operations}
-        columns={columns(now)}
-        getRowId={(operation) => operation.id}
-        renderRow={(operation) => <OperationRow operation={operation} now={now} />}
+        columns={listColumns}
+        getRowId={getRowId}
+        renderRow={renderRow}
         emptyTitle={emptyTitle(search.state, search.kind)}
         cursor={search.cursor}
         onCursor={(cursor) => void navigate({ search: (previous) => ({ ...previous, cursor }) })}

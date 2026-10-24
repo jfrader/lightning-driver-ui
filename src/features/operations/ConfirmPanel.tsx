@@ -3,7 +3,7 @@ import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import type { NodeSummary, Operation, OperationKind } from '../../api/types';
 import { TABLE_MEDIA } from '../../config';
 import { wrappingControlText } from '../../components/control-styles';
-import { useNow } from '../../lib/use-now';
+import { useDeadlineNow } from '../../lib/use-now';
 import { SignerError } from '../auth/SignerError';
 import { useAuthMethod } from '../auth/use-auth-method';
 import { confirmBlockReason } from './confirm-block';
@@ -35,7 +35,7 @@ interface ConfirmPanelProps {
  * primary button is an ordinary focusable button: never autofocused, no shortcut, no hold gesture.
  */
 export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) {
-  const now = useNow();
+  const now = useDeadlineNow(operation.review.expires_at);
   const { confirm, isPending, error } = useConfirmOperation(operation);
   const method = useAuthMethod();
   const blocked = confirmBlockReason(operation, node, now);
@@ -54,7 +54,9 @@ export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) 
   return (
     <Flex direction="column" gap="sm">
       <Actions>
-        <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" sx={wrappingControlText('lg')} loading={isPending} onClick={confirm}>
+        <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" sx={wrappingControlText('lg')} loading={isPending} onClick={() => {
+          if (confirmBlockReason(operation, node, Date.now()) === null) confirm();
+        }}>
           {confirmLabel(operation, method)}
         </Button>
         {secondary?.(isPending)}

@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Flex } from '@jfrader/ui';
+import { useCallback, useMemo, type ReactNode } from 'react';
+import { Flex, type SortState } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { paymentsQueryOptions } from '../../api/node-queries';
@@ -13,7 +13,6 @@ import { TextLink } from '../../components/TextLink';
 import { VisuallyHidden } from '../../components/VisuallyHidden';
 import { InspectorLayout } from '../../components/InspectorLayout';
 import { isKeyOf } from '../../lib/guards';
-import { useNow } from '../../lib/use-now';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
@@ -24,28 +23,38 @@ import { PaymentRow } from './PaymentRow';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/payments');
 
+const open = (payment: Payment, label: ReactNode) => (
+  <TextLink
+    from="/nodes/$nodeId/payments"
+    search={(previous) => ({ ...previous, selected: payment.payment_hash })}
+    {...ROW_PRIMARY_LINK}
+  >
+    {label}
+    <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
+  </TextLink>
+);
+const columns = paymentColumns(open);
+const getRowId = (payment: Payment) => payment.payment_hash;
+const renderRow = (payment: Payment) => <PaymentRow payment={payment} open={open} />;
+
 /** One row per payment hash as the node reports them; filter, sort and selection live in the URL. */
 export function PaymentsPage() {
   const node = useCurrentNode();
-  const now = useNow();
   const size = useControlSize();
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const payments = useQuery(paymentsQueryOptions(node.id, { status: search.status, cursor: search.cursor }));
 
-  const open = (payment: Payment, label: ReactNode) => (
-    <TextLink
-      from="/nodes/$nodeId/payments"
-      search={(previous) => ({ ...previous, selected: payment.payment_hash })}
-      {...ROW_PRIMARY_LINK}
-      resetScroll={false}
-    >
-      {label}
-      <VisuallyHidden>{` (Open payment ${payment.payment_hash.slice(0, 8)})`}</VisuallyHidden>
-    </TextLink>
-  );
-  const columns = paymentColumns(now, open);
-  const sort = search.sort ? { columnId: search.sort, direction: search.dir ?? 'desc' } : null;
+  const sort = useMemo(() => search.sort ? { columnId: search.sort, direction: search.dir ?? 'desc' as const } : null, [search.sort, search.dir]);
+  const onSort = useCallback((next: SortState | null) =>
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        sort: next && isKeyOf(PAYMENT_SORT, next.columnId) ? next.columnId : undefined,
+        dir: next?.direction,
+      }),
+      replace: true,
+    }), [navigate]);
   const selected = search.selected
     ? (payments.data?.items.find((payment) => payment.payment_hash === search.selected) ?? null)
     : undefined;
@@ -62,19 +71,10 @@ export function PaymentsPage() {
         caption="Payments"
         query={payments}
         columns={columns}
-        getRowId={(payment) => payment.payment_hash}
+        getRowId={getRowId}
         sort={sort}
-        onSort={(next) =>
-          void navigate({
-            search: (previous) => ({
-              ...previous,
-              sort: next && isKeyOf(PAYMENT_SORT, next.columnId) ? next.columnId : undefined,
-              dir: next?.direction,
-            }),
-            replace: true,
-          })
-        }
-        renderRow={(payment) => <PaymentRow payment={payment} now={now} open={open} />}
+        onSort={onSort}
+        renderRow={renderRow}
         emptyTitle={search.status ? `No payments in state ${PAYMENT_STATE[search.status].label}.` : 'No payments on this node.'}
         cursor={search.cursor}
         onCursor={(cursor) => void navigate({ search: (previous) => ({ ...previous, cursor, selected: undefined }) })}
@@ -101,7 +101,6 @@ export function PaymentsPage() {
           selected === undefined || payments.isPending ? null : (
             <PaymentInspector
               payment={selected}
-              now={now}
               close={
                 <ButtonLink
                   variant="ghost"

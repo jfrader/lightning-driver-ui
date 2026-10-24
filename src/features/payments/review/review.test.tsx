@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, beforeEach, expect, it, vi } from 'vitest';
 import { fixture } from '../../../test/fixtures';
@@ -8,6 +8,7 @@ import { openTechnicalDetails } from '../../../test/queries';
 import { renderApp } from '../../../test/render-app';
 import { api, safeError, server } from '../../../test/server';
 import { assertion } from '../../../test/webauthn-mock';
+import { nodeKeys } from '../../../api/node-queries';
 
 const webauthn = vi.hoisted(() => ({ startAuthentication: vi.fn(), startRegistration: vi.fn() }));
 vi.mock('@simplewebauthn/browser', async (importOriginal) =>
@@ -30,6 +31,40 @@ describe('payment review', () => {
   beforeEach(() => {
     // Discard only exists beside the primary action on desktop; the phone back link discards.
     setWideLayout(true);
+  });
+
+  it('rechecks real time on interaction even if the expiry timer has not fired', async () => {
+    const calls = mockJournal({ created: review() });
+    const { queryClient } = renderApp(PATH);
+    const button = await screen.findByRole('button', { name: 'Pay with passkey' });
+    const mutationsBefore = queryClient.getMutationCache().getAll().length;
+    vi.setSystemTime(new Date(review().review.expires_at));
+    fireEvent.click(button);
+    expect(queryClient.getMutationCache().getAll()).toHaveLength(mutationsBefore);
+    expect(calls.authorizes).toEqual([]);
+    expect(calls.confirms).toEqual([]);
+  });
+
+  it('removes confirmation exactly at expiry while the display clock is paused', async () => {
+    const calls = mockJournal({ created: review() });
+    const { queryClient } = renderApp(PATH);
+    await screen.findByRole('button', { name: 'Pay with passkey' });
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    const deadline = new Date(Date.now() + 1_234).toISOString();
+    const updated = { ...review(), review: { ...review().review, expires_at: deadline } };
+    await act(async () => {
+      queryClient.setQueryData(nodeKeys.operation(updated.node_id, updated.id), updated);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(1_233));
+    expect(screen.getByRole('button', { name: 'Pay with passkey' })).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    expect(screen.queryByRole('button', { name: 'Pay with passkey' })).not.toBeInTheDocument();
+    expect(screen.getByText('This review expired.')).toBeInTheDocument();
+    expect(calls.authorizes).toEqual([]);
+    expect(calls.confirms).toEqual([]);
   });
 
   it('shows what the passkey approves from the server review', async () => {

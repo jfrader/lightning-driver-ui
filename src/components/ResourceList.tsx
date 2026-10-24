@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Flex, Select, SortableDataTable, styled, type SortState } from '@jfrader/ui';
 import { SORT_DIRECTIONS } from '../app/search';
 import { TABLE_QUERY, TOUCH_TARGET } from '../config';
@@ -96,7 +96,7 @@ function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[]
 }
 
 /** A table from 48rem and rows below it, from one column definition and one sort. */
-export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null, onSort, renderRow }: ResourceListProps<T>) {
+function ResourceListBody<T>({ caption, rows, columns, getRowId, sort = null, onSort, renderRow }: ResourceListProps<T>) {
   const table = useMediaQuery(TABLE_QUERY);
   const size = useControlSize();
   const ordered = sortedRows(rows, columns, sort);
@@ -158,3 +158,5 @@ export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null,
     </Flex>
   );
 }
+
+export const ResourceList = memo(ResourceListBody) as typeof ResourceListBody;

@@ -4,7 +4,7 @@ import type { DecodedInvoice, Operation } from '../../../api/types';
 import { WorkLayout } from '../../../components/WorkLayout';
 import { READING_WIDTH, TABLE_MEDIA } from '../../../config';
 import { formatClockTime, isPast } from '../../../lib/time';
-import { useNow } from '../../../lib/use-now';
+import { useDeadlineNow } from '../../../lib/use-now';
 import { ReviewDetails } from '../ReviewDetails';
 import { ListLink } from './kind-links';
 import { LIST_OF_KIND } from './kind-lists';
@@ -44,14 +44,20 @@ interface ReviewFrameProps {
   decoded?: DecodedInvoice | null;
 }
 
+function ReviewExpiry({ at }: { at: string }) {
+  const now = useDeadlineNow(at);
+  return <>
+    <Pill tone="neutral">{isPast(at, now) ? 'Expired' : 'Not sent'}</Pill>
+    <Expiry>expires <Mono>{formatClockTime(at)}</Mono> UTC</Expiry>
+  </>;
+}
+
 /**
  * Every review screen: back to its list, the title with the `Not sent` tag and the review's expiry,
  * then what is being approved, the one confirm control and the collapsed technical details.
  */
 export function ReviewFrame({ operation, title, consent, confirmation, aside, asideLabel = 'Context', decoded }: ReviewFrameProps) {
   const sheet = useOperationSheet();
-  const now = useNow();
-  const expired = isPast(operation.review.expires_at, now);
   const main = (
     <Stack>
       {consent}
@@ -65,10 +71,7 @@ export function ReviewFrame({ operation, title, consent, confirmation, aside, as
         <ListLink nodeId={operation.node_id} list={LIST_OF_KIND[operation.request.kind]} />
         <TitleRow>
           <Title>{title}</Title>
-          <Pill tone="neutral">{expired ? 'Expired' : 'Not sent'}</Pill>
-          <Expiry>
-            expires <Mono>{formatClockTime(operation.review.expires_at)}</Mono> UTC
-          </Expiry>
+          <ReviewExpiry at={operation.review.expires_at} />
         </TitleRow>
       </Head>
       {aside ? (
