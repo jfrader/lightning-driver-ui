@@ -93,6 +93,8 @@ test('channel close keeps accessible destructive-action contrast in both themes'
 for (const locale of ['en-US', 'de-DE']) test.describe(locale, () => {
   test.use({ locale });
   test('@layout enlarged Lightning details and fee choices stay inside the workspace', async ({ page }) => {
+    // Thirteen paths at 200% text: 14-20 s warm and over the 30 s default under parallel load.
+    test.slow();
     await installSyntheticApi(page);
     for (const { width, path } of cases) {
       await page.setViewportSize({ width, height: 1000 });
