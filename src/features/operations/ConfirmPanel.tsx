@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import type { NodeSummary, Operation, OperationKind } from '../../api/types';
 import { TABLE_MEDIA } from '../../config';
+import { wrappingControlText } from '../../components/control-styles';
 import { useNow } from '../../lib/use-now';
 import { SignerError } from '../auth/SignerError';
 import { useAuthMethod } from '../auth/use-auth-method';
@@ -53,7 +54,7 @@ export function ConfirmPanel({ operation, node, secondary }: ConfirmPanelProps) 
   return (
     <Flex direction="column" gap="sm">
       <Actions>
-        <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" loading={isPending} onClick={confirm}>
+        <Button tone={DESTRUCTIVE.has(operation.request.kind) ? 'danger' : 'accent'} variant="solid" size="lg" sx={wrappingControlText('lg')} loading={isPending} onClick={confirm}>
           {confirmLabel(operation, method)}
         </Button>
         {secondary?.(isPending)}

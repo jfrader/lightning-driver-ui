@@ -2,6 +2,7 @@ import { Button, Kbd, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { STRIP_HEIGHT } from '../../config';
+import { wrappingControlText } from '../../components/control-styles';
 import { UnitToggle } from '../display/UnitToggle';
 import { RegistryFacts, StatusFacts } from './StatusFacts';
 import { UnresolvedButton } from './UnresolvedButton';
@@ -14,6 +15,7 @@ const Strip = styled.div(({ theme }) => ({
   boxSizing: 'border-box',
   minBlockSize: STRIP_HEIGHT,
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
   gap: theme.space[4],
   paddingInline: theme.space[8],
@@ -24,8 +26,11 @@ const Strip = styled.div(({ theme }) => ({
 const Controls = styled.div(({ theme }) => ({
   marginInlineStart: 'auto',
   display: 'flex',
+  flexWrap: 'wrap',
+  maxInlineSize: '100%',
   alignItems: 'center',
   gap: theme.space[2],
+  '& > *': { flexShrink: 0 },
 }));
 
 const APPLE_PLATFORM = /mac|iphone|ipad/i;
@@ -49,6 +54,7 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <UnitToggle />
         <Button
           size="sm"
+          sx={wrappingControlText('sm')}
           variant="ghost"
           aria-keyshortcuts="Control+K Meta+K"
           onClick={onOpenPalette}

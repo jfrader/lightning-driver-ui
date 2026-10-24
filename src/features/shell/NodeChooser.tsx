@@ -2,6 +2,7 @@ import { Select } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
+import { TOUCH_TARGET } from '../../config';
 import { nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
 import { NODE_DESTINATIONS, surfacesFor } from './nav-model';
@@ -63,6 +64,7 @@ export function NodeChooser() {
         root: { sx: { inlineSize: '100%', minInlineSize: 0 } },
         label: { sx: visuallyHidden },
         trigger: { sx: { inlineSize: '100%' } },
+        item: { sx: { minBlockSize: size === 'lg' ? TOUCH_TARGET : undefined } },
       }}
     />
   );

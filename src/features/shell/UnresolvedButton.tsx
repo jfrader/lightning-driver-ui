@@ -27,7 +27,6 @@ export function UnresolvedButton({ node }: { node: NodeSummary }) {
       size={size}
       variant={none ? 'ghost' : 'outline'}
       startIcon={none ? undefined : <Marker />}
-      style={{ whiteSpace: 'nowrap' }}
     >
       {`${formatInteger(count)} unresolved`}
     </ButtonLink>

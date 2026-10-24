@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import type { AuthMethod, Session } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { wrappingControlText } from '../../components/control-styles';
 import { safeRedirectPath } from '../../lib/safe-redirect';
 import { useControlSize } from '../shell/use-shell-layout';
 import { visuallyHidden } from '../shell/visually-hidden';
@@ -60,12 +61,12 @@ export function LoginPage() {
     },
   });
   const reload = (
-    <Button variant="outline" size={size} onClick={() => void bootstrap.refetch()} loading={bootstrap.isFetching}>
+    <Button variant="outline" size={size} sx={wrappingControlText(size)} onClick={() => void bootstrap.refetch()} loading={bootstrap.isFetching}>
       Reload
     </Button>
   );
   const enrollmentAction = bootstrap.data?.enrollment_available && (
-    <Button variant="ghost" size={size} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
+    <Button variant="ghost" size={size} sx={wrappingControlText(size)} onClick={() => setEnrolling(true)} disabled={signIn.isPending}>
       Enroll a sign-in method
     </Button>
   );
@@ -134,6 +135,7 @@ export function LoginPage() {
             <Button
               tone="accent"
               size="lg"
+              sx={wrappingControlText('lg')}
               loading={pending('passkey')}
               disabled={cooldown.active || pending('nostr')}
               autoFocus={backFromEnroll}
@@ -148,6 +150,7 @@ export function LoginPage() {
                 tone={nostrPrimary ? 'accent' : undefined}
                 variant={nostrPrimary ? 'solid' : 'outline'}
                 size={nostrPrimary ? 'lg' : size}
+                sx={wrappingControlText(nostrPrimary ? 'lg' : size)}
                 loading={pending('nostr')}
                 disabled={!browser.nostr || cooldown.active || pending('passkey')}
                 autoFocus={backFromEnroll && nostrPrimary}

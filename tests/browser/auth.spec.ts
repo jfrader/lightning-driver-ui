@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { APP_ORIGIN, fixture, installSyntheticApi } from './synthetic-api';
+import { doubleText } from './text-size';
 
 /** Touch targets on the phone layout. */
 const MIN_TOUCH_PX = 44;
@@ -8,6 +9,29 @@ const SIZES = [
   { width: 1440, height: 900 },
 ];
 const PHONE_MAX_WIDTH = 1023;
+
+test('@layout sign-in and enrollment actions remain contained at 200% text size', async ({ page }) => {
+  await installSyntheticApi(page);
+  await hostAllows(page, true, true);
+  await page.setViewportSize({ width: 320, height: 844 });
+  for (const enrollment of [false, true]) {
+    await page.goto('/login');
+    await expect(page.getByRole('button', { name: 'Continue with passkey' })).toBeVisible();
+    if (enrollment) await page.getByRole('button', { name: 'Enroll a sign-in method' }).click();
+    await doubleText(page);
+    await expectNoHorizontalOverflow(page);
+    for (const button of await page.getByRole('button').all()) {
+      const contained = await button.evaluate(element => {
+        const box = element.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const text = range.getBoundingClientRect();
+        return text.left >= box.left - 1 && text.right <= box.right + 1 && text.top >= box.top - 1 && text.bottom <= box.bottom + 1;
+      });
+      expect(contained, await button.textContent() ?? '').toBe(true);
+    }
+  }
+});
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

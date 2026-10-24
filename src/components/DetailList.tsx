@@ -10,7 +10,7 @@ export interface DetailItem {
   stacked?: boolean;
 }
 
-const List = styled.dl({ margin: 0, display: 'grid', minInlineSize: 0, containerType: 'inline-size' });
+const List = styled.dl({ margin: 0, display: 'grid', inlineSize: '100%', minInlineSize: 0, containerType: 'inline-size' });
 
 const Pair = styled.div<{ stacked: boolean }>(({ theme, stacked }) => ({
   display: 'grid',
