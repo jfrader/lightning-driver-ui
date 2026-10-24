@@ -21,7 +21,7 @@ import { useControlSize } from '../shell/use-shell-layout';
 export function RecentPayments({ nodeId }: { nodeId: string }) {
   const now = useNow();
   const size = useControlSize();
-  const payments = useQuery(paymentsQueryOptions(nodeId, { limit: String(RECENT_PAYMENTS_LIMIT) }));
+  const payments = useQuery(paymentsQueryOptions(nodeId, {}, { pageSize: RECENT_PAYMENTS_LIMIT }));
   const open = (payment: Payment, label: ReactNode) => (
     <TextLink
       to="/nodes/$nodeId/payments"
@@ -44,7 +44,7 @@ export function RecentPayments({ nodeId }: { nodeId: string }) {
       }
     >
       {payments.isPending && <LoadingState label="Loading recent payments" />}
-      {payments.isError && <ErrorNotice error={payments.error} onRetry={() => void payments.refetch()} />}
+      {payments.isError && <ErrorNotice error={payments.error} stale={payments.data !== undefined} onRetry={() => void payments.refetch()} />}
       {payments.data &&
         (payments.data.items.length === 0 ? (
           <EmptyState variant="inline" title="No payments on this node." />

@@ -1,6 +1,5 @@
 import { styled } from '@jfrader/ui';
-import { useQuery } from '@tanstack/react-query';
-import { operationsQueryOptions } from '../../api/node-queries';
+import { useOperationList } from '../operations/use-operation-list';
 import type { Operation } from '../../api/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -53,8 +52,8 @@ function title(operation: Operation): string {
  */
 export function AttentionList({ nodeId }: { nodeId: string }) {
   const size = useControlSize();
-  const operations = useQuery(operationsQueryOptions(nodeId, { state: 'nonterminal' }));
-  if (operations.isError) {
+  const operations = useOperationList(nodeId, { state: 'nonterminal' });
+  if (operations.isError && !operations.data) {
     return (
       <Section title="Needs attention">
         <ErrorNotice error={operations.error} onRetry={() => void operations.refetch()} />
@@ -64,10 +63,11 @@ export function AttentionList({ nodeId }: { nodeId: string }) {
   const items = (operations.data?.items ?? [])
     .filter((operation) => isInFlight(operation.state))
     .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-  if (items.length === 0) return null;
+  if (items.length === 0 && !operations.isError) return null;
 
   return (
     <Section title="Needs attention">
+      {operations.isError && <ErrorNotice error={operations.error} stale onRetry={() => void operations.refetch()} />}
       <List>
         {items.map((operation) => {
           const reconciliation = reconciliationSentence(operation);

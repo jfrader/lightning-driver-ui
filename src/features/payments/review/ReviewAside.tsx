@@ -1,6 +1,6 @@
 import { styled } from '@jfrader/ui';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { balancesQueryOptions, nodePolicyQueryOptions, operationsQueryOptions } from '../../../api/node-queries';
+import { balancesQueryOptions, nodePolicyQueryOptions } from '../../../api/node-queries';
 import type { Operation } from '../../../api/types';
 import { ButtonLink } from '../../../components/ButtonLink';
 import { DetailList } from '../../../components/DetailList';
@@ -13,6 +13,7 @@ import { NotReported } from '../../display/NotReported';
 import { useAuthMethod } from '../../auth/use-auth-method';
 import { REAUTH_LABEL } from '../../nodes/labels';
 import { isInFlight } from '../../operations/labels';
+import { useOperationList } from '../../operations/use-operation-list';
 import { useControlSize } from '../../shell/use-shell-layout';
 
 const Note = styled.p(({ theme }) => ({ margin: 0, marginBlockEnd: theme.space[3], fontSize: theme.textSize.sm }));
@@ -28,7 +29,7 @@ export function ReviewAside({ operation }: { operation: Operation }) {
   const balances = useQuery(balancesQueryOptions(nodeId));
   const reauth = useSuspenseQuery(publicPolicyQueryOptions).data.reauth;
   const method = useAuthMethod();
-  const unresolved = useQuery(operationsQueryOptions(nodeId, { state: 'nonterminal', kind: 'pay_invoice' }));
+  const unresolved = useOperationList(nodeId, { state: 'nonterminal', kind: 'pay_invoice' });
   const others = (unresolved.data?.items ?? []).filter(
     (item) => item.id !== operation.id && item.request.kind === 'pay_invoice' && isInFlight(item.state),
   );
