@@ -13,6 +13,7 @@ import type { BrowserMethods } from './login-state';
 import { SignInNotice } from './SignInNotice';
 import { METHOD_COPY, signUpProblem } from './sign-in-problem';
 import { useCooldown } from './use-cooldown';
+import { NostrSignerControl } from './NostrSignerControl';
 
 const Line = styled.p({ margin: 0 });
 
@@ -117,7 +118,8 @@ export function EnrollForm({ browser, onBack, onSession, autoFocus }: EnrollForm
               <Line key={value}>{METHOD_COPY[value].unsupported}</Line>
             ))}
         </Flex>
-        <Button type="submit" tone="accent" size="lg" sx={wrappingControlText('lg')} loading={enroll.isPending} disabled={cooldown.active}>
+        {(method === 'nostr' || !browser.nostr) && <NostrSignerControl disabled={enroll.isPending} />}
+        <Button type="submit" tone="accent" size="lg" sx={wrappingControlText('lg')} loading={enroll.isPending} disabled={cooldown.active || !browser[method]}>
           {current.submit}
         </Button>
         {enroll.isError && enroll.variables && <SignInNotice problem={signUpProblem(enroll.error, enroll.variables.chosen)} />}

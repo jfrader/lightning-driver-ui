@@ -10,7 +10,9 @@ import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
 import { useControlSize, useDesktopShell } from '../shell/use-shell-layout';
 import { linkNostr, unlinkNostr } from './ceremonies';
-import { NOSTR_FAILURE_MESSAGE, hasNostrExtension } from './nostr';
+import { METHOD_COPY } from './sign-in-problem';
+import { useNostrSigner } from './use-nostr-signer';
+import { NostrSignerControl } from './NostrSignerControl';
 import { nostrIdentitiesQueryOptions, sessionQueryOptions } from './queries';
 import { SignerError } from './SignerError';
 import { useSessionStart } from './use-session-start';
@@ -99,7 +101,7 @@ export function SignInMethods() {
   const queryClient = useQueryClient();
   const methods = useQuery(nostrIdentitiesQueryOptions);
   const session = useQuery(sessionQueryOptions);
-  const extension = hasNostrExtension();
+  const signerAvailable = useNostrSigner();
   const startSession = useSessionStart();
   const reasonId = useId();
   const link = useMutation({
@@ -137,14 +139,15 @@ export function SignInMethods() {
           size={size}
           variant="outline"
           loading={link.isPending}
-          disabled={!extension || !session.data}
-          aria-describedby={extension ? undefined : reasonId}
+          disabled={!signerAvailable || !session.data}
+          aria-describedby={signerAvailable ? undefined : reasonId}
           onClick={() => link.mutate()}
         >
           Link Nostr
         </Button>
       </div>
-      {!extension && <Line id={reasonId}>{NOSTR_FAILURE_MESSAGE.missing}</Line>}
+      {!signerAvailable && <Line id={reasonId}>{METHOD_COPY.nostr.unsupported}</Line>}
+      <NostrSignerControl disabled={link.isPending} />
       {link.isError && <MethodError error={link.error} texts={LINK_TEXT} />}
     </Flex>
   );

@@ -31,7 +31,7 @@ export async function enrollPasskey(enrollmentToken: string): Promise<Session> {
   return finishEnrollment(preauthToken, challenge.challenge_id, credential);
 }
 
-/** Server challenge, extension signature over its event template, then the purpose's answer. */
+/** Server challenge, signer signature over its event template, then the purpose's answer. */
 async function nostrCeremony<T>(csrf: CsrfSource, start: NostrStart, response: ContractValidator<T>): Promise<T> {
   const challenge = await startNostr(csrf, start);
   const event = await signNostrEvent(challenge.event);
@@ -47,7 +47,7 @@ export async function signInWithNostr(): Promise<Session> {
   return nostrCeremony(await preauth(), { purpose: 'login' }, isSession);
 }
 
-/** Enrolls the extension's key with the host token; a failed signature leaves the token usable. */
+/** Enrolls the signer's key with the host token; a failed signature leaves the token usable. */
 export async function enrollNostr(enrollmentToken: string): Promise<Session> {
   return nostrCeremony(await preauth(), { purpose: 'enrollment', token: enrollmentToken }, isSession);
 }
@@ -64,7 +64,7 @@ export interface NostrLink {
 }
 
 /**
- * Adds the extension's key to the signed-in operator. The server requires a session that
+ * Adds the signer's key to the signed-in operator. The server requires a session that
  * proved its own method moments ago, so a stale session signs in again first and the link
  * is retried once on the rotated session.
  */

@@ -120,13 +120,14 @@ describe('sign in with Nostr', () => {
     expect(webauthn.startAuthentication).not.toHaveBeenCalled();
   });
 
-  it('without WebAuthn or an extension, says what is missing and offers nothing', async () => {
+  it('without WebAuthn or an extension, offers a remote signer', async () => {
     webauthn.browserSupportsWebAuthn.mockReturnValue(false);
     host({});
     renderApp('/login');
-    expect(await screen.findByText('This browser cannot use passkeys. Open the app in a browser with passkey support.')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Bunker URI')).toBeInTheDocument();
     expect(screen.getByText('No Nostr extension found.')).toBeInTheDocument();
-    expect(screen.queryAllByRole('button')).toEqual([]);
+    expect(screen.getByRole('button', { name: 'Connect remote signer' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Continue with passkey' })).not.toBeInTheDocument();
   });
 
   it('reads a refused signature and does not finish', async () => {

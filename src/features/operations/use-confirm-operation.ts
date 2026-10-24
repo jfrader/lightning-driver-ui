@@ -52,7 +52,7 @@ const passkeyStepUp: StepUp<AuthenticationChallenge> = {
 const nostrStepUp: StepUp<NostrChallenge> = {
   start: startNostrAuthorization,
   prove: async ({ id, node_id: nodeId, review }, challenge, attempt) => {
-    // The extension prompt cannot be aborted; a closed review stops right after it answers.
+    // A closed review stops after the signer answers, before sending the signed event.
     const event = await signNostrEvent(challenge.event);
     throwIfAbandoned(attempt);
     return finishNostrAuthorization(

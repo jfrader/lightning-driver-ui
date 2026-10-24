@@ -13,8 +13,9 @@ import { AuthLayout } from './AuthLayout';
 import { signInWithNostr, signInWithPasskey } from './ceremonies';
 import { EnrollForm } from './EnrollForm';
 import { HostInstruction } from './HostInstruction';
-import { LOGIN_NOTICE, loginState, type BrowserMethods } from './login-state';
-import { hasNostrExtension } from './nostr';
+import { LOGIN_NOTICE, loginState } from './login-state';
+import { NostrSignerControl } from './NostrSignerControl';
+import { useNostrSigner } from './use-nostr-signer';
 import { bootstrapQueryOptions } from './queries';
 import { SignInNotice } from './SignInNotice';
 import { METHOD_COPY, SIGN_IN_COPY, signInProblem } from './sign-in-problem';
@@ -31,10 +32,6 @@ const SIGN_IN: Record<AuthMethod, () => Promise<Session>> = {
   nostr: signInWithNostr,
 };
 
-function browserMethods(): BrowserMethods {
-  return { passkey: browserSupportsWebAuthn(), nostr: hasNostrExtension() };
-}
-
 /** Screens spec §6: `/login` holds sign-in, enrollment and the host-only recovery wording. */
 export function LoginPage() {
   const { redirect, notice } = route.useSearch();
@@ -47,6 +44,7 @@ export function LoginPage() {
   const [backFromEnroll, setBackFromEnroll] = useState(false);
   const cooldown = useCooldown();
   const nostrReasonId = useId();
+  const signerAvailable = useNostrSigner();
 
   const enter = (session: Session) => {
     startSession(session);
@@ -71,8 +69,8 @@ export function LoginPage() {
     </Button>
   );
 
-  const browser = browserMethods();
-  const state = loginState({ browser, bootstrap, enrolling });
+  const browser = { passkey: browserSupportsWebAuthn(), nostr: signerAvailable };
+  const state = loginState({ browser: { ...browser, nostr: true }, bootstrap, enrolling });
   switch (state.kind) {
     case 'loading':
       return (
@@ -160,6 +158,7 @@ export function LoginPage() {
                 Sign in with Nostr
               </Button>
               {!browser.nostr && <Line id={nostrReasonId}>{METHOD_COPY.nostr.unsupported}</Line>}
+              <NostrSignerControl disabled={signIn.isPending} />
             </Flex>
           )}
           {signIn.isError && signIn.variables && (
