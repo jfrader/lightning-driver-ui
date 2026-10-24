@@ -123,10 +123,12 @@ function FleetRow({ node, now }: { node: NodeSummary; now: number }) {
         <Observed node={node} now={now} />
         {node.unresolved_operation_count !== '0' && <Unresolved node={node} />}
       </Line>
-      <Meta>
-        <span>Actions {capabilitySummary(node)}</span>
-        {node.kind === 'bitcoin' && <span>Unresolved —</span>}
-      </Meta>
+      {node.kind === 'bitcoin' && (
+        <Meta>
+          <span>Actions {capabilitySummary(node)}</span>
+          <span>Unresolved —</span>
+        </Meta>
+      )}
     </RowBody>
   );
 }
