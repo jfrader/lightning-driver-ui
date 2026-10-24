@@ -130,12 +130,12 @@ export function TransactionsPage() {
         actions={
           <>
             <CapabilityAction node={node} capability="new_address">
-              <ButtonLink to="/nodes/$nodeId/onchain/receive" params={params} size={size} variant="outline">
+              <ButtonLink to="/nodes/$nodeId/onchain/receive" params={params} search={search} size={size} variant="outline">
                 New address
               </ButtonLink>
             </CapabilityAction>
             <CapabilityAction node={node} capability="send_onchain">
-              <ButtonLink to="/nodes/$nodeId/onchain/send" params={params} size={size} variant="outline">
+              <ButtonLink to="/nodes/$nodeId/onchain/send" params={params} search={search} size={size} variant="outline">
                 Send on-chain
               </ButtonLink>
             </CapabilityAction>

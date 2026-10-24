@@ -1,8 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { installSyntheticApi, operation } from './synthetic-api';
 
-/** The phone review's primary action must clear the fixed tab bar by at least this much. */
-const TAB_BAR_CLEARANCE_PX = 12;
 const SIZES = [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
@@ -13,13 +11,17 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
-/** On a phone the review's primary action, as first rendered, sits at least 12px above the tab bar. */
-async function expectClearOfTabBar(page: Page, name: string) {
-  if ((page.viewportSize()?.width ?? 0) >= 1024) return;
-  const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
-  const box = await page.getByRole('button', { name }).boundingBox();
-  if (!tabs || !box) throw new Error('Missing geometry');
-  expect(box.y + box.height, `${name} bottom`).toBeLessThan(tabs.y - TAB_BAR_CLEARANCE_PX);
+async function expectVisibleConfirmation(page: Page, name: string) {
+  const action = page.getByRole('dialog').getByRole('button', { name });
+  await action.scrollIntoViewIfNeeded();
+  const geometry = await action.evaluate(element => {
+    const box = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return { top: box.top, bottom: box.bottom, viewport: innerHeight, hit: hit === element || element.contains(hit) };
+  });
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewport);
+  expect(geometry.hit).toBe(true);
 }
 
 for (const size of SIZES) {
@@ -38,7 +40,7 @@ for (const size of SIZES) {
       await expect(page.getByText('Not sent')).toBeVisible();
       await expectNoHorizontalOverflow(page);
       expect(requests.map((r) => r.path)).toEqual(['/nodes/lnd-lab/operations']);
-      await expectClearOfTabBar(page, 'Create invoice');
+      await expectVisibleConfirmation(page, 'Create invoice');
 
       await page.getByRole('button', { name: 'Create invoice' }).click();
 
@@ -65,7 +67,7 @@ for (const size of SIZES) {
       await expect(page.getByText('Requested; the final fee can differ')).toBeVisible();
       await expect(page.getByText('Total')).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
-      await expectClearOfTabBar(page, 'Send with passkey');
+      await expectVisibleConfirmation(page, 'Send with passkey');
 
       await page.keyboard.press('Control+Enter');
       expect(requests.filter((r) => r.path.endsWith('/confirm'))).toEqual([]);

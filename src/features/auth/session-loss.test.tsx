@@ -106,7 +106,7 @@ describe('a 401 ends the current session wherever it arrives', () => {
 
     expect(await screen.findByText('Another operation holds this resource.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Review invoice' })).toBeInTheDocument();
-    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('create_invoice').id}`);
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/invoices/review/${operation('create_invoice').id}`);
     expect(sessionCsrfToken()).toBe(FIRST_SESSION_CSRF);
     expect(calls.confirms).toHaveLength(1);
   });

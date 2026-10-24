@@ -97,6 +97,7 @@ export function ChannelInspector({ channel, node, close }: ChannelInspectorProps
             <ButtonLink
               to="/nodes/$nodeId/channels/$channelId/close"
               params={{ nodeId: node.id, channelId: channel.id }}
+              search
               size={size}
               variant="outline"
               tone="danger"

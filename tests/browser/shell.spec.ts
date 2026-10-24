@@ -2,9 +2,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { fixture, installSyntheticApi } from './synthetic-api';
 import { doubleText } from './text-size';
 
-/** The phone's primary action must clear the fixed tab bar by at least this much. */
-const TAB_BAR_CLEARANCE_PX = 12;
-
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
 test('@layout missing-node recovery is touch-sized and opens the fleet', async ({ page }) => {
@@ -75,7 +72,7 @@ test('@layout enlarged Lightning header controls remain separate and quick actio
   }
 });
 
-test('@layout keyboard-focused phone actions stay above the fixed tabs at enlarged text size', async ({ page }) => {
+test('@layout keyboard-focused phone actions stay visible inside the sheet at enlarged text size', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
@@ -86,24 +83,23 @@ test('@layout keyboard-focused phone actions stay above the fixed tabs at enlarg
     await page.keyboard.press('Tab');
     await expect.poll(async () => page.evaluate(() => {
       const el = document.activeElement;
-      if (!el?.closest('main') || !el.matches('a,button,input,select,textarea')) return true;
+      if (!el?.closest('dialog') || !el.matches('a,button,input,select,textarea')) return true;
       const r = el.getBoundingClientRect();
-      const tabs = document.querySelector('nav[aria-label="Sections"]')?.getBoundingClientRect();
-      return r.top >= 0 && r.bottom < (tabs?.top ?? innerHeight);
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return r.top >= 0 && r.bottom <= innerHeight && (hit === el || el.contains(hit));
     })).toBe(true);
   }
   await expect(submit).toBeFocused();
-  const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
   const action = await submit.boundingBox();
-  if (!tabs || !action) throw new Error('Missing focused control geometry');
-  expect(action.y + action.height, 'tab navigation must reveal the entire focused action').toBeLessThan(tabs.y);
+  if (!action) throw new Error('Missing focused control geometry');
+  expect(action.y + action.height, 'tab navigation must reveal the entire focused action').toBeLessThanOrEqual(page.viewportSize()!.height);
 });
 
 test('@layout enlarged desktop preferences stay inside the rail instead of covering the workspace', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await installSyntheticApi(page);
-  await page.goto('/nodes/lnd-lab/invoices/new');
-  await expect(page.getByRole('button', { name: 'Review invoice' })).toBeVisible();
+  await page.goto('/nodes/lnd-lab/invoices');
+  await expect(page.getByRole('heading', { name: 'Invoices', exact: true })).toBeVisible();
   await doubleText(page);
   const rail = await page.getByRole('complementary', { name: 'Node and sections' }).boundingBox();
   if (!rail) throw new Error('Missing rail geometry');
@@ -146,18 +142,21 @@ for (const path of ['/nodes/lnd-lab', '/nodes/lnd-lab/payments', '/nodes/lnd-lab
   });
 }
 
-test('the phone primary action clears the tab bar when scrolled to the end', async ({ page }) => {
+test('the phone sheet primary action is unobscured when scrolled to the end', async ({ page }) => {
   test.skip(!isPhone(page), 'phone shell only');
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
   const submit = page.getByRole('button', { name: 'Review invoice' });
   await expect(submit).toBeVisible();
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-
-  const tabs = await page.getByRole('navigation', { name: 'Sections' }).boundingBox();
+  await submit.scrollIntoViewIfNeeded();
   const action = await submit.boundingBox();
-  if (!tabs || !action) throw new Error('Missing geometry');
-  expect(action.y + action.height).toBeLessThan(tabs.y - TAB_BAR_CLEARANCE_PX);
+  if (!action) throw new Error('Missing geometry');
+  expect(action.y + action.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+  expect(await submit.evaluate(element => {
+    const box = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return hit === element || element.contains(hit);
+  })).toBe(true);
 });
 
 test('the palette opens with the keyboard, traps focus and returns it on close', async ({ page }) => {

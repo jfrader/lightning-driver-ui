@@ -35,7 +35,7 @@ describe('blocked forms', () => {
   ])('renders the reason and no field for %s', async (_label, path, overrides, reason) => {
     serveNode(overrides);
     renderApp(`/nodes/lnd-lab${path}`);
-    const scope = path === '/payments/new' ? within(await screen.findByRole('dialog', { name: 'Pay invoice' })) : screen;
+    const scope = within(await screen.findByRole('dialog'));
     expect(await scope.findByText(reason)).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Review|Check invoice/ })).not.toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('close channel form', () => {
     const calls = mockJournal({ created: operation('close_channel') });
     const { user } = renderApp(`/nodes/lnd-lab/channels/${CHANNEL.id}/close`);
     expect(await screen.findByText('Cooperative close only. The peer must be online.')).toBeInTheDocument();
-    expect(screen.getByText('Capacity').nextElementSibling).toHaveTextContent('1,000,000 sat');
+    expect(within(screen.getByRole('dialog')).getByText('Capacity').nextElementSibling).toHaveTextContent('1,000,000 sat');
 
     await user.type(screen.getByLabelText(/^Fee rate/), '2');
     await user.click(screen.getByRole('button', { name: 'Review close' }));

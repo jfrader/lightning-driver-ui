@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
+import type { ComponentProps } from 'react';
 import {
   Outlet,
   createRootRouteWithContext,
@@ -7,6 +8,7 @@ import {
   notFound,
   redirect,
   type RouterHistory,
+  type RouteComponent,
 } from '@tanstack/react-router';
 import { isSessionLoss } from '../api/errors';
 import { nodeQueryOptions } from '../api/node-queries';
@@ -31,6 +33,7 @@ import {
 import { OPERATION_KIND, OPERATION_LIST_STATE } from '../features/operations/labels';
 import { PAYMENT_STATE } from '../features/payments/labels';
 import { AppShell } from '../features/shell/AppShell';
+import { OperationListLayout } from '../features/operations/OperationListLayout';
 import {
   ChannelsPage,
   WatchtowerClientPage,
@@ -44,8 +47,9 @@ import {
   OperationPage,
   OperationsPage,
   PayInvoicePage,
-  PaymentsLayout,
-  PayReviewPage,
+  PaymentsPage,
+  OperationFormRoute,
+  OperationReviewRoute,
   PeersPage,
   ReceiveAddressPage,
   ReceiveInvoicePage,
@@ -56,6 +60,7 @@ import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
 import {
   booleanParam,
+  booleanCodec,
   decimalParam,
   moneySearch,
   enumParam,
@@ -99,6 +104,7 @@ const enrollRoute = createRoute({
 const authedRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: '_authed',
+  validateSearch: (search: Record<string, unknown>): { palette?: 1 } => ({ palette: booleanCodec.serialize(booleanCodec.parse(search.palette)) }),
   beforeLoad: async ({ context, location }) => {
     try {
       // The session and the public policy are independent reads: one round trip, not two.
@@ -184,6 +190,20 @@ const configuredNodeRoute = createRoute({
 const node = <TPath extends string>(path: TPath) => ({ getParentRoute: () => configuredNodeRoute, path });
 const history = <TPath extends string>(path: TPath) => ({ getParentRoute: () => nodeRoute, path });
 
+function operationList(Page: RouteComponent) {
+  return Object.assign(() => <OperationListLayout><Page /></OperationListLayout>, { preload: Page.preload });
+}
+
+function operationForm(Page: RouteComponent, props: Omit<ComponentProps<typeof OperationFormRoute>, 'children'>) {
+  return Object.assign(() => <OperationFormRoute {...props}><Page /></OperationFormRoute>, {
+    preload: async () => { await Promise.all([OperationFormRoute.preload?.(), Page.preload?.()]); },
+  });
+}
+
+function operationReview(list: ComponentProps<typeof OperationReviewRoute>['list']) {
+  return Object.assign(() => <OperationReviewRoute list={list} />, { preload: OperationReviewRoute.preload });
+}
+
 const nodeOverviewRoute = createRoute({ ...node('/'), component: NodeOverviewPage });
 const watchtowerClientRoute = createRoute({
   ...node('/watchtower'),
@@ -201,9 +221,10 @@ const invoicesRoute = createRoute({
     status: enumParam(search.status, INVOICE_STATE),
     selected: hashParam(search.selected),
   }),
-  component: InvoicesPage,
+  component: operationList(InvoicesPage),
 });
-const receiveInvoiceRoute = createRoute({ ...node('/invoices/new'), component: ReceiveInvoicePage });
+const receiveInvoiceRoute = createRoute({ getParentRoute: () => invoicesRoute, path: '/new', component: operationForm(ReceiveInvoicePage, { list: 'invoices', kind: 'create_invoice' }) });
+const invoiceReviewRoute = createRoute({ getParentRoute: () => invoicesRoute, path: '/review/$operationId', component: operationReview('invoices') });
 const paymentsRoute = createRoute({
   ...node('/payments'),
   validateSearch: (
@@ -214,19 +235,20 @@ const paymentsRoute = createRoute({
     status: enumParam(search.status, PAYMENT_STATE),
     selected: hashParam(search.selected),
   }),
-  component: PaymentsLayout,
+  component: operationList(PaymentsPage),
 });
-const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', component: PayInvoicePage });
-const payReviewRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/review/$operationId', component: PayReviewPage });
+const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', component: operationForm(PayInvoicePage, { list: 'payments', kind: 'pay_invoice' }) });
+const payReviewRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/review/$operationId', component: operationReview('payments') });
 const peersRoute = createRoute({
   ...node('/peers'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
     ...pagedSearch(search),
     selected: pubkeyParam(search.selected) ?? decimalParam(search.selected),
   }),
-  component: PeersPage,
+  component: operationList(PeersPage),
 });
-const connectPeerRoute = createRoute({ ...node('/peers/new'), component: ConnectPeerPage });
+const connectPeerRoute = createRoute({ getParentRoute: () => peersRoute, path: '/new', component: operationForm(ConnectPeerPage, { list: 'peers', kind: 'connect_peer' }) });
+const peerReviewRoute = createRoute({ getParentRoute: () => peersRoute, path: '/review/$operationId', component: operationReview('peers') });
 const channelsRoute = createRoute({
   ...node('/channels'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { state?: ChannelState; selected?: string } => ({
@@ -234,24 +256,26 @@ const channelsRoute = createRoute({
     state: enumParam(search.state, CHANNEL_STATE),
     selected: resourceIdParam(search.selected),
   }),
-  component: ChannelsPage,
+  component: operationList(ChannelsPage),
 });
 const openChannelRoute = createRoute({
-  ...node('/channels/new'),
+  getParentRoute: () => channelsRoute, path: '/new',
   validateSearch: (search: Record<string, unknown>): { peer?: string } => ({ peer: pubkeyParam(search.peer) }),
-  component: OpenChannelPage,
+  component: operationForm(OpenChannelPage, { list: 'channels', kind: 'open_channel' }),
 });
-const closeChannelRoute = createRoute({ ...node('/channels/$channelId/close'), component: CloseChannelPage });
+const closeChannelRoute = createRoute({ getParentRoute: () => channelsRoute, path: '/$channelId/close', component: operationForm(CloseChannelPage, { list: 'channels', kind: 'close_channel' }) });
+const channelReviewRoute = createRoute({ getParentRoute: () => channelsRoute, path: '/review/$operationId', component: operationReview('channels') });
 const transactionsRoute = createRoute({
   ...node('/onchain'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
     ...pagedSearch(search),
     selected: hashParam(search.selected),
   }),
-  component: TransactionsPage,
+  component: operationList(TransactionsPage),
 });
-const receiveAddressRoute = createRoute({ ...node('/onchain/receive'), component: ReceiveAddressPage });
-const sendOnchainRoute = createRoute({ ...node('/onchain/send'), component: SendOnchainPage });
+const receiveAddressRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/receive', component: operationForm(ReceiveAddressPage, { list: 'onchain', kind: 'new_address' }) });
+const sendOnchainRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/send', component: operationForm(SendOnchainPage, { list: 'onchain', kind: 'send_onchain' }) });
+const onchainReviewRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/review/$operationId', component: operationReview('onchain') });
 const operationsRoute = createRoute({
   ...history('/operations'),
   validateSearch: (
@@ -283,17 +307,11 @@ const routeTree = rootRoute.addChildren([
         nodeOverviewRoute,
         watchtowerClientRoute,
         watchtowerServerRoute,
-        invoicesRoute,
-        receiveInvoiceRoute,
+        invoicesRoute.addChildren([receiveInvoiceRoute, invoiceReviewRoute]),
         paymentsRoute.addChildren([payInvoiceRoute, payReviewRoute]),
-        peersRoute,
-        connectPeerRoute,
-        channelsRoute,
-        openChannelRoute,
-        closeChannelRoute,
-        transactionsRoute,
-        receiveAddressRoute,
-        sendOnchainRoute,
+        peersRoute.addChildren([connectPeerRoute, peerReviewRoute]),
+        channelsRoute.addChildren([openChannelRoute, closeChannelRoute, channelReviewRoute]),
+        transactionsRoute.addChildren([receiveAddressRoute, sendOnchainRoute, onchainReviewRoute]),
       ]),
       operationsRoute,
       operationRoute,

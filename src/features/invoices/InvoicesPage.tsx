@@ -125,7 +125,7 @@ export function InvoicesPage() {
         title="Invoices"
         actions={
           <CapabilityAction node={node} capability="create_invoice">
-            <ButtonLink to="/nodes/$nodeId/invoices/new" params={{ nodeId: node.id }} size={size} tone="accent" variant="solid">
+            <ButtonLink to="/nodes/$nodeId/invoices/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
               Create invoice
             </ButtonLink>
           </CapabilityAction>

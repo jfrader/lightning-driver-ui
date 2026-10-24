@@ -26,7 +26,7 @@ describe('receive', () => {
     await user.click(screen.getByRole('button', { name: 'Review invoice' }));
 
     await screen.findByRole('heading', { name: 'Review invoice' });
-    expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${operation('create_invoice').id}`);
+    expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/invoices/review/${operation('create_invoice').id}`);
     expect(calls.creates.map((call) => call.body)).toEqual([
       { kind: 'create_invoice', params: { amount_msat: '2500000', description: 'Coffee', expiry_seconds: 3600 } },
     ]);
@@ -130,7 +130,7 @@ describe('channel and on-chain reviews', () => {
     await user.click(screen.getByRole('button', { name: 'Review channel open' }));
 
     expect(await screen.findByRole('button', { name: 'Open channel with passkey' })).toBeInTheDocument();
-    expect(screen.getByText('Open channel').nextElementSibling).toHaveTextContent('1,000,000 sat');
+    expect(screen.getByText('Open channel', { selector: 'p' }).nextElementSibling).toHaveTextContent('1,000,000 sat');
     expect(screen.getByText('Channel capacity from this node')).toBeInTheDocument();
     expect(screen.getByText('Fee rate').closest('div')).toHaveTextContent('Requested; the final fee can differ2 sat/vB');
     expect(screen.getByText('Visibility').nextElementSibling).toHaveTextContent('Private');
