@@ -28,7 +28,7 @@ export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, chi
     });
   }, [invoker]);
   useLayoutEffect(() => {
-    if (hasReview) titleRef.current?.focus();
+    titleRef.current?.focus();
   }, [hasReview]);
   const canDismiss = !hasReview && !busy;
   const Surface = desktop ? Drawer : BottomSheet;

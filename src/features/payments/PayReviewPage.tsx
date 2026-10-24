@@ -40,7 +40,7 @@ export function PayReviewPage() {
   );
   return (
     <OperationSheetContext value={{ onCreated: () => {}, onUnanswered: list, discard: form }}>
-      <OperationSheet title="Pay invoice" hasReview busy={busy} onClose={list} onDiscard={form}>
+      <OperationSheet title="Pay invoice" hasReview={operation.data === undefined || operation.data.state === 'awaiting_confirmation'} busy={busy} onClose={list} onDiscard={form}>
         {content}
       </OperationSheet>
     </OperationSheetContext>
