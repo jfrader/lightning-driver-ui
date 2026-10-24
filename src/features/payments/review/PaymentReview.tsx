@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { decodeQueryOptions } from '../../../api/node-queries';
 import type { NodeSummary, Operation } from '../../../api/types';
 import { LoadingState } from '../../../components/LoadingState';
-import { useNow } from '../../../lib/use-now';
+import { useDeadlineNow } from '../../../lib/use-now';
 import { ConfirmPanel } from '../../operations/ConfirmPanel';
 import { confirmBlockReason } from '../../operations/confirm-block';
 import { DiscardLink } from '../../operations/review/DiscardLink';
@@ -24,7 +24,7 @@ interface PaymentReviewProps {
  * its payment hash differs from the server review, no confirm button renders.
  */
 export function PaymentReview({ operation, bolt11, node }: PaymentReviewProps) {
-  const now = useNow();
+  const now = useDeadlineNow(operation.review.expires_at);
   const blocked = confirmBlockReason(operation, node, now);
   const decode = useQuery({ ...decodeQueryOptions(operation.node_id, bolt11), enabled: blocked === null });
   const decoded = decode.data && decode.data.payment_hash === operation.review.payment_hash ? decode.data : null;

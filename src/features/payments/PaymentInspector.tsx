@@ -2,7 +2,7 @@ import { styled } from '@jfrader/ui';
 import type { Payment } from '../../api/types';
 import { DetailList } from '../../components/DetailList';
 import { Section } from '../../components/Section';
-import { UtcTime } from '../../components/UtcTime';
+import { LiveUtcTime, UtcTime } from '../../components/UtcTime';
 import { Amount } from '../display/Amount';
 import { FeeRatio } from '../display/FeeRatio';
 import { Identifier } from '../display/Identifier';
@@ -16,12 +16,11 @@ const Note = styled.p(({ theme }) => ({ margin: 0, fontSize: theme.textSize.sm, 
 interface PaymentInspectorProps {
   /** The selected record, or `null` when the selected hash is not on the loaded page. */
   payment: Payment | null;
-  now: number;
   close: React.ReactNode;
 }
 
 /** The selected payment's facts with full, copyable identifiers. Read-only: no retry, no pay again. */
-export function PaymentInspector({ payment, now, close }: PaymentInspectorProps) {
+export function PaymentInspector({ payment, close }: PaymentInspectorProps) {
   if (!payment) {
     return (
       <Section title="Payment" action={close}>
@@ -41,7 +40,7 @@ export function PaymentInspector({ payment, now, close }: PaymentInspectorProps)
             numeric: true,
             value: <FeeRatio feeMsat={payment.fee_msat} amountMsat={payment.amount_msat} />,
           },
-          { label: 'Created', value: <UtcTime value={payment.created_at} now={now} /> },
+          { label: 'Created', value: <LiveUtcTime value={payment.created_at} /> },
           { label: 'Completed', value: <UtcTime value={payment.completed_at} /> },
           {
             label: 'Destination',

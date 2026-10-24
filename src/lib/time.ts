@@ -1,4 +1,8 @@
 import { DISPLAY_LOCALE, DISPLAY_TIME_ZONE } from '../config';
+import { formatterCache } from './formatter-cache';
+
+const dateFormat = formatterCache((locale, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options));
+const relativeFormat = formatterCache((locale, options: Intl.RelativeTimeFormatOptions) => new Intl.RelativeTimeFormat(locale, options));
 
 const RELATIVE_UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
   ['day', 86_400],
@@ -32,29 +36,29 @@ function relativeAge(
   if (time === null) return null;
   const seconds = Math.round((time - now) / 1000);
   const [unit, size] = RELATIVE_UNITS.find(([, unitSeconds]) => Math.abs(seconds) >= unitSeconds) ?? ['second', 1];
-  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style }).format(Math.round(seconds / size), unit);
+  return relativeFormat(locale, { numeric: 'auto', style }).format(Math.round(seconds / size), unit);
 }
 
 export function formatDateTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
   const time = parseTime(iso);
   if (time === null) return null;
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(time);
+  return dateFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(time);
 }
 
 /** "14:05:09", 24-hour clock in the display time zone (UTC). */
 export function formatClockTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
   const time = parseTime(iso);
   if (time === null) return null;
-  return new Intl.DateTimeFormat(locale, { timeStyle: 'medium', hourCycle: 'h23', timeZone: DISPLAY_TIME_ZONE }).format(time);
+  return dateFormat(locale, { timeStyle: 'medium', hourCycle: 'h23', timeZone: DISPLAY_TIME_ZONE }).format(time);
 }
 
 /** List time in UTC: "14:05" today, with the date on other days. */
 export function formatListTime(iso: string, now: number, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
   const time = parseTime(iso);
   if (time === null) return null;
-  const day = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeZone: DISPLAY_TIME_ZONE });
+  const day = dateFormat(locale, { dateStyle: 'short', timeZone: DISPLAY_TIME_ZONE });
   const sameDay = day.format(time) === day.format(now);
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     ...(sameDay ? {} : { dateStyle: 'medium' }),
     timeStyle: 'short',
     hourCycle: 'h23',
@@ -66,7 +70,7 @@ export function formatListTime(iso: string, now: number, locale: Intl.LocalesArg
 export function formatDetailTime(iso: string, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string | null {
   const time = parseTime(iso);
   if (time === null) return null;
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'medium',
     hourCycle: 'h23',

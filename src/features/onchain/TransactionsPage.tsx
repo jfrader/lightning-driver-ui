@@ -12,7 +12,6 @@ import type { ResourceColumn } from '../../components/ResourceList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { VisuallyHidden } from '../../components/VisuallyHidden';
-import { useNow } from '../../lib/use-now';
 import { Amount } from '../display/Amount';
 import { ShortIdentifier } from '../display/Identifier';
 import { CapabilityAction } from '../nodes/CapabilityAction';
@@ -50,9 +49,9 @@ const Small = styled.span(({ theme }) => ({
 
 type Open = (transaction: Transaction, label: ReactNode) => ReactNode;
 
-function columns(now: number, open: Open): ResourceColumn<Transaction>[] {
+function columns(open: Open): ResourceColumn<Transaction>[] {
   return [
-    { id: 'time', header: 'Time (UTC)', width: '9rem', cell: (tx) => open(tx, <TransactionTime transaction={tx} now={now} />) },
+    { id: 'time', header: 'Time (UTC)', width: '9rem', cell: (tx) => open(tx, <TransactionTime transaction={tx} />) },
     { id: 'direction', header: 'Direction', cell: (tx) => <TransactionDirection transaction={tx} /> },
     { id: 'amount', header: 'Amount', numeric: true, cell: (tx) => <Amount value={tx.amount_sat} unit="sat" /> },
     { id: 'fee', header: 'Fee', numeric: true, cell: (tx) => <Amount value={tx.fee_sat} unit="sat" /> },
@@ -63,7 +62,7 @@ function columns(now: number, open: Open): ResourceColumn<Transaction>[] {
 }
 
 /** Phone row: amount and direction, confirmations and fee, time and txid. */
-function TransactionRow({ transaction, now, open }: { transaction: Transaction; now: number; open: Open }) {
+function TransactionRow({ transaction, open }: { transaction: Transaction; open: Open }) {
   return (
     <RowBody>
       <Line>
@@ -78,34 +77,35 @@ function TransactionRow({ transaction, now, open }: { transaction: Transaction; 
         </Small>
       </Line>
       <Line>
-        <Small>{open(transaction, <TransactionTime transaction={transaction} now={now} />)}</Small>
+        <Small>{open(transaction, <TransactionTime transaction={transaction} />)}</Small>
         <ShortIdentifier value={transaction.txid} />
       </Line>
     </RowBody>
   );
 }
 
+const open: Open = (transaction, label) => (
+  <TextLink
+    from="/nodes/$nodeId/onchain"
+    search={(previous) => ({ ...previous, selected: transaction.txid })}
+    {...ROW_PRIMARY_LINK}
+  >
+    {label}
+    <VisuallyHidden>{` (Open transaction ${transaction.txid.slice(0, 8)})`}</VisuallyHidden>
+  </TextLink>
+);
+const listColumns = columns(open);
+const getRowId = (transaction: Transaction) => transaction.txid;
+const renderRow = (transaction: Transaction) => <TransactionRow transaction={transaction} open={open} />;
+
 /** On-chain transactions of the node's wallet; no balances here (they live on Overview). */
 export function TransactionsPage() {
   const node = useCurrentNode();
-  const now = useNow();
   const size = useControlSize();
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const transactions = useQuery(transactionsQueryOptions(node.id, { cursor: search.cursor }));
   const params = { nodeId: node.id };
-
-  const open: Open = (transaction, label) => (
-    <TextLink
-      from="/nodes/$nodeId/onchain"
-      search={(previous) => ({ ...previous, selected: transaction.txid })}
-      {...ROW_PRIMARY_LINK}
-      resetScroll={false}
-    >
-      {label}
-      <VisuallyHidden>{` (Open transaction ${transaction.txid.slice(0, 8)})`}</VisuallyHidden>
-    </TextLink>
-  );
   const selected = search.selected
     ? (transactions.data?.items.find((transaction) => transaction.txid === search.selected) ?? null)
     : undefined;
@@ -114,9 +114,9 @@ export function TransactionsPage() {
     <PagedList
       caption="Transactions"
       query={transactions}
-      columns={columns(now, open)}
-      getRowId={(transaction) => transaction.txid}
-      renderRow={(transaction) => <TransactionRow transaction={transaction} now={now} open={open} />}
+      columns={listColumns}
+      getRowId={getRowId}
+      renderRow={renderRow}
       emptyTitle="No on-chain transactions on this node."
       cursor={search.cursor}
       onCursor={(cursor) => void navigate({ search: { cursor } })}
@@ -149,7 +149,6 @@ export function TransactionsPage() {
           selected === undefined || transactions.isPending ? null : (
             <TransactionInspector
               transaction={selected}
-              now={now}
               close={
                 <ButtonLink
                   variant="ghost"

@@ -8,7 +8,6 @@ import type { ResourceColumn } from '../../components/ResourceList';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
-import { useNow } from '../../lib/use-now';
 import { NotReported } from '../display/NotReported';
 import { StateWord } from '../display/StateWord';
 import { BACKEND_LABEL, NETWORK_LABEL, NODE_STATUS, capabilitySummary, syncLabel, accessLabel } from './labels';
@@ -60,13 +59,13 @@ function NetworkPill({ node }: { node: NodeSummary }) {
 }
 
 /** Observation time and age; `Stale` when it is a cached observation; `Never observed` when none. */
-function Observed({ node, now }: { node: NodeSummary; now: number }) {
+function Observed({ node }: { node: NodeSummary }) {
   const { observed_at: at, stale } = node.status;
   if (at === null) return <NotReported>Never observed</NotReported>;
   return (
     <Meta>
       {stale && <Pill tone="warning">Stale</Pill>}
-      <ListTime at={at} now={now} />
+      <ListTime at={at} />
     </Meta>
   );
 }
@@ -83,7 +82,7 @@ function Unresolved({ node }: { node: NodeSummary }) {
   );
 }
 
-function columns(now: number): ResourceColumn<NodeSummary>[] {
+function columns(): ResourceColumn<NodeSummary>[] {
   return [
     {
       id: 'node',
@@ -99,7 +98,7 @@ function columns(now: number): ResourceColumn<NodeSummary>[] {
     { id: 'network', header: 'Network', cell: (node) => <NetworkPill node={node} /> },
     { id: 'status', header: 'Status', cell: (node) => <StateWord state={NODE_STATUS[node.status.status]} /> },
     { id: 'sync', header: 'Chain sync', cell: (node) => syncLabel(node.status.synced_to_chain) },
-    { id: 'observed', header: 'Observed', cell: (node) => <Observed node={node} now={now} /> },
+    { id: 'observed', header: 'Observed', cell: (node) => <Observed node={node} /> },
     { id: 'access', header: 'Access', cell: accessLabel },
     { id: 'actions', header: 'Actions', cell: (node) => capabilitySummary(node) },
     { id: 'unresolved', header: 'Unresolved', numeric: true, cell: (node) => <Unresolved node={node} /> },
@@ -107,7 +106,7 @@ function columns(now: number): ResourceColumn<NodeSummary>[] {
 }
 
 /** Phone row: label and status, network · backend · access, observed time and unresolved count. */
-function FleetRow({ node, now }: { node: NodeSummary; now: number }) {
+function FleetRow({ node }: { node: NodeSummary }) {
   return (
     <RowBody>
       <Line>
@@ -120,7 +119,7 @@ function FleetRow({ node, now }: { node: NodeSummary; now: number }) {
         <span>{accessLabel(node)}</span>
       </Meta>
       <Line>
-        <Observed node={node} now={now} />
+        <Observed node={node} />
         {node.unresolved_operation_count !== '0' && <Unresolved node={node} />}
       </Line>
       {node.kind === 'bitcoin' && (
@@ -138,20 +137,23 @@ interface FleetListProps {
   onPage: (cursor: string | undefined) => void;
 }
 
+const listColumns = columns();
+const getRowId = (node: NodeSummary) => node.id;
+const renderRow = (node: NodeSummary) => <FleetRow node={node} />;
+
 /**
  * Every configured node with its own network, status and access. Each row opens that node. There is
  * no fleet-wide money total and no combined activity: nodes are never summed.
  */
 export function FleetList({ cursor, onPage }: FleetListProps) {
-  const now = useNow();
   const fleet = useQuery(fleetQueryOptions(cursor));
   return (
     <PagedList
       caption="Nodes"
       query={fleet}
-      columns={columns(now)}
-      getRowId={(node) => node.id}
-      renderRow={(node) => <FleetRow node={node} now={now} />}
+      columns={listColumns}
+      getRowId={getRowId}
+      renderRow={renderRow}
       emptyTitle="No nodes are configured on this server."
       cursor={cursor}
       onCursor={onPage}

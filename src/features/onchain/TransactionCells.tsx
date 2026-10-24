@@ -22,6 +22,6 @@ export function TransactionBlock({ transaction }: { transaction: Transaction }) 
   return transaction.block_height === null ? <span>{label}</span> : <Mono>{label}</Mono>;
 }
 
-export function TransactionTime({ transaction, now }: { transaction: Transaction; now: number }) {
-  return transaction.occurred_at === null ? <NotReported /> : <ListTime at={transaction.occurred_at} now={now} />;
+export function TransactionTime({ transaction }: { transaction: Transaction }) {
+  return transaction.occurred_at === null ? <NotReported /> : <ListTime at={transaction.occurred_at} />;
 }

@@ -2,6 +2,7 @@ import { styled } from '@jfrader/ui';
 import type { Invoice } from '../../api/types';
 import { ListTime } from '../../components/ListTime';
 import { formatAgeShort } from '../../lib/time';
+import { useNow } from '../../lib/use-now';
 import { NotReported } from '../display/NotReported';
 import { invoiceExpiry } from './labels';
 
@@ -21,7 +22,8 @@ const Description = styled.span<{ lines: number }>(({ lines }) => ({
 }));
 
 /** Expiry per §1.4: remaining time for an open invoice, "Expiry passed" for an unpaid one past it. */
-export function InvoiceExpiryText({ invoice, now }: { invoice: Invoice; now: number }) {
+export function InvoiceExpiryText({ invoice }: { invoice: Invoice }) {
+  const now = useNow();
   const expiry = invoiceExpiry(invoice, now);
   switch (expiry.kind) {
     case 'none':
@@ -29,7 +31,7 @@ export function InvoiceExpiryText({ invoice, now }: { invoice: Invoice; now: num
     case 'remaining':
       return (
         <Stack>
-          <ListTime at={expiry.at} now={now} />
+          <ListTime at={expiry.at} />
           <Muted>{formatAgeShort(expiry.at, now)}</Muted>
         </Stack>
       );
@@ -38,12 +40,12 @@ export function InvoiceExpiryText({ invoice, now }: { invoice: Invoice; now: num
         <Stack>
           <Passed>Expiry passed</Passed>
           <Muted>
-            <ListTime at={expiry.at} now={now} />
+            <ListTime at={expiry.at} />
           </Muted>
         </Stack>
       );
     case 'recorded':
-      return <ListTime at={expiry.at} now={now} />;
+      return <ListTime at={expiry.at} />;
   }
 }
 

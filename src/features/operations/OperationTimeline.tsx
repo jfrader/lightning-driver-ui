@@ -68,7 +68,8 @@ const Mono = styled.time(({ theme }) => ({ fontFamily: theme.font.mono, fontVari
 
 const Unrecorded = styled.span(({ theme }) => ({ fontStyle: 'italic', color: theme.color.textSubtle }));
 
-function StepTime({ step, now }: { step: OperationStep; now: number }) {
+function StepTime({ step }: { step: OperationStep }) {
+  const now = useNow();
   const clock = step.at === null ? null : formatClockTime(step.at);
   if (step.at === null || clock === null) {
     return (
@@ -85,12 +86,11 @@ function StepTime({ step, now }: { step: OperationStep; now: number }) {
 }
 
 /**
- * What the operation record proves, in order, with absolute UTC times and ages from one `now`.
+ * What the operation record proves, in order, with absolute UTC times and relative ages.
  * Untimed steps say so; nothing is interpolated. App-owned because a timeline that needs a time per
  * event would drop or fake the authorization and dispatch steps.
  */
 export function OperationTimeline({ operation }: { operation: Operation }) {
-  const now = useNow();
   return (
     <List aria-label="Operation timeline">
       {operationSteps(operation).map((step) => (
@@ -101,7 +101,7 @@ export function OperationTimeline({ operation }: { operation: Operation }) {
               {step.label}
               {step.detail && <Detail>{step.detail}</Detail>}
             </Title>
-            <StepTime step={step} now={now} />
+            <StepTime step={step} />
           </Body>
         </Step>
       ))}

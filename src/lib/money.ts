@@ -1,5 +1,8 @@
 // Exact amounts: wire strings become bigint millisatoshis. No floating point anywhere.
 import { DISPLAY_LOCALE } from '../config';
+import { formatterCache } from './formatter-cache';
+
+const numberFormat = formatterCache((locale, options: Intl.NumberFormatOptions) => new Intl.NumberFormat(locale, options));
 
 export type DisplayUnit = 'sat' | 'btc';
 export type WireUnit = 'sat' | 'msat';
@@ -68,7 +71,7 @@ function fractionLength(decimal: string): number {
 export function formatMsat(msat: bigint, unit: DisplayUnit, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
   const decimal = toDecimal(msat, unit);
   const digits = Math.max(UNIT_MIN_FRACTION[unit], fractionLength(decimal));
-  const number = new Intl.NumberFormat(locale, {
+  const number = numberFormat(locale, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(decimal);
@@ -81,7 +84,7 @@ export function formatMsatInput(msat: bigint, unit: DisplayUnit): string {
 }
 
 export function formatInteger(value: bigint, locale: Intl.LocalesArgument = DISPLAY_LOCALE): string {
-  return new Intl.NumberFormat(locale).format(value);
+  return numberFormat(locale, {}).format(value);
 }
 
 export type AmountInputResult = { ok: true; msat: bigint } | { ok: false; error: string };

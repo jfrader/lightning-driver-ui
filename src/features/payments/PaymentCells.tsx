@@ -4,8 +4,8 @@ import { ShortIdentifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
 
 /** Created time in UTC: time today, date and time otherwise. */
-export function PaymentTime({ payment, now }: { payment: Payment; now: number }) {
-  return <ListTime at={payment.created_at} now={now} />;
+export function PaymentTime({ payment }: { payment: Payment }) {
+  return <ListTime at={payment.created_at} />;
 }
 
 export function PaymentDestination({ payment }: { payment: Payment }) {

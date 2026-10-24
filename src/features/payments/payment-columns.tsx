@@ -20,13 +20,13 @@ function compareAmounts(a: string | null, b: string | null): number {
  * Contract columns: Time (UTC), State, Amount, Fee, Fee / amount, Destination. One row per payment
  * hash, as the node reports them. `open` wraps the time in the link that opens the record.
  */
-export function paymentColumns(now: number, open: (payment: Payment, label: ReactNode) => ReactNode): ResourceColumn<Payment>[] {
+export function paymentColumns(open: (payment: Payment, label: ReactNode) => ReactNode): ResourceColumn<Payment>[] {
   return [
     {
       id: 'time',
       header: 'Time (UTC)',
       width: '9rem',
-      cell: (payment) => open(payment, <PaymentTime payment={payment} now={now} />),
+      cell: (payment) => open(payment, <PaymentTime payment={payment} />),
       compare: (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
     },
     { id: 'state', header: 'State', width: '10rem', cell: (payment) => <PaymentState state={payment.state} /> },

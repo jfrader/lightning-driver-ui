@@ -1,11 +1,33 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { Profiler } from 'react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { setWideLayout } from '../../test/environment';
 import { fixture } from '../../test/fixtures';
 import { withinSection } from '../../test/queries';
 import { renderApp } from '../../test/render-app';
 import { api, server } from '../../test/server';
+
+const commits = vi.hoisted(() => new Map<string, number>());
+const comparisons = vi.hoisted(() => vi.fn());
+vi.mock('./payment-columns', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./payment-columns')>();
+  return {
+    ...original,
+    paymentColumns: (...args: Parameters<typeof original.paymentColumns>) => original.paymentColumns(...args).map((column) => ({
+      ...column,
+      compare: column.compare && ((a: Parameters<typeof column.cell>[0], b: Parameters<typeof column.cell>[0]) => {
+        comparisons();
+        return column.compare!(a, b);
+      }),
+      cell: (payment: Parameters<typeof column.cell>[0]) => (
+        <Profiler id={column.id} onRender={(id) => commits.set(id, (commits.get(id) ?? 0) + 1)}>
+          {column.cell(payment)}
+        </Profiler>
+      ),
+    })),
+  };
+});
 
 const PAYMENT = fixture('payments_page').items[0];
 const SMALL = {
@@ -42,6 +64,27 @@ describe('payments list', () => {
     await waitFor(() => expect(order()).toEqual(hashes([2, 3, 1, 0, 4])));
     await router.navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: 'lnd-lab' }, search: { sort: key, dir: 'desc' } });
     await waitFor(() => expect(order()).toEqual(hashes([1, 3, 2, 0, 4])));
+  });
+
+  it('ticks populated timestamps without recommitting amount, state or destination cells or re-sorting', async () => {
+    setWideLayout(true);
+    const items = Array.from({ length: 40 }, (_, index) => ({ ...PAYMENT, payment_hash: index.toString(16).padStart(64, '0') }));
+    server.use(http.get(api('/nodes/:nodeId/payments'), () => HttpResponse.json(page(items))));
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(new Date('2026-10-21T23:59:59Z'));
+    const { queryClient } = renderApp('/nodes/lnd-lab/payments?sort=amount&dir=asc');
+    const table = await screen.findByRole('table');
+    await waitFor(() => expect(within(table).getAllByRole('row')).toHaveLength(41));
+    const before = new Map(commits);
+    const comparisonsBefore = comparisons.mock.calls.length;
+    expect(comparisonsBefore).toBeGreaterThan(0);
+    const timeBefore = within(table).getAllByRole('row')[1].textContent;
+    await act(() => vi.advanceTimersByTime(15_000));
+    expect(within(table).getAllByRole('row')[1].textContent).not.toBe(timeBefore);
+    expect(commits.get('time')).toBe((before.get('time') ?? 0) + 40);
+    for (const id of ['amount', 'fee', 'ratio', 'state', 'destination']) expect(commits.get(id)).toBe(before.get(id));
+    expect(comparisons).toHaveBeenCalledTimes(comparisonsBefore);
+    queryClient.clear();
   });
 
   it('shows the contract columns with exact values and the fee ratio', async () => {
