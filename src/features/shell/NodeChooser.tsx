@@ -1,4 +1,5 @@
 import { Select } from '@jfrader/ui';
+import { POPOVER_LAYER } from '../../config';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
@@ -63,6 +64,7 @@ export function NodeChooser() {
         root: { sx: { inlineSize: '100%', minInlineSize: 0 } },
         label: { sx: visuallyHidden },
         trigger: { sx: { inlineSize: '100%' } },
+        content: { css: { zIndex: POPOVER_LAYER } },
       }}
     />
   );
