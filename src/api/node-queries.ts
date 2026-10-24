@@ -21,8 +21,16 @@ import { PAGE_LIMIT } from '../config';
 
 type ListParams = Record<string, string | undefined>;
 
-/** Bounded page for every list: no rendered table exceeds this many rows. */
-const LIMITED = (params: ListParams): ListParams => ({ ...params, limit: String(PAGE_LIMIT) });
+export interface ListQueryOptions {
+  pageSize?: number;
+}
+
+function boundedParams(params: ListParams, { pageSize = PAGE_LIMIT }: ListQueryOptions): ListParams {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > PAGE_LIMIT) {
+    throw new RangeError(`pageSize must be an integer between 1 and ${PAGE_LIMIT}`);
+  }
+  return { ...params, limit: String(pageSize) };
+}
 
 /** Every node read lives under `['node', nodeId, …]`, so one node's cache never answers for another. */
 export const nodeKeys = {
@@ -78,8 +86,8 @@ const listQuery = <T>(
   resource: string,
   fetchPage: (nodeId: string, params: ListParams, signal: AbortSignal) => Promise<T>,
 ) =>
-  (nodeId: string, params: ListParams) => {
-    const bounded = LIMITED(params);
+  (nodeId: string, params: ListParams, options: ListQueryOptions = {}) => {
+    const bounded = boundedParams(params, options);
     return queryOptions({
       queryKey: nodeKeys.list(nodeId, resource, bounded),
       queryFn: ({ signal }) => fetchPage(nodeId, bounded, signal),

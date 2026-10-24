@@ -6,14 +6,16 @@ interface ErrorNoticeProps {
   error: unknown;
   onRetry?: () => void;
   retryLabel?: string;
+  stale?: boolean;
 }
 
-export function ErrorNotice({ error, onRetry, retryLabel = 'Try again' }: ErrorNoticeProps) {
+export function ErrorNotice({ error, onRetry, retryLabel = 'Try again', stale = false }: ErrorNoticeProps) {
   const size = useControlSize();
   const { title, message, requestId } = describeError(error);
   return (
     <Alert tone="danger" title={title}>
       <Flex direction="column" gap="sm">
+        {stale && <span>Showing last successful read.</span>}
         <span>{message}</span>
         {(onRetry || requestId) && (
           <Flex wrap gap="sm" align="center">

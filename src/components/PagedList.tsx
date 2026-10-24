@@ -32,11 +32,13 @@ export function PagedList<T>({ query, emptyTitle, cursor, onCursor, ...list }: P
         </Alert>
       );
     }
-    return <ErrorNotice error={query.error} onRetry={() => void query.refetch()} />;
+    if (!query.data) return <ErrorNotice error={query.error} onRetry={() => void query.refetch()} />;
   }
   const page = query.data;
+  if (!page) return null;
   return (
     <Flex direction="column" gap="md">
+      {query.isError && <ErrorNotice error={query.error} stale onRetry={() => void query.refetch()} />}
       {page.items.length === 0 ? (
         <EmptyState variant="inline" title={emptyTitle} />
       ) : (

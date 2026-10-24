@@ -1,4 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { Flex } from '@jfrader/ui';
 import { getRouteApi } from '@tanstack/react-router';
 import { operationQueryOptions } from '../../api/node-queries';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -29,7 +30,13 @@ export function OperationPage() {
   });
 
   if (operation.isPending) return <LoadingState label="Loading operation" />;
-  if (operation.isError) return <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} />;
+  if (operation.isError && !operation.data) return <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} />;
+  if (!operation.data) return null;
 
-  return <OperationView operation={operation.data} node={node} unanswered={unanswered} />;
+  return (
+    <Flex direction="column" gap="md">
+      {operation.isError && <ErrorNotice error={operation.error} stale onRetry={() => void operation.refetch()} />}
+      <OperationView operation={operation.data} node={node} unanswered={unanswered} stale={operation.isError} />
+    </Flex>
+  );
 }

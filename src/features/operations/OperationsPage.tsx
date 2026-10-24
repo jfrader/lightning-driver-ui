@@ -1,7 +1,6 @@
 import { Flex, Pill, styled } from '@jfrader/ui';
-import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import { operationsQueryOptions } from '../../api/node-queries';
+import { useOperationList } from './use-operation-list';
 import type { Operation } from '../../api/types';
 import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
@@ -89,9 +88,7 @@ export function OperationsPage() {
   const { nodeId } = route.useParams();
   const search = route.useSearch();
   const navigate = route.useNavigate();
-  const operations = useQuery(
-    operationsQueryOptions(nodeId, { state: search.state, kind: search.kind, cursor: search.cursor }),
-  );
+  const operations = useOperationList(nodeId, { state: search.state, kind: search.kind, cursor: search.cursor });
   return (
     <Flex direction="column" gap="md">
       <PageHeader title="Operations" />

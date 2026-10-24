@@ -21,12 +21,19 @@ const ALWAYS = ['operations', 'summary'] as const;
  * Marks the reads a confirmed operation affects as stale: shown ones refetch now, the rest on their
  * next visit. Invalidation never writes data, so it cannot bring back a cache cleared by sign-out.
  */
-export function invalidateAffectedReads(queryClient: QueryClient, operation: Operation): Promise<void[]> {
-  const resources = [...AFFECTED_READS[operation.request.kind], ...ALWAYS];
+export function invalidateAffectedReads(queryClient: QueryClient, ...operations: Operation[]): Promise<void[]> {
+  const nodes = new Map<string, Set<string>>();
+  for (const operation of operations) {
+    const resources = nodes.get(operation.node_id) ?? new Set<string>();
+    for (const resource of [...AFFECTED_READS[operation.request.kind], ...ALWAYS]) resources.add(resource);
+    nodes.set(operation.node_id, resources);
+  }
   return Promise.all(
     [
-      ...resources.map((resource) => queryClient.invalidateQueries({ queryKey: nodeKeys.detail(operation.node_id, resource) })),
-      queryClient.invalidateQueries({ queryKey: ['fleet'] }),
+      ...Array.from(nodes, ([nodeId, resources]) => Array.from(resources, (resource) =>
+        queryClient.invalidateQueries({ queryKey: nodeKeys.detail(nodeId, resource) }),
+      )).flat(),
+      ...(operations.length ? [queryClient.invalidateQueries({ queryKey: ['fleet'] })] : []),
     ],
   );
 }

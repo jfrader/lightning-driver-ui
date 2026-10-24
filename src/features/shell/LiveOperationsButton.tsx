@@ -1,16 +1,14 @@
 import { useState, type ComponentPropsWithRef, type ReactNode } from 'react';
 import { Button, Flex, Popover, styled } from '@jfrader/ui';
-import { useQuery } from '@tanstack/react-query';
-import { operationsQueryOptions } from '../../api/node-queries';
 import type { NodeSummary } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ButtonLink } from '../../components/ButtonLink';
 import { wrappingControlText } from '../../components/control-styles';
 import { LoadingState } from '../../components/LoadingState';
-import { NODE_REFRESH_MS } from '../../config';
 import { formatInteger } from '../../lib/money';
 import { isInFlight, OPERATION_KIND, OPERATION_STAGE, OPERATION_STATE } from '../operations/labels';
 import { OperationAmount } from '../operations/OperationAmount';
+import { useOperationList } from '../operations/use-operation-list';
 import { useControlSize } from './use-shell-layout';
 
 const List = styled.ul(({ theme }) => ({ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: theme.space[4] }));
@@ -23,7 +21,7 @@ function LiveTrigger(props: ComponentPropsWithRef<'button'>) {
 export function LiveOperationsButton({ node }: { node: NodeSummary }) {
   const [open, setOpen] = useState(false);
   const size = useControlSize();
-  const operations = useQuery({ ...operationsQueryOptions(node.id, { state: 'nonterminal' }), refetchInterval: NODE_REFRESH_MS });
+  const operations = useOperationList(node.id, { state: 'nonterminal' });
   const active = operations.data?.items.filter((operation) => operation.state === 'awaiting_confirmation' || isInFlight(operation.state)) ?? [];
   const more = !!(operations.data?.next_cursor || operations.data?.truncated);
   const count = operations.data ? `${formatInteger(BigInt(active.length))}${more ? '+' : ''}` : '…';

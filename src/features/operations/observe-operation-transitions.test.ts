@@ -20,6 +20,44 @@ function watchRead(client: QueryClient, queryKey: readonly unknown[]) {
 }
 
 describe('operation transitions', () => {
+  it('deduplicates read invalidation for a batch of changed list operations', async () => {
+    const client = new QueryClient();
+    const stop = observeOperationTransitions(client);
+    const first = pending();
+    const second = { ...first, id: '00000000-0000-4000-8000-000000000802' };
+    const summary = watchRead(client, nodeKeys.summary(first.node_id));
+    const payments = watchRead(client, nodeKeys.detail(first.node_id, 'payments'));
+    const key = nodeKeys.list(first.node_id, 'operations', { state: 'nonterminal' });
+    client.setQueryData(key, { items: [first, second] });
+    client.setQueryData(key, { items: [] });
+    await vi.waitFor(() => expect(summary.read).toHaveBeenCalledTimes(1));
+    expect(payments.read).toHaveBeenCalledTimes(1);
+    summary.unsubscribe();
+    payments.unsubscribe();
+    stop();
+    client.clear();
+  });
+
+  it.each(['terminal', 'removed', 'new'] as const)('refreshes affected reads when a list observes an operation %s', async (change) => {
+    const client = new QueryClient();
+    const stop = observeOperationTransitions(client);
+    const op = pending();
+    const summary = watchRead(client, nodeKeys.summary(op.node_id));
+    const payments = watchRead(client, nodeKeys.detail(op.node_id, 'payments'));
+    const key = nodeKeys.list(op.node_id, 'operations', { state: 'nonterminal', limit: '100' });
+    client.setQueryData(key, { items: change === 'new' ? [] : [op] });
+    const items = change === 'removed' ? [] : [{ ...op, state: change === 'terminal' ? 'succeeded' : op.state }];
+    client.setQueryData(key, { items });
+    await vi.waitFor(() => expect(summary.read).toHaveBeenCalledTimes(1));
+    expect(payments.read).toHaveBeenCalledTimes(1);
+    client.setQueryData(key, { items });
+    expect(summary.read).toHaveBeenCalledTimes(1);
+    summary.unsubscribe();
+    payments.unsubscribe();
+    stop();
+    client.clear();
+  });
+
   it('refreshes affected reads exactly once for a nonterminal to terminal transition, regardless of subscribers', async () => {
     const client = new QueryClient();
     const stop = observeOperationTransitions(client);
