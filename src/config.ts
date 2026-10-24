@@ -49,3 +49,9 @@ export const TOUCH_TARGET = '2.75rem';
 
 /** Every collection request asks for this many rows; the API allows up to 200. */
 export const PAGE_LIMIT = 100;
+
+/**
+ * Menus and popovers paint above the shell's sticky layers: the status strip and table header (1),
+ * the phone tab bar (2) and the skip link (3). Keep this above them and below card flight (1000).
+ */
+export const POPOVER_LAYER = 10;
