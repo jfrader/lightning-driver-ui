@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Accordion } from '@jfrader/ui';
 import { TOUCH_TARGET } from '../config';
 
-const TRIGGER = { trigger: { css: { minBlockSize: TOUCH_TARGET } } };
+const TRIGGER = { trigger: { sx: { minBlockSize: TOUCH_TARGET } } };
 
 interface DisclosureProps {
   value: string;

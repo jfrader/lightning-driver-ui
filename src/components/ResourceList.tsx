@@ -67,9 +67,9 @@ const Field = styled.div({ display: 'contents' });
  * scrolls inside the table's own scroller, never the page. Long values truncate or clamp themselves.
  */
 const HEADER_NO_WRAP = {
-  headerCell: { css: { whiteSpace: 'nowrap' as const } },
+  headerCell: { sx: { whiteSpace: 'nowrap' as const } },
   cell: {
-    css: {
+    sx: {
       overflowWrap: 'normal' as const,
       wordBreak: 'normal' as const,
       // A row's open link is a short, often shortened identifier (`channel-…pening`): one token.

@@ -15,7 +15,7 @@ export function ThemeChoice() {
       options={OPTIONS}
       value={preference}
       sx={{ minInlineSize: 0, maxInlineSize: '100%' }}
-      slotProps={{ track: { css: { flexWrap: 'wrap' } } }}
+      slotProps={{ track: { sx: { flexWrap: 'wrap' } } }}
       onValueChange={(value) => {
         if (isKeyOf(THEME_PREFERENCE_LABEL, value)) setPreference(value);
       }}
