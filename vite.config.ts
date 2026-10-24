@@ -58,7 +58,6 @@ export default defineConfig(({ command }) => ({
             { name: 'vendor-react', test: /\/node_modules\/(react|react-dom|scheduler)\//, priority: 40 },
             { name: 'vendor-tanstack', test: /\/node_modules\/@tanstack\//, priority: 30 },
             { name: 'vendor-motion', test: /\/node_modules\/(motion|framer-motion|motion-dom|motion-utils)\//, priority: 20 },
-            { name: 'vendor-ui', test: /\/node_modules\/@jfrader\/(ui|tokens)\//, priority: 10 },
           ],
         },
       },
