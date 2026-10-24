@@ -40,7 +40,7 @@ describe('pay invoice', () => {
     await reviewPayment(view);
 
     expect(await screen.findByRole('button', { name: 'Pay with passkey' })).toBeInTheDocument();
-    expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/payments/new');
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/payments/review/${created.id}`);
     expect(screen.getByRole('heading', { name: 'Review payment' })).toBeInTheDocument();
     expect(screen.getByText('Pay Lightning invoice').nextElementSibling).toHaveTextContent('2,500.001 sat');
     expect(screen.getByText('From').nextElementSibling).toHaveTextContent('Regtest');

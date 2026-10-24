@@ -37,7 +37,7 @@ for (const width of [390, 1440]) {
       await expect(trigger).toBeFocused();
     });
 
-    test('keyboard checks, reviews and confirms in place; review refuses Escape; cold load works', async ({ page }) => {
+    test('keyboard checks, reviews and confirms with the review in the URL; review refuses Escape', async ({ page }) => {
       const requests = await installSyntheticApi(page);
       await page.goto('/nodes/lnd-lab/payments/new?sort=amount');
       const dialog = page.getByRole('dialog', { name: 'Pay invoice' });
@@ -49,7 +49,7 @@ for (const width of [390, 1440]) {
       await tabTo(page, dialog.getByRole('button', { name: 'Review payment' }));
       await page.keyboard.press('Enter');
       await expect(dialog.getByRole('heading', { name: 'Review payment' })).toBeVisible();
-      await expect(page).toHaveURL('/nodes/lnd-lab/payments/new?sort=amount');
+      await expect(page).toHaveURL(/\/payments\/review\/[0-9a-f-]+\?sort=amount$/);
       await page.keyboard.press('Escape');
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toHaveCount(0);
@@ -58,7 +58,7 @@ for (const width of [390, 1440]) {
       await page.keyboard.press('Enter');
       await expect(dialog.getByRole('heading', { name: 'Payment operation' })).toBeVisible();
       expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(1);
-      await expect(page).toHaveURL('/nodes/lnd-lab/payments/new?sort=amount');
+      await expect(page).toHaveURL(/\/payments\/review\/[0-9a-f-]+\?sort=amount$/);
       await tabTo(page, dialog.getByRole('button', { name: 'Close', exact: true }));
       await page.keyboard.press('Enter');
       await expect(dialog).toHaveCount(0);
@@ -103,6 +103,7 @@ for (const width of [390, 1440]) {
       await page.mouse.click(10, 10);
       await expect(dialog).toBeVisible();
       await dialog.getByRole('button', { name: 'Discard review' }).click();
+      await expect(page).toHaveURL(/\/payments\/new$/);
       await expect(dialog.getByRole('textbox', { name: /^Invoice/ })).toHaveValue('');
       await dialog.getByRole('button', { name: 'Close', exact: true }).click();
       await expect(dialog).toHaveCount(0);

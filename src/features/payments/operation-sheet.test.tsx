@@ -22,25 +22,37 @@ describe('payment operation sheet', () => {
     expect(screen.getByRole('heading', { name: 'Payments' })).toBe(heading);
   });
 
-  it('swaps to the existing review without navigation and refuses Escape until explicitly discarded', async () => {
-    const calls = mockJournal({ created: operation('pay_invoice') });
+  it('names the review in the URL and keeps the list behind it', async () => {
+    const created = operation('pay_invoice');
+    const calls = mockJournal({ created });
     const view = renderApp('/nodes/lnd-lab/payments/new?sort=amount');
     await view.user.type(await screen.findByLabelText(/^Invoice/), 'SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
     await view.user.click(screen.getByRole('button', { name: 'Check invoice' }));
-    const before = view.router.state.location;
     await view.user.click(await screen.findByRole('button', { name: 'Review payment' }));
     await screen.findByRole('button', { name: 'Pay with passkey' });
-    expect(view.router.state.location).toBe(before);
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/payments/review/${created.id}`);
+    expect(view.router.state.location.search).toMatchObject({ sort: 'amount' });
+    expect(screen.getByRole('heading', { name: 'Payments' })).toBeInTheDocument();
     const dialog = screen.getByRole('dialog', { name: 'Pay invoice' });
-    expect(within(dialog).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
     expect(fireEvent(dialog, new Event('cancel', { cancelable: true }))).toBe(false);
-    expect(view.router.state.location).toBe(before);
     expect(calls.confirms).toEqual([]);
     await view.user.click(within(dialog).getByRole('button', { name: 'Discard review' }));
+    await waitFor(() => expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/payments/new'));
     expect(await screen.findByLabelText(/^Invoice/)).toBeInTheDocument();
-    await view.user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    const formSheet = await screen.findByRole('dialog', { name: 'Pay invoice' });
+    await view.user.click(within(formSheet).getByRole('button', { name: 'Close' }));
     await waitFor(() => expect(view.router.state.location.pathname).toBe('/nodes/lnd-lab/payments'));
     expect(view.router.state.location.search).toMatchObject({ sort: 'amount' });
+  });
+
+  it('renders a cold-loaded review URL over its list', async () => {
+    const created = operation('pay_invoice');
+    mockJournal({ created });
+    const view = renderApp(`/nodes/lnd-lab/payments/review/${created.id}`);
+    expect(await screen.findByRole('heading', { name: 'Payments' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Pay invoice' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Pay with passkey' })).toBeInTheDocument();
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/payments/review/${created.id}`);
   });
 
   it('shows the literal capability reason on the disabled payment palette entry', async () => {

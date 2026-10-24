@@ -45,6 +45,7 @@ import {
   OperationsPage,
   PayInvoicePage,
   PaymentsLayout,
+  PayReviewPage,
   PeersPage,
   ReceiveAddressPage,
   ReceiveInvoicePage,
@@ -208,6 +209,7 @@ const paymentsRoute = createRoute({
   component: PaymentsLayout,
 });
 const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', component: PayInvoicePage });
+const payReviewRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/review/$operationId', component: PayReviewPage });
 const peersRoute = createRoute({
   ...node('/peers'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({
@@ -275,7 +277,7 @@ const routeTree = rootRoute.addChildren([
         watchtowerServerRoute,
         invoicesRoute,
         receiveInvoiceRoute,
-        paymentsRoute.addChildren([payInvoiceRoute]),
+        paymentsRoute.addChildren([payInvoiceRoute, payReviewRoute]),
         peersRoute,
         connectPeerRoute,
         channelsRoute,

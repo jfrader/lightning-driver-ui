@@ -15,6 +15,7 @@ export const MorePage = lazyRouteComponent(() => import('../features/shell/MoreP
 
 export const PaymentsLayout = lazyRouteComponent(() => import('../features/payments/PaymentsLayout'), 'PaymentsLayout');
 export const PayInvoicePage = lazyRouteComponent(() => import('../features/payments/PayInvoicePage'), 'PayInvoicePage');
+export const PayReviewPage = lazyRouteComponent(() => import('../features/payments/PayReviewPage'), 'PayReviewPage');
 export const InvoicesPage = lazyRouteComponent(() => import('../features/invoices/InvoicesPage'), 'InvoicesPage');
 export const ReceiveInvoicePage = lazyRouteComponent(
   () => import('../features/invoices/ReceiveInvoicePage'),
