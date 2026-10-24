@@ -17,6 +17,7 @@ export declare const AuthBootstrap: ContractValidator<components['schemas']['Aut
 export declare const AuthenticationChallenge: ContractValidator<components['schemas']['AuthenticationChallenge']>;
 export declare const RegistrationChallenge: ContractValidator<components['schemas']['RegistrationChallenge']>;
 export declare const Session: ContractValidator<components['schemas']['Session']>;
+export declare const SessionList: ContractValidator<components['schemas']['SessionList']>;
 export declare const PublicPolicy: ContractValidator<components['schemas']['PublicPolicy']>;
 export declare const NodesPage: ContractValidator<components['schemas']['NodesPage']>;
 export declare const NodeSummary: ContractValidator<components['schemas']['NodeSummary']>;

@@ -14,6 +14,7 @@ import { AUTH_METHOD_LABEL } from '../auth/labels';
 import { LogoutButton } from '../auth/LogoutButton';
 import { sessionQueryOptions } from '../auth/queries';
 import { SignInMethods } from '../auth/SignInMethods';
+import { Sessions } from '../auth/Sessions';
 import { NotReported } from '../display/NotReported';
 import { UnitToggle } from '../display/UnitToggle';
 import { REAUTH_LABEL } from '../nodes/labels';
@@ -68,6 +69,9 @@ export function MorePage() {
       </Section>
       <Section title="Sign-in methods">
         <SignInMethods />
+      </Section>
+      <Section title="Sessions">
+        <Sessions />
       </Section>
       <div>
         <LogoutButton variant="outline" />

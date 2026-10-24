@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { API_BASE_PATH } from '../config';
 import { fixture } from './fixtures';
+import { currentSession } from './sessions';
 
 export const api = (path: string) => `${API_BASE_PATH}${path}`;
 
@@ -31,6 +32,7 @@ export const handlers = [
   http.get(api('/nodes/:nodeId/watchtower/client/towers/:pubkey'), () => HttpResponse.json(fixture('watchtower_tower_detail'))),
   http.get(api('/auth/bootstrap'), () => HttpResponse.json(fixture('bootstrap'))),
   http.get(api('/session'), () => HttpResponse.json(fixture('session'))),
+  http.get(api('/sessions'), () => HttpResponse.json({ sessions: [currentSession] })),
   // The frozen session signed in with a passkey; no Nostr key is linked.
   http.get(api('/auth/nostr/identities'), () => HttpResponse.json({ identities: [], passkey_count: 1 })),
   http.get(api('/config'), () => HttpResponse.json({ ...fixture('public_policy'), operation_poll_seconds: 1 })),
