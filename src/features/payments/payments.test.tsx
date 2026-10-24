@@ -23,6 +23,27 @@ function page(items: unknown[]) {
 }
 
 describe('payments list', () => {
+  it.each(['amount', 'fee'] as const)('sorts %s exactly with missing values last in both directions', async (key) => {
+    setWideLayout(true);
+    const values = [null, '9007199254740993', '0', '9007199254740992', null];
+    const items = values.map((value, index) => ({
+      ...PAYMENT,
+      payment_hash: 'abcde'[index].repeat(64),
+      amount_msat: value,
+      fee_msat: value,
+    }));
+    server.use(http.get(api('/nodes/:nodeId/payments'), () => HttpResponse.json(page(items))));
+    const { router } = renderApp(`/nodes/lnd-lab/payments?sort=${key}`);
+    const table = await screen.findByRole('table');
+    const order = () => within(table).getAllByRole('link').map((link) => new URL(link.getAttribute('href') ?? '', 'http://localhost').searchParams.get('selected'));
+    const hashes = (indices: number[]) => indices.map((index) => items[index].payment_hash);
+    expect(order()).toEqual(hashes([1, 3, 2, 0, 4]));
+    await router.navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: 'lnd-lab' }, search: { sort: key, dir: 'asc' } });
+    await waitFor(() => expect(order()).toEqual(hashes([2, 3, 1, 0, 4])));
+    await router.navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: 'lnd-lab' }, search: { sort: key, dir: 'desc' } });
+    await waitFor(() => expect(order()).toEqual(hashes([1, 3, 2, 0, 4])));
+  });
+
   it('shows the contract columns with exact values and the fee ratio', async () => {
     setWideLayout(true);
     server.use(http.get(api('/nodes/:nodeId/payments'), () => HttpResponse.json(page([PAYMENT, SMALL]))));

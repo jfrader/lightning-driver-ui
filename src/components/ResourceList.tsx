@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
-import { SortableDataTable, styled, type SortState } from '@jfrader/ui';
+import { Flex, Select, SortableDataTable, styled, type SortState } from '@jfrader/ui';
+import { SORT_DIRECTIONS } from '../app/search';
 import { TABLE_QUERY, TOUCH_TARGET } from '../config';
+import { useControlSize } from '../features/shell/use-shell-layout';
+import { keysOf } from '../lib/guards';
 import { useMediaQuery } from '../lib/use-media-query';
 
 export interface ResourceColumn<T> {
@@ -11,6 +14,7 @@ export interface ResourceColumn<T> {
   width?: string;
   /** Orders the loaded snapshot; columns without it are not sortable. */
   compare?: (a: T, b: T) => number;
+  isMissing?: (row: T) => boolean;
 }
 
 interface ResourceListProps<T> {
@@ -79,15 +83,22 @@ const HEADER_NO_WRAP = {
 };
 
 function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {
-  const compare = sort && columns.find((column) => column.id === sort.columnId)?.compare;
-  if (!sort || !compare) return rows;
+  const column = sort && columns.find((column) => column.id === sort.columnId);
+  if (!sort || !column?.compare) return rows;
+  const { compare, isMissing } = column;
   const sign = sort.direction === 'asc' ? 1 : -1;
-  return [...rows].sort((a, b) => sign * compare(a, b));
+  return [...rows].sort((a, b) => {
+    const aMissing = isMissing?.(a) ?? false;
+    const bMissing = isMissing?.(b) ?? false;
+    if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
+    return sign * compare(a, b);
+  });
 }
 
 /** A table from 48rem and rows below it, from one column definition and one sort. */
 export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null, onSort, renderRow }: ResourceListProps<T>) {
   const table = useMediaQuery(TABLE_QUERY);
+  const size = useControlSize();
   const ordered = sortedRows(rows, columns, sort);
   if (table) {
     return (
@@ -105,7 +116,14 @@ export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null,
       />
     );
   }
-  return (
+  const sortOptions = columns.filter((column) => column.compare).flatMap((column) =>
+    keysOf(SORT_DIRECTIONS).map((direction) => ({
+      value: `${column.id}:${direction}`,
+      label: `${column.header}: ${SORT_DIRECTIONS[direction]}`,
+      sort: { columnId: column.id, direction },
+    })),
+  );
+  const list = (
     <Rows aria-label={caption}>
       {ordered.map((row) => (
         <Row key={getRowId(row)}>
@@ -124,5 +142,19 @@ export function ResourceList<T>({ caption, rows, columns, getRowId, sort = null,
         </Row>
       ))}
     </Rows>
+  );
+  if (!onSort || sortOptions.length === 0) return list;
+  return (
+    <Flex direction="column" gap="md">
+      <Select
+        label="Sort by"
+        size={size}
+        slotProps={{ item: { sx: { minBlockSize: TOUCH_TARGET } } }}
+        options={[{ value: '', label: 'Unsorted' }, ...sortOptions]}
+        value={sort ? `${sort.columnId}:${sort.direction}` : ''}
+        onValueChange={(value) => onSort(sortOptions.find((option) => option.value === value)?.sort ?? null)}
+      />
+      {list}
+    </Flex>
   );
 }

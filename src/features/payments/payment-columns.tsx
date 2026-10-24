@@ -10,9 +10,8 @@ import { PaymentState } from './PaymentState';
 /** Sortable columns, as accepted in the URL. */
 export const PAYMENT_SORT = { time: 'Time', amount: 'Amount', fee: 'Fee' } as const;
 
-/** Exact order of two nullable wire amounts; unreported values come after reported ones. */
 function compareAmounts(a: string | null, b: string | null): number {
-  if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1;
+  if (a === null || b === null) return 0;
   const difference = parseWireDecimal(a) - parseWireDecimal(b);
   return difference === 0n ? 0 : difference > 0n ? 1 : -1;
 }
@@ -37,6 +36,7 @@ export function paymentColumns(now: number, open: (payment: Payment, label: Reac
       numeric: true,
       cell: (payment) => <Amount value={payment.amount_msat} unit="msat" />,
       compare: (a, b) => compareAmounts(a.amount_msat, b.amount_msat),
+      isMissing: (payment) => payment.amount_msat === null,
     },
     {
       id: 'fee',
@@ -44,6 +44,7 @@ export function paymentColumns(now: number, open: (payment: Payment, label: Reac
       numeric: true,
       cell: (payment) => <Amount value={payment.fee_msat} unit="msat" />,
       compare: (a, b) => compareAmounts(a.fee_msat, b.fee_msat),
+      isMissing: (payment) => payment.fee_msat === null,
     },
     {
       id: 'ratio',
