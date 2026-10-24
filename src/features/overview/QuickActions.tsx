@@ -29,11 +29,10 @@ const Secondary = styled.div(({ theme }) => ({
 
 /**
  * One accent priority (Pay invoice); Receive is outline and the rest are text actions. Every entry
- * only opens a form and obeys the node's capabilities; read-only nodes show none.
+ * only opens a form and obeys the node's capabilities.
  */
 export function QuickActions({ node }: { node: NodeSummary }) {
   const size = useControlSize();
-  if (node.read_only) return null;
   const params = { nodeId: node.id };
   return (
     <Bar>

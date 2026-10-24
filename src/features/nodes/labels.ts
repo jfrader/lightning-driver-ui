@@ -39,6 +39,7 @@ export const CAPABILITY_REASON_WORD: Record<CapabilityReason, string> = {
  */
 export function capabilitySummary(node: NodeSummary): string {
   if (node.kind === 'bitcoin') return 'None';
+  if (node.read_only) return CAPABILITY_REASON_WORD.read_only;
   const states = keysOf(node.capabilities).map((key) => node.capabilities[key]);
   if (states.every((state) => state.enabled)) return 'All actions';
   const reasons = new Set(states.map((state) => (state.enabled ? null : state.reason)));

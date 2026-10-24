@@ -15,6 +15,41 @@ const cases = [
   ...['onchain/receive', 'peers/new', 'channels/new'].map(path => ({ width: 320, path: `${root}/${path}` })),
 ];
 
+test('@layout read-only actions retain complete labels and adjacent reasons at enlarged text size', async ({ page }) => {
+  const mutations = await installSyntheticApi(page);
+  const node = { ...fixture('node_lnd'), read_only: true };
+  await page.route(/\/api\/v1\/nodes(?:\/lnd-lab)?$/, route => route.fulfill({
+    json: route.request().url().endsWith('/nodes')
+      ? { ...fixture('nodes_page'), items: [node], next_cursor: null, truncated: false }
+      : node,
+  }));
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const path of [root, `${root}/peers?selected=${fixture('peers_page').items[0].pubkey}`]) {
+      await page.goto(path);
+      const actions = page.getByRole('button', { name: /^(Pay invoice|Create invoice|New address|Send on-chain|Open channel|Connect peer|Disconnect peer)$/ });
+      await expect(actions).toHaveCount(path === root ? 5 : 3);
+      await page.evaluate(() => document.fonts.ready);
+      await doubleText(page);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+      for (const action of await actions.all()) {
+        await expect(action).toBeDisabled();
+        await expect(action).toHaveAccessibleDescription('This node is read-only.');
+        await action.scrollIntoViewIfNeeded();
+        const fits = await action.evaluate(element => {
+          const box = element.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          const text = range.getBoundingClientRect();
+          return text.left >= box.left - 1 && text.right <= box.right + 1 && text.top >= box.top - 1 && text.bottom <= box.bottom + 1;
+        });
+        expect(fits, `${width} ${path}: ${await action.textContent()}`).toBe(true);
+      }
+    }
+  }
+  expect(mutations.filter(request => request.method === 'POST' && request.path.endsWith('/operations'))).toEqual([]);
+});
+
 test('channel close keeps accessible destructive-action contrast in both themes', async ({ page }) => {
   await installSyntheticApi(page);
   const path = `${root}/channels/${fixture('channels_page').items[0].id}/close`;
