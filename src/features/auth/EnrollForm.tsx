@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Flex, SegmentedControl, styled } from '@jfrader/ui';
 import { FormTextField } from '../../components/FormTextField';
+import { wrappingControlText } from '../../components/control-styles';
 import { useMutation } from '@tanstack/react-query';
 import type { AuthMethod, Session } from '../../api/types';
 import { isKeyOf, keysOf } from '../../lib/guards';
@@ -116,12 +117,12 @@ export function EnrollForm({ browser, onBack, onSession, autoFocus }: EnrollForm
               <Line key={value}>{METHOD_COPY[value].unsupported}</Line>
             ))}
         </Flex>
-        <Button type="submit" tone="accent" size="lg" loading={enroll.isPending} disabled={cooldown.active}>
+        <Button type="submit" tone="accent" size="lg" sx={wrappingControlText('lg')} loading={enroll.isPending} disabled={cooldown.active}>
           {current.submit}
         </Button>
         {enroll.isError && enroll.variables && <SignInNotice problem={signUpProblem(enroll.error, enroll.variables.chosen)} />}
         {onBack && (
-          <Button variant="ghost" size={size} onClick={onBack} disabled={enroll.isPending}>
+          <Button variant="ghost" size={size} sx={wrappingControlText(size)} onClick={onBack} disabled={enroll.isPending}>
             Back to sign in
           </Button>
         )}

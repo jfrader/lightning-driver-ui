@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { UNRESOLVED_OPERATION_ID, installSyntheticApi, syntheticChannels } from './synthetic-api';
+import { UNRESOLVED_OPERATION_ID, fixture, installSyntheticApi, operation, syntheticChannels } from './synthetic-api';
+import { doubleText } from './text-size';
 
 const OPERATION_PATH = `/nodes/lnd-lab/operations/${UNRESOLVED_OPERATION_ID}`;
 const SIZES = [
@@ -7,6 +8,37 @@ const SIZES = [
   { width: 768, height: 900 },
   { width: 1440, height: 900 },
 ];
+
+test('historical-node navigation has usable phone targets and still opens the journal and fleet', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installSyntheticApi(page);
+  const formerId = 'retired-lnd';
+  const former = operation('pay_invoice', 'unknown', 'reconciling');
+  former.node_id = formerId;
+  former.review.node.node_id = formerId;
+  await page.route(`**/api/v1/nodes/${formerId}/operations**`, route => route.fulfill({
+    json: new URL(route.request().url()).pathname.endsWith(former.id)
+      ? former
+      : { ...fixture('operations_page'), node_id: formerId, network: 'regtest', next_cursor: null, items: [former] },
+  }));
+  for (const enlarged of [false, true]) {
+    await page.goto(`/nodes/${formerId}/operations/${former.id}`);
+    await expect(page.getByText('This node is not configured', { exact: true })).toBeVisible();
+    if (enlarged) await doubleText(page);
+    for (const name of ['Operation history', 'Fleet']) {
+      const action = page.getByRole('link', { name, exact: true });
+      const box = await action.boundingBox();
+      if (!box) throw new Error('Missing historical-node action');
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    }
+    await page.getByRole('link', { name: 'Operation history', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Operations', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Fleet', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Fleet', exact: true })).toBeVisible();
+  }
+});
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

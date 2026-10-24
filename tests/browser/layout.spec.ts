@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { fixture, installSyntheticApi, UNRESOLVED_OPERATION_ID } from './synthetic-api';
+import { fixture, installSyntheticApi, operation, UNRESOLVED_OPERATION_ID } from './synthetic-api';
 import { doubleText } from './text-size';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -11,6 +11,7 @@ const cases = [
   { width: 1440, path: `${root}/onchain?selected=${fixture('transactions_page').items[0].txid}` },
   { width: 1440, path: `${root}/peers?selected=${fixture('peers_page').items[0].pubkey}` },
   { width: 390, path: `${root}/onchain/send` },
+  ...(['send_onchain', 'open_channel', 'close_channel', 'new_address', 'connect_peer', 'create_invoice', 'pay_invoice'] as const).map(kind => ({ width: 320, path: `${root}/operations/${operation(kind).id}` })),
   ...['onchain/receive', 'peers/new', 'channels/new'].map(path => ({ width: 320, path: `${root}/${path}` })),
 ];
 

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { installSyntheticApi } from './synthetic-api';
+import { fixture, installSyntheticApi } from './synthetic-api';
 import { doubleText } from './text-size';
 
 /** The phone's primary action must clear the fixed tab bar by at least this much. */
@@ -7,15 +7,37 @@ const TAB_BAR_CLEARANCE_PX = 12;
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
+test('phone node choices have usable targets and keyboard selection reaches the fleet', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installSyntheticApi(page);
+  await page.goto('/nodes/lnd-lab');
+  const chooser = page.getByRole('combobox', { name: 'Node' });
+  await chooser.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('option', { name: 'All nodes', exact: true })).toBeVisible();
+  for (const option of await page.getByRole('option').all()) {
+    const box = await option.boundingBox();
+    if (!box) throw new Error('Missing node choice geometry');
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Fleet', exact: true })).toBeVisible();
+});
+
 test('@layout enlarged Lightning header controls remain separate and quick actions show their full labels', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await installSyntheticApi(page);
+  const node = { ...fixture('node_lnd'), unresolved_operation_count: '9007199254740993' };
+  await page.route('**/api/v1/nodes/lnd-lab', route => route.fulfill({ json: node }));
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await doubleText(page);
   const chooser = page.getByRole('combobox', { name: 'Node' });
-  const unresolved = page.getByRole('link', { name: '1 unresolved', exact: true });
+  const unresolved = page.getByRole('link', { name: /unresolved$/, exact: false }).first();
+  await expectNoHorizontalOverflow(page, 1);
   const first = await chooser.boundingBox();
   const second = await unresolved.boundingBox();
   if (!first || !second) throw new Error('Missing header control geometry');
@@ -72,11 +94,27 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
     if (!box) throw new Error('Missing rail control');
     expect.soft(box.x + box.width, await control.textContent() ?? 'rail control').toBeLessThanOrEqual(rail.x + rail.width);
   }
+  const stripControls = [
+    page.getByRole('link', { name: '1 unresolved', exact: true }),
+    ...await page.getByRole('radiogroup', { name: 'Display unit' }).getByRole('radio').all(),
+    page.getByRole('button', { name: /^Go to/ }),
+  ];
+  for (const control of stripControls) {
+    const usable = await control.evaluate(element => {
+      const box = element.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const text = range.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return (hit === element || element.contains(hit)) && text.left >= box.left - 1 && text.right <= box.right + 1 && text.top >= box.top - 1 && text.bottom <= box.bottom + 1;
+    });
+    expect.soft(usable, await control.textContent() ?? 'strip control').toBe(true);
+  }
 });
 
-async function expectNoHorizontalOverflow(page: Page) {
+async function expectNoHorizontalOverflow(page: Page, tolerance = 0) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
+  expect(overflow).toBeLessThanOrEqual(tolerance);
 }
 
 for (const path of ['/nodes/lnd-lab', '/nodes/lnd-lab/payments', '/nodes/lnd-lab/channels', '/fleet']) {
