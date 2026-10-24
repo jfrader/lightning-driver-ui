@@ -31,6 +31,7 @@ export function useSubmitOperation(nodeId: string) {
     onSuccess: (operation, { attempt }) => {
       if (!attempt.isCurrent()) return;
       queryClient.setQueryData(nodeKeys.operation(nodeId, operation.id), operation);
+      void queryClient.invalidateQueries({ queryKey: nodeKeys.detail(nodeId, 'operations') });
       if (sheet) sheet.onCreated(operation);
       else void navigate({ to: '/nodes/$nodeId/operations/$operationId', params: { nodeId, operationId: operation.id } });
     },

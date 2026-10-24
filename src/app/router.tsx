@@ -56,6 +56,7 @@ import { safeRedirectPath } from '../lib/safe-redirect';
 import { PAYMENT_SORT } from '../features/payments/payment-columns';
 import {
   decimalParam,
+  moneySearch,
   enumParam,
   hashParam,
   pagedSearch,
@@ -155,6 +156,7 @@ async function loadRememberedNode(queryClient: QueryClient) {
 const nodeRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/nodes/$nodeId',
+  validateSearch: moneySearch,
   beforeLoad: ({ params }) => {
     if (!isNodeId(params.nodeId)) throw notFound();
   },

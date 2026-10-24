@@ -29,7 +29,7 @@ export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, chi
   }, [invoker]);
   useLayoutEffect(() => {
     titleRef.current?.focus();
-  }, [hasReview]);
+  }, [hasReview, title]);
   const canDismiss = !hasReview && !busy;
   const Surface = desktop ? Drawer : BottomSheet;
   return createPortal(

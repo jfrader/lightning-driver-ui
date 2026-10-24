@@ -7,6 +7,7 @@ import { UnitToggle } from '../display/UnitToggle';
 import { RegistryFacts, StatusFacts } from './StatusFacts';
 import { UnresolvedButton } from './UnresolvedButton';
 import { useShellNode } from './use-shell-node';
+import { GlobalMoneyActions } from './GlobalMoneyActions';
 
 const Strip = styled.div(({ theme }) => ({
   position: 'sticky',
@@ -52,6 +53,7 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
       )}
       <Controls>
         {node && <UnresolvedButton node={node} />}
+        <GlobalMoneyActions node={node} />
         <UnitToggle />
         <Button
           size="sm"

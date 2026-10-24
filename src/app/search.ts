@@ -2,6 +2,40 @@ import { isKeyOf } from '../lib/guards';
 
 const CURSOR_MAX_LENGTH = 1024;
 
+export function booleanParam(value: unknown): 1 | undefined {
+  return value === 1 || value === '1' ? 1 : undefined;
+}
+
+const OPERATION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+export function operationIdParam(value: unknown): string | undefined {
+  return typeof value === 'string' && OPERATION_ID.test(value) ? value : undefined;
+}
+
+export const MONEY_ACTIONS = { send: ['pay_invoice', 'send_onchain'], receive: ['create_invoice', 'new_address'] } as const;
+type MoneyAction = (typeof MONEY_ACTIONS)[keyof typeof MONEY_ACTIONS][number];
+
+export interface MoneySearch {
+  send?: 1;
+  receive?: 1;
+  operation?: string;
+  action?: MoneyAction;
+  confirmation?: 'unanswered';
+}
+
+export function moneySearch(search: Record<string, unknown>): MoneySearch {
+  const operation = operationIdParam(search.operation);
+  const send = operation ? undefined : booleanParam(search.send);
+  const receive = operation || send ? undefined : booleanParam(search.receive);
+  const actions = send ? MONEY_ACTIONS.send : MONEY_ACTIONS.receive;
+  const action = send || receive ? actions.find((candidate) => candidate === search.action) : undefined;
+  return {
+    send, receive, operation,
+    action,
+    confirmation: search.confirmation === 'unanswered' ? 'unanswered' as const : undefined,
+  };
+}
+
 export function cursorParam(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 && value.length <= CURSOR_MAX_LENGTH ? value : undefined;
 }
