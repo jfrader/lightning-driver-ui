@@ -66,6 +66,9 @@ export function MorePage() {
       </Section>
       <Section title="Session">
         <SessionFacts />
+        <div>
+          <LogoutButton variant="outline" />
+        </div>
       </Section>
       <Section title="Sign-in methods">
         <SignInMethods />
@@ -73,9 +76,6 @@ export function MorePage() {
       <Section title="Sessions">
         <Sessions />
       </Section>
-      <div>
-        <LogoutButton variant="outline" />
-      </div>
       {APP_VERSION && <Version>App version {APP_VERSION}</Version>}
     </Flex>
   );
