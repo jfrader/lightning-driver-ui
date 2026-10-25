@@ -13,20 +13,20 @@ const Marker = styled.span(({ theme }) => ({
   forcedColorAdjust: 'none',
 }));
 
-/** Always present for a node: the count of operations whose outcome is not final, linked to them. */
+/** The count of operations whose outcome is not final, linked to them. Nothing to show, nothing rendered. */
 export function UnresolvedButton({ node }: { node: NodeSummary }) {
   const size = useControlSize();
   if (!surfacesFor(node).includes('operations')) return null;
   const count = parseWireDecimal(node.unresolved_operation_count);
-  const none = count === 0n;
+  if (count === 0n) return null;
   return (
     <ButtonLink
       to="/nodes/$nodeId/operations"
       params={{ nodeId: node.id }}
       search={{ state: 'nonterminal' }}
       size={size}
-      variant={none ? 'ghost' : 'outline'}
-      startIcon={none ? undefined : <Marker />}
+      variant="outline"
+      startIcon={<Marker />}
     >
       {`${formatInteger(count)} unresolved`}
     </ButtonLink>

@@ -33,8 +33,9 @@ test('a polled terminal outcome refreshes unresolved counts and attention withou
   if (desktop) await expect(sidebar.getByRole('link', { name: /Operations.*1 unresolved/ })).toBeVisible();
 
   terminal = true;
-  await expect(page.getByRole('link', { name: '0 unresolved', exact: true }).first()).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole('link', { name: '1 unresolved', exact: true })).toHaveCount(0);
+  // The counter disappears when nothing is unresolved; that is the visible proof the poll landed.
+  await expect(page.getByRole('link', { name: '1 unresolved', exact: true })).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.getByRole('link', { name: '0 unresolved', exact: true })).toHaveCount(0);
   if (desktop) await expect(sidebar.getByRole('link', { name: 'Operations', exact: true })).toBeVisible();
 
   const sections = page.getByRole('navigation', { name: desktop ? 'Node sections' : 'Sections' });
