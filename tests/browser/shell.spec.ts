@@ -256,3 +256,25 @@ test('switching theme keeps the route, the unit and the session', async ({ page 
   expect(stored).toEqual(['lightning-driver.last-node-id', 'lightning-driver.theme']);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 });
+
+test('@layout every status strip control shares one height and baseline', async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/nodes/lnd-lab');
+  await expect(page.getByRole('main')).toBeVisible();
+  await page.waitForTimeout(300);
+  const heights = await page.evaluate(() => {
+    const strip = [...document.querySelectorAll('div')].find((element) => {
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      return style.position === 'sticky' && box.top <= 1 && box.height < 120;
+    });
+    if (!strip) return [];
+    return [...strip.querySelectorAll('button, a, [role="radiogroup"]')]
+      .map((element) => element.getBoundingClientRect())
+      .filter((box) => box.height >= 18)
+      .map((box) => Math.round(box.height));
+  });
+  expect(heights.length).toBeGreaterThan(4);
+  expect(new Set(heights)).toEqual(new Set([40]));
+});

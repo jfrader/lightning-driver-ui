@@ -8,10 +8,13 @@ const OPTIONS = keysOf(UNIT_LABEL).map((unit) => ({ value: unit, label: UNIT_LAB
 
 export function UnitToggle() {
   const { unit, setUnit } = useDisplayUnit();
+  const size = useControlSize();
   return (
     <SegmentedControl
       label="Display unit"
-      size={useControlSize()}
+      size={size}
+      // On the desktop strip every control is 2.5rem; touch layouts keep their own target size.
+      slotProps={size === 'sm' ? { root: { sx: { blockSize: '2.5rem', boxSizing: 'border-box' } } } : undefined}
       options={OPTIONS}
       value={unit}
       onValueChange={(value) => {

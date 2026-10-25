@@ -4,6 +4,7 @@ import type { NodeSummary } from '../../api/types';
 import { wrappingControlText } from '../../components/control-styles';
 import { useControlSize } from './use-shell-layout';
 import { useMoneySheet } from './use-money-sheet';
+import { STRIP_CONTROL } from '../../config';
 import { surfacesFor } from './nav-model';
 
 const LiveOperationsButton = lazy(() => import('./LiveOperationsButton').then((module) => ({ default: module.LiveOperationsButton })));
@@ -21,8 +22,8 @@ export function GlobalMoneyActions({ node }: { node: NodeSummary | null }) {
         </Suspense>
       )}
       <Flex wrap gap="sm" align="center">
-        <Button size={size} sx={wrappingControlText(size)} tone="accent" disabled={!node} aria-haspopup="dialog" aria-describedby={!node ? 'money-node-reason' : undefined} onClick={() => sheet.update({ send: 1 }, false)}>Send</Button>
-        <Button size={size} sx={wrappingControlText(size)} variant="outline" disabled={!node} aria-haspopup="dialog" aria-describedby={!node ? 'money-node-reason' : undefined} onClick={() => sheet.update({ receive: 1 }, false)}>Receive</Button>
+        <Button size={size} sx={{ ...wrappingControlText(size), ...(size === 'sm' ? STRIP_CONTROL : {}) }} tone="accent" disabled={!node} aria-haspopup="dialog" aria-describedby={!node ? 'money-node-reason' : undefined} onClick={() => sheet.update({ send: 1 }, false)}>Send</Button>
+        <Button size={size} sx={{ ...wrappingControlText(size), ...(size === 'sm' ? STRIP_CONTROL : {}) }} variant="outline" disabled={!node} aria-haspopup="dialog" aria-describedby={!node ? 'money-node-reason' : undefined} onClick={() => sheet.update({ receive: 1 }, false)}>Receive</Button>
         {!node && <Reason id="money-node-reason">Select a node.</Reason>}
       </Flex>
     </>

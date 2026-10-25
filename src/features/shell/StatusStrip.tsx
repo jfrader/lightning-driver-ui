@@ -1,7 +1,7 @@
 import { Button, Kbd, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { fleetQueryOptions } from '../../api/node-queries';
-import { STRIP_HEIGHT } from '../../config';
+import { STRIP_CONTROL, STRIP_HEIGHT } from '../../config';
 import { wrappingControlText } from '../../components/control-styles';
 import { UnitToggle } from '../display/UnitToggle';
 import { RegistryFacts, StatusFacts } from './StatusFacts';
@@ -57,7 +57,7 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <UnitToggle />
         <Button
           size="sm"
-          sx={wrappingControlText('sm')}
+          sx={{ ...wrappingControlText('sm'), ...STRIP_CONTROL }}
           variant="ghost"
           aria-keyshortcuts="Control+K Meta+K"
           onClick={onOpenPalette}
