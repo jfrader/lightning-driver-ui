@@ -257,8 +257,13 @@ test.describe('phone targets', () => {
             return box.width > 1 && box.height > 1 && style.visibility !== 'hidden';
           })
           .map((element) => {
-            // A row's primary link covers its whole row; the row is the target.
-            const area = element.hasAttribute('data-row-primary') ? (element.closest('li') ?? element) : element;
+            // A row's primary link covers its whole row; a segment's hit area extends through the
+            // control's padding, so the segmented control is the target.
+            const area = element.hasAttribute('data-row-primary')
+              ? (element.closest('li') ?? element)
+              : element.getAttribute('role') === 'radio'
+                ? (element.closest('[role="radiogroup"]') ?? element)
+                : element;
             const box = area.getBoundingClientRect();
             return { name: (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40), height: Math.round(box.height) };
           })

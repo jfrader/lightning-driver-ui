@@ -8,10 +8,11 @@ const OPTIONS = keysOf(UNIT_LABEL).map((unit) => ({ value: unit, label: UNIT_LAB
 
 export function UnitToggle() {
   const { unit, setUnit } = useDisplayUnit();
+  const size = useControlSize();
   return (
     <SegmentedControl
       label="Display unit"
-      size={useControlSize()}
+      size={size}
       options={OPTIONS}
       value={unit}
       onValueChange={(value) => {

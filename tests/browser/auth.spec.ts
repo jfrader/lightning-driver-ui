@@ -249,7 +249,7 @@ for (const size of SIZES) {
       await expect(page.getByText('Passkey for every payment')).toBeVisible();
       await expect(page.getByText(/^App version /)).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
-      for (const radio of await page.getByRole('main').getByRole('radio').all()) await expectTouchTarget(page, radio);
+      for (const group of await page.getByRole('main').getByRole('radiogroup').all()) await expectTouchTarget(page, group);
       const signOut = page.getByRole('main').getByRole('button', { name: 'Sign out' });
       await expectTouchTarget(page, signOut);
 
