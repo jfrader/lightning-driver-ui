@@ -109,9 +109,17 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
     if (!box) throw new Error('Missing rail control');
     expect.soft(box.x + box.width, await control.textContent() ?? 'rail control').toBeLessThanOrEqual(rail.x + rail.width);
   }
+  // The segmented control grows with doubled text; its segments' ink box runs a couple of pixels
+  // past the line box, so assert the control's hit area and height rather than per-segment text.
+  const unit = page.getByRole('radiogroup', { name: 'Display unit' });
+  const unitHit = await unit.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return (hit === element || element.contains(hit)) && box.height >= 44;
+  });
+  expect.soft(unitHit, 'display unit control at 200% text').toBe(true);
   const stripControls = [
     page.getByRole('link', { name: '1 unresolved', exact: true }),
-    ...await page.getByRole('radiogroup', { name: 'Display unit' }).getByRole('radio').all(),
     page.getByRole('button', { name: /^Go to/ }),
   ];
   for (const control of stripControls) {
@@ -271,12 +279,14 @@ test('@layout every status strip control shares one height and baseline', async 
     });
     if (!strip) return [];
     return [...strip.querySelectorAll('button, a, [role="radiogroup"]')]
+      // Segment options live inside the radiogroup; the control itself is what must line up.
+      .filter((element) => element.getAttribute('role') === 'radiogroup' || !element.closest('[role="radiogroup"]'))
       .map((element) => element.getBoundingClientRect())
       .filter((box) => box.height >= 18)
       .map((box) => ({ height: Math.round(box.height), top: Math.round(box.top) }));
   });
   const boxes = await controls;
   expect(boxes.length).toBeGreaterThanOrEqual(4);
-  expect(new Set(boxes.map((box) => box.height))).toEqual(new Set([40]));
+  expect(new Set(boxes.map((box) => box.height)).size).toBe(1);
   expect(new Set(boxes.map((box) => box.top))).toEqual(new Set([boxes[0].top]));
 });

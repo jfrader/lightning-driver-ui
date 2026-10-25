@@ -8,18 +8,16 @@ interface ButtonAnchorProps extends ComponentPropsWithRef<'a'> {
   tone?: ButtonProps['tone'];
   size?: ButtonProps['size'];
   startIcon?: ReactNode;
-  /** Extra styling for the rendered button, merged after the wrapping text rules. */
-  sx?: ButtonProps['sx'];
 }
 
-function ButtonAnchor({ variant, tone, size, startIcon, sx, children, onClick, ref, ...anchor }: ButtonAnchorProps) {
+function ButtonAnchor({ variant, tone, size, startIcon, children, onClick, ref, ...anchor }: ButtonAnchorProps) {
   return (
     <Button
       variant={variant}
       tone={tone}
       size={size}
       startIcon={startIcon}
-      sx={[wrappingControlText(size), sx]}
+      sx={wrappingControlText(size)}
       render={({ onClick: buttonClick, ...buttonProps }) => (
         <a
           {...anchor}

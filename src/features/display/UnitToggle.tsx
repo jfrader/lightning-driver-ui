@@ -13,8 +13,6 @@ export function UnitToggle() {
     <SegmentedControl
       label="Display unit"
       size={size}
-      // On the desktop strip every control is 2.5rem; touch layouts keep their own target size.
-      slotProps={size === 'sm' ? { root: { sx: { minBlockSize: '2.5rem', boxSizing: 'border-box' } } } : undefined}
       options={OPTIONS}
       value={unit}
       onValueChange={(value) => {

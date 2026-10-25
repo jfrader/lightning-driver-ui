@@ -5,7 +5,6 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 import { ButtonLink } from '../../components/ButtonLink';
 import { wrappingControlText } from '../../components/control-styles';
 import { LoadingState } from '../../components/LoadingState';
-import { STRIP_CONTROL } from '../../config';
 import { formatInteger } from '../../lib/money';
 import { isInFlight, OPERATION_KIND, OPERATION_STAGE, OPERATION_STATE } from '../operations/labels';
 import { OperationAmount } from '../operations/OperationAmount';
@@ -16,7 +15,7 @@ const List = styled.ul(({ theme }) => ({ listStyle: 'none', padding: 0, margin: 
 
 function LiveTrigger(props: ComponentPropsWithRef<'button'>) {
   const size = useControlSize();
-  return <Button {...props} size={size} variant="outline" sx={{ ...wrappingControlText(size), ...(size === 'sm' ? STRIP_CONTROL : {}) }} />;
+  return <Button {...props} size={size} variant="outline" sx={wrappingControlText(size)} />;
 }
 
 export function LiveOperationsButton({ node }: { node: NodeSummary }) {

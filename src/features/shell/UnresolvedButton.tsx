@@ -1,7 +1,6 @@
 import { styled } from '@jfrader/ui';
 import type { NodeSummary } from '../../api/types';
 import { ButtonLink } from '../../components/ButtonLink';
-import { STRIP_CONTROL } from '../../config';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { useControlSize } from './use-shell-layout';
 import { surfacesFor } from './nav-model';
@@ -27,7 +26,6 @@ export function UnresolvedButton({ node }: { node: NodeSummary }) {
       search={{ state: 'nonterminal' }}
       size={size}
       variant="outline"
-      sx={size === 'sm' ? STRIP_CONTROL : undefined}
       startIcon={<Marker />}
     >
       {`${formatInteger(count)} unresolved`}

@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react';
-import { Flex, Select, SortableDataTable, styled, type SortState } from '@jfrader/ui';
+import { DataTable, Flex, Select, styled, type SortState } from '@jfrader/ui';
 import { SORT_DIRECTIONS } from '../app/search';
 import { TABLE_QUERY, TOUCH_TARGET } from '../config';
 import { useControlSize } from '../features/shell/use-shell-layout';
@@ -102,7 +102,7 @@ function ResourceListBody<T>({ caption, rows, columns, getRowId, sort = null, on
   const ordered = sortedRows(rows, columns, sort);
   if (table) {
     return (
-      <SortableDataTable
+      <DataTable
         caption={caption}
         captionHidden
         size="sm"
