@@ -45,6 +45,7 @@ export function LiveOperationsButton({ node }: { node: NodeSummary }) {
     </List>
   );
 
+  if (operations.isPending || active.length === 0) return null;
   return (
     <Popover open={open} onOpenChange={setOpen} placement="bottom-end" triggerLabel={`${count} in progress`} label="Operations in progress" slots={{ trigger: LiveTrigger }} content={
       <Flex direction="column" gap="md">

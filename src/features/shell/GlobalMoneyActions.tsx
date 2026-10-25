@@ -16,7 +16,7 @@ export function GlobalMoneyActions({ node }: { node: NodeSummary | null }) {
   return (
     <>
       {node && surfacesFor(node).includes('operations') && (
-        <Suspense fallback={<Button size={size} variant="outline" sx={wrappingControlText(size)} disabled>… in progress</Button>}>
+        <Suspense fallback={null}>
           <LiveOperationsButton key={node.id} node={node} />
         </Suspense>
       )}
