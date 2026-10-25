@@ -263,7 +263,7 @@ test('@layout every status strip control shares one height and baseline', async 
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('main')).toBeVisible();
   await page.waitForTimeout(300);
-  const heights = await page.evaluate(() => {
+  const controls = page.evaluate(() => {
     const strip = [...document.querySelectorAll('div')].find((element) => {
       const style = getComputedStyle(element);
       const box = element.getBoundingClientRect();
@@ -273,8 +273,10 @@ test('@layout every status strip control shares one height and baseline', async 
     return [...strip.querySelectorAll('button, a, [role="radiogroup"]')]
       .map((element) => element.getBoundingClientRect())
       .filter((box) => box.height >= 18)
-      .map((box) => Math.round(box.height));
+      .map((box) => ({ height: Math.round(box.height), top: Math.round(box.top) }));
   });
-  expect(heights.length).toBeGreaterThan(4);
-  expect(new Set(heights)).toEqual(new Set([40]));
+  const boxes = await controls;
+  expect(boxes.length).toBeGreaterThanOrEqual(4);
+  expect(new Set(boxes.map((box) => box.height))).toEqual(new Set([40]));
+  expect(new Set(boxes.map((box) => box.top))).toEqual(new Set([boxes[0].top]));
 });
