@@ -42,7 +42,7 @@ for (const size of SIZES) {
       expect(requests.map((r) => r.path)).toEqual(['/nodes/lnd-lab/operations']);
       await expectVisibleConfirmation(page, 'Create invoice');
 
-      await page.getByRole('button', { name: 'Create invoice' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
 
       await expect(page.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
       await expect(page.getByText('Sent to the node. No invoice reported yet.')).toBeVisible();
@@ -51,7 +51,7 @@ for (const size of SIZES) {
         `/nodes/lnd-lab/operations/${operation('create_invoice').id}/confirm`,
       ]);
       for (const name of ['Create invoice', 'Retry', 'Try again']) {
-        await expect(page.getByRole('button', { name })).toHaveCount(0);
+        await expect(page.getByRole('dialog').getByRole('button', { name })).toHaveCount(0);
       }
     });
 

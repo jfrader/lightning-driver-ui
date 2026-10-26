@@ -32,7 +32,7 @@ describe('receive', () => {
     ]);
     expect(calls.confirms).toEqual([]);
 
-    await user.click(screen.getByRole('button', { name: 'Create invoice' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Create invoice' })).getByRole('button', { name: 'Create invoice' }));
 
     expect(await screen.findByRole('img', { name: 'Invoice QR code' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Invoice' })).toBeInTheDocument();

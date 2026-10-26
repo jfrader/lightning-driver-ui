@@ -61,7 +61,10 @@ export const PHONE_TABS: readonly { key: PhoneTab; label: string; destination: N
   { key: 'more', label: 'More', destination: null },
 ];
 
-/** Palette form openings. Opening a form never creates, authorizes or confirms anything. */
+/**
+ * Palette navigation retains addressable route forms; page money CTAs use MoneyActionButton.
+ * Opening a form never creates, authorizes or confirms anything.
+ */
 export const FORM_DESTINATIONS = [
   {
     label: 'Pay invoice…',

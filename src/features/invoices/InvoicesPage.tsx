@@ -19,6 +19,7 @@ import { StateWord } from '../display/StateWord';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
+import { MoneyActionButton } from '../shell/MoneyActionButton';
 import { ListTime } from '../../components/ListTime';
 import { InvoiceDescription, InvoiceExpiryText } from './InvoiceCells';
 import { InvoiceInspector } from './InvoiceInspector';
@@ -121,17 +122,19 @@ export function InvoicesPage() {
 
   return (
     <Flex direction="column" gap="md">
-      <PageHeader
-        title="Invoices"
-        actions={
-          <CapabilityAction node={node} capability="create_invoice">
-            <ButtonLink to="/nodes/$nodeId/invoices/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
-              Create invoice
-            </ButtonLink>
-          </CapabilityAction>
-        }
-      />
       <InspectorLayout
+        header={
+          <PageHeader
+            title="Invoices"
+            actions={
+              <CapabilityAction node={node} capability="create_invoice">
+                <MoneyActionButton action="create_invoice" size={size} tone="accent" variant="solid">
+                  Create invoice
+                </MoneyActionButton>
+              </CapabilityAction>
+            }
+          />
+        }
         list={list}
         inspectorLabel="Selected invoice"
         inspector={

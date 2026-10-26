@@ -18,7 +18,7 @@ export function operationIdParam(value: unknown): string | undefined {
 }
 
 export const MONEY_ACTIONS = { send: ['pay_invoice', 'send_onchain'], receive: ['create_invoice', 'new_address'] } as const;
-type MoneyAction = (typeof MONEY_ACTIONS)[keyof typeof MONEY_ACTIONS][number];
+export type MoneyAction = (typeof MONEY_ACTIONS)[keyof typeof MONEY_ACTIONS][number];
 
 export interface MoneySearch {
   send?: 1;

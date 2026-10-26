@@ -67,7 +67,7 @@ test('@layout enlarged Lightning header controls remain separate and quick actio
     return hit === element || element.contains(hit);
   });
   expect(chooserHit).toBe(true);
-  for (const control of [unresolved, page.getByRole('link', { name: 'Pay invoice', exact: true }), page.getByRole('link', { name: 'Receive', exact: true })]) {
+  for (const control of [unresolved, page.getByRole('button', { name: 'Pay invoice', exact: true }), page.getByRole('button', { name: 'Receive', exact: true })]) {
     await control.scrollIntoViewIfNeeded();
     const usable = await control.evaluate(element => {
       const r = element.getBoundingClientRect();

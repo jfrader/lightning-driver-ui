@@ -5,6 +5,7 @@ import { installSyntheticApi } from './synthetic-api';
 
 type Transition = {
   start: number;
+  retained: { id: number; tag: string; ui: string | null }[];
   mutations: { time: number; action: string; id: number; tag: string; ui: string | null; dialogs: number }[];
   frames: { time: number; url: string; dialogs: number[]; forms: number[]; text: string[]; rects: { x: number; y: number; width: number; height: number }[] }[];
   shifts: { time: number; value: number }[];
@@ -27,7 +28,9 @@ const MAX_LAYOUT_SHIFT = 0.01;
 
 for (const width of [1440, 390]) {
   for (const surface of surfaces) {
-    test(`${surface.path} drawer keeps its mounted identity at ${width}`, async ({ page }) => {
+    test(`${surface.path} action surface keeps its mounted identity at ${width}`, async ({ page }) => {
+      const money = surface.path !== 'channels';
+      const popover = money && width >= 1024;
       await page.setViewportSize({ width, height: 900 });
       await installSyntheticApi(page);
       await page.addInitScript(() => {
@@ -70,7 +73,8 @@ for (const width of [1440, 390]) {
         }).observe({ type: 'longtask', buffered: true });
         window.startDrawerTransition = () => {
           observer.takeRecords();
-          window.drawerTransition = { start: performance.now(), mutations: [], frames: [], shifts: [], longTasks: [] };
+          const retained = [...document.querySelectorAll('dialog, [data-ui="morph-surface"], [data-ui$="-panel"], [data-ui$="-body"]')].map(element => ({ id: identity(element), tag: element.tagName, ui: element.getAttribute('data-ui') }));
+          window.drawerTransition = { start: performance.now(), retained, mutations: [], frames: [], shifts: [], longTasks: [] };
           active = true;
           const sample = () => {
             const dialogs = [...document.querySelectorAll('dialog[open], [role="dialog"]')];
@@ -96,7 +100,7 @@ for (const width of [1440, 390]) {
       });
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(`/nodes/lnd-lab/${surface.path}`);
-      const trigger = page.getByRole('link', { name: surface.trigger, exact: true });
+      const trigger = page.getByRole(money ? 'button' : 'link', { name: surface.trigger, exact: true });
       await expect(trigger).toBeVisible();
       await page.waitForLoadState('networkidle');
       const box = await trigger.boundingBox();
@@ -126,14 +130,19 @@ for (const width of [1440, 390]) {
       await test.info().attach('drawer-transition', { body: JSON.stringify({ ...transition, warnings, errors }), contentType: 'application/json' });
       const dialogIds = [...new Set(transition.frames.flatMap((frame) => frame.dialogs))];
       const formIds = [...new Set(transition.frames.flatMap((frame) => frame.forms))];
+      const retained = money ? transition.retained : [];
+      const expectStable = (matches: (entry: Transition['retained'][number]) => boolean, label: string) => {
+        const elements = [...retained.filter(matches), ...transition.mutations.filter(entry => entry.action === 'mount' && matches(entry))];
+        expect.soft([...new Set(elements.map(element => element.id))], `${label} has one retained or mounted identity`).toHaveLength(1);
+        expect.soft(transition.mutations.filter(entry => entry.action === 'unmount' && elements.some(element => element.id === entry.id)), `${label} stays mounted`).toEqual([]);
+      };
       expect.soft(dialogIds, 'one dialog identity throughout opening').toHaveLength(1);
-      expect.soft(transition.mutations.filter((entry) => entry.tag === 'DIALOG' && entry.action === 'mount'), 'dialog mounts once').toHaveLength(1);
+      expectStable(entry => popover ? entry.ui === 'morph-surface' : entry.tag === 'DIALOG', 'dialog');
       expect.soft(formIds, 'one form identity throughout opening').toHaveLength(1);
-      expect.soft(transition.mutations.filter((entry) => entry.tag === 'FORM' && entry.action === 'mount'), 'form mounts once').toHaveLength(1);
+      expectStable(entry => entry.tag === 'FORM', 'form');
       for (const slot of ['panel', 'body']) {
-        const mounts = transition.mutations.filter((entry) => entry.action === 'mount' && (entry.ui === `drawer-${slot}` || entry.ui === `bottom-sheet-${slot}`));
-        expect.soft(mounts, `${slot} mounts once`).toHaveLength(1);
-        expect.soft(transition.mutations.filter((entry) => entry.action === 'unmount' && mounts.some((mount) => mount.id === entry.id)), `${slot} stays mounted`).toEqual([]);
+        const morphSlot = slot === 'panel' ? 'morph-surface' : 'morph-step';
+        expectStable(entry => money && (popover || slot === 'body') ? entry.ui === morphSlot : entry.ui === `drawer-${slot}` || entry.ui === `bottom-sheet-${slot}`, slot);
       }
       const firstDialog = transition.frames.findIndex((frame) => frame.dialogs.length > 0);
       expect.soft(transition.frames.slice(firstDialog).every((frame) => frame.dialogs.length === 1), 'no missing or duplicate dialog after first mount').toBe(true);

@@ -81,7 +81,7 @@ describe('payment review', () => {
     expect(screen.getByText('Total').nextElementSibling).toHaveTextContent('at most 2,501 sat');
     expect(screen.getByTitle(RECIPIENT)).toHaveTextContent(RECIPIENT);
     expect(screen.getByText('Description').nextElementSibling).toHaveTextContent('Synthetic payment');
-    expect(screen.getByRole('link', { name: 'Discard review' })).toHaveAttribute('href', '/nodes/lnd-lab/payments/new');
+    expect(screen.getByRole('button', { name: 'Discard review' })).toBeEnabled();
 
     await openTechnicalDetails(user);
     expect(screen.getByText('Invoice expires').nextElementSibling).toHaveTextContent('13:00:00');
@@ -107,7 +107,7 @@ describe('payment review', () => {
     expect(await screen.findByText('The invoice could not be checked again.')).toBeInTheDocument();
     expect(screen.getByText('Nothing was sent.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pay with passkey' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Discard review' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Discard review' })).toBeInTheDocument();
     expect(calls.authorizes).toEqual([]);
   });
 

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { sessionCsrfToken } from '../../api/csrf';
@@ -55,7 +55,8 @@ async function createInvoice(view: View) {
 /** The low-risk confirm is the one explicit action on the invoice review. */
 async function createAndConfirmInvoice(view: View) {
   await createInvoice(view);
-  await view.user.click(await screen.findByRole('button', { name: 'Create invoice' }));
+  const review = await screen.findByRole('dialog', { name: 'Create invoice' });
+  await view.user.click(await within(review).findByRole('button', { name: 'Create invoice' }));
 }
 
 describe('a 401 ends the current session wherever it arrives', () => {

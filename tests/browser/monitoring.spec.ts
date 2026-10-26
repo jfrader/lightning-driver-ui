@@ -192,8 +192,8 @@ test('Lightning overview actions and reads agree with unavailable surfaces', asy
   });
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Pay invoice', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Receive', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pay invoice', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Receive', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Recent payments', exact: true })).toHaveCount(0);
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Go to' });

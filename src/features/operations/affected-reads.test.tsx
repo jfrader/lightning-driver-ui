@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { QueryClient } from '@tanstack/react-query';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -69,7 +69,8 @@ describe('reads a confirmed operation affects', () => {
     await view.router.navigate({ to: '/nodes/$nodeId/invoices/new', params: { nodeId: 'lnd-lab' } });
     await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
     await view.user.click(screen.getByRole('button', { name: 'Review invoice' }));
-    await view.user.click(await screen.findByRole('button', { name: 'Create invoice' }));
+    const review = await screen.findByRole('dialog', { name: 'Create invoice' });
+    await view.user.click(await within(review).findByRole('button', { name: 'Create invoice' }));
     expect(await screen.findByText('Invoice created.')).toBeInTheDocument();
 
     await view.router.navigate({ to: '/nodes/$nodeId/invoices', params: { nodeId: 'lnd-lab' } });

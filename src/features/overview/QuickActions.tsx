@@ -4,14 +4,15 @@ import { ButtonLink } from '../../components/ButtonLink';
 import { TABLE_MEDIA } from '../../config';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useControlSize } from '../shell/use-shell-layout';
+import { MoneyActionButton } from '../shell/MoneyActionButton';
 
 const Bar = styled.div(({ theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
   alignItems: 'flex-start',
   gap: theme.space[2],
-  '& > a': { flex: '1 1 auto' },
-  [TABLE_MEDIA]: { '& > a': { flex: '0 1 auto' } },
+  '& > a, & > button': { flex: '1 1 auto' },
+  [TABLE_MEDIA]: { '& > a, & > button': { flex: '0 1 auto' } },
 }));
 
 const Secondary = styled.div(({ theme }) => ({
@@ -37,25 +38,25 @@ export function QuickActions({ node }: { node: NodeSummary }) {
   return (
     <Bar>
       <CapabilityAction node={node} capability="pay_invoice">
-        <ButtonLink to="/nodes/$nodeId/payments/new" params={params} size={size} tone="accent" variant="solid">
+        <MoneyActionButton action="pay_invoice" size={size} tone="accent" variant="solid">
           Pay invoice
-        </ButtonLink>
+        </MoneyActionButton>
       </CapabilityAction>
       <CapabilityAction node={node} capability="create_invoice">
-        <ButtonLink to="/nodes/$nodeId/invoices/new" params={params} size={size} variant="outline">
+        <MoneyActionButton action="create_invoice" size={size} variant="outline">
           Receive
-        </ButtonLink>
+        </MoneyActionButton>
       </CapabilityAction>
       <Secondary>
         <CapabilityAction node={node} capability="new_address">
-          <ButtonLink to="/nodes/$nodeId/onchain/receive" params={params} size={size} variant="ghost">
+          <MoneyActionButton action="new_address" size={size} variant="ghost">
             New address
-          </ButtonLink>
+          </MoneyActionButton>
         </CapabilityAction>
         <CapabilityAction node={node} capability="send_onchain">
-          <ButtonLink to="/nodes/$nodeId/onchain/send" params={params} size={size} variant="ghost">
+          <MoneyActionButton action="send_onchain" size={size} variant="ghost">
             Send on-chain
-          </ButtonLink>
+          </MoneyActionButton>
         </CapabilityAction>
         <CapabilityAction node={node} capability="open_channel">
           <ButtonLink to="/nodes/$nodeId/channels/new" params={params} size={size} variant="ghost">

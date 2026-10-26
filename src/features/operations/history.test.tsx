@@ -78,6 +78,7 @@ describe('history of a node that is no longer configured', () => {
     expect(await screen.findByText('This node is not configured anymore.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pay with passkey' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Start a new review' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Start a new review' })).not.toBeInTheDocument();
     expect(posts).toEqual([]);
   });
 

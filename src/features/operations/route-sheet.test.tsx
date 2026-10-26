@@ -18,16 +18,22 @@ describe.each(cases)('$kind route sheet', ({ kind, list, heading, entry, submit,
   const listPath = `/nodes/lnd-lab/${list}`;
   const path = `${listPath}/${entry}`;
 
-  it('opens from the real list action without dropping its selection or cursor', async () => {
+  it('opens the list action in its surface without dropping selection or cursor', async () => {
     const selected = list === 'channels' ? fixture('channels_page').items[0].id : list === 'peers' ? fixture('peers_page').items[0].pubkey : list === 'invoices' ? fixture('invoices_page').items[0].payment_hash : fixture('transactions_page').items[0].txid;
     const view = renderApp(`${listPath}?selected=${selected}&cursor=synthetic`);
-    const trigger = await screen.findByRole('link', { name: new RegExp(`^${OPERATION_KIND[kind]}`) });
+    const money = kind === 'create_invoice' || kind === 'send_onchain' || kind === 'new_address';
+    const trigger = await screen.findByRole(money ? 'button' : 'link', { name: new RegExp(`^${OPERATION_KIND[kind]}`) });
     const search = view.router.state.location.search;
     await view.user.click(trigger);
-    const dialog = await screen.findByRole('dialog', { name: OPERATION_KIND[kind] });
-    expect(view.router.state.location.pathname).toBe(path);
-    expect(view.router.state.location.search).toEqual(search);
-    await view.user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    const dialog = await screen.findByRole('dialog', { name: money ? 'Send and receive' : OPERATION_KIND[kind] });
+    expect(view.router.state.location.pathname).toBe(money ? listPath : path);
+    expect(view.router.state.location.search).toEqual(money ? { ...search, [kind === 'send_onchain' ? 'send' : 'receive']: 1, action: kind } : search);
+    if (money) {
+      await view.user.click(within(dialog).getByRole('button', { name: 'Back' }));
+      await within(dialog).findByRole('menuitem', { name: 'Pay invoice' });
+      await view.user.keyboard('{Escape}');
+    } else await view.user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await waitFor(() => expect(view.router.state.location.pathname).toBe(listPath));
     expect(view.router.state.location.search).toEqual(search);
   });

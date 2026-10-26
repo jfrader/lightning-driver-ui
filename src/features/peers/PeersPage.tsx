@@ -116,17 +116,19 @@ function LightningPeersPage() {
 
   return (
     <Flex direction="column" gap="md">
-      <PageHeader
-        title="Peers"
-        actions={
-          <CapabilityAction node={node} capability="connect_peer">
-            <ButtonLink to="/nodes/$nodeId/peers/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
-              Connect peer
-            </ButtonLink>
-          </CapabilityAction>
-        }
-      />
       <InspectorLayout
+        header={
+          <PageHeader
+            title="Peers"
+            actions={
+              <CapabilityAction node={node} capability="connect_peer">
+                <ButtonLink to="/nodes/$nodeId/peers/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
+                  Connect peer
+                </ButtonLink>
+              </CapabilityAction>
+            }
+          />
+        }
         list={list}
         inspectorLabel="Selected peer"
         inspector={
