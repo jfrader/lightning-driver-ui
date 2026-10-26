@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Flex, SegmentedControl } from '@jfrader/ui';
+import { SegmentedControl, styled } from '@jfrader/ui';
 import { ExactNumberField } from '../../components/ExactNumberField';
 import { isKeyOf, keysOf } from '../../lib/guards';
 import { PLAIN_DECIMAL_HINT, UNIT_LABEL, formatInteger, formatMsatInput, parseAmountInput, type DisplayUnit } from '../../lib/money';
@@ -13,6 +13,12 @@ export interface AmountEntry {
 
 const UNIT_OPTIONS = keysOf(UNIT_LABEL).map((unit) => ({ value: unit, label: UNIT_LABEL[unit] }));
 const UNIT_BLOCKED = 'Correct the amount before changing the unit.';
+const AmountRow = styled.div(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) max-content',
+  columnGap: theme.space[2],
+  rowGap: theme.space[1],
+}));
 
 /**
  * Re-expresses the entered amount exactly in the new unit. Text that is not a valid amount keeps
@@ -49,8 +55,9 @@ export function AmountField({ label, value, onChange, description, error, requir
   const [unitBlocked, setUnitBlocked] = useState(false);
   const size = useControlSize();
   const hint = [readback(value) ?? PLAIN_DECIMAL_HINT, description].filter(Boolean).join(' · ');
+  const fieldError = unitBlocked ? UNIT_BLOCKED : error;
   return (
-    <Flex gap="sm" align="end" wrap>
+    <AmountRow>
       <ExactNumberField
         kind="decimal"
         label={`${label} (${UNIT_LABEL[value.unit]})`}
@@ -60,13 +67,14 @@ export function AmountField({ label, value, onChange, description, error, requir
           setUnitBlocked(false);
           onChange({ ...value, text });
         }}
-        error={unitBlocked ? UNIT_BLOCKED : error}
+        error={fieldError}
         required={required}
-        sx={{ flex: '1 1 12rem' }}
+        sx={{ gridColumn: 1, gridRow: `1 / span ${fieldError ? 4 : 3}`, gridTemplateRows: 'subgrid' }}
       />
       <SegmentedControl
         label={`${label} unit`}
         size={size}
+        sx={{ gridColumn: 2, gridRow: 2, alignSelf: 'start' }}
         options={UNIT_OPTIONS}
         value={value.unit}
         onValueChange={(unit) => {
@@ -76,6 +84,6 @@ export function AmountField({ label, value, onChange, description, error, requir
           if (converted) onChange(converted);
         }}
       />
-    </Flex>
+    </AmountRow>
   );
 }

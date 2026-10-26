@@ -11,6 +11,46 @@ async function tabTo(page: Page, target: Locator) {
   await expect(target).toBeFocused();
 }
 
+test('cold money popover grows at its positioned anchor without a layout projection jump', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await installSyntheticApi(page);
+  await page.goto('/nodes/lnd-lab');
+  const trigger = page.getByRole('button', { name: 'Send and receive', exact: true });
+  await expect(trigger).toBeVisible();
+  const sampling = page.evaluate(() => new Promise<{ x: number; y: number; scale: number; time: number }[]>((resolve) => {
+    const frames: { x: number; y: number; scale: number; time: number }[] = [];
+    let start: number | undefined;
+    function sample() {
+      const surface = document.querySelector<HTMLElement>('[data-ui="morph-surface"]');
+      const now = performance.now();
+      if (surface) {
+        const rect = surface.getBoundingClientRect();
+        const css = getComputedStyle(surface);
+        if (rect.width > 0 && Number(css.opacity) > 0) {
+          start ??= now;
+          const [originX, originY] = css.transformOrigin.split(' ').map(Number.parseFloat);
+          frames.push({ x: rect.x + rect.width * originX! / surface.offsetWidth, y: rect.y + rect.height * originY! / surface.offsetHeight, scale: rect.width / surface.offsetWidth, time: now - start });
+        }
+      }
+      if (start !== undefined && now - start >= 600) resolve(frames);
+      else requestAnimationFrame(sample);
+    }
+    requestAnimationFrame(sample);
+  }));
+  await trigger.click();
+  const frames = await sampling;
+  expect(frames.length).toBeGreaterThan(2);
+  const first = frames[0]!;
+  const final = frames.at(-1)!;
+  const anchor = await trigger.boundingBox();
+  expect(Math.abs(final.x - (anchor!.x + anchor!.width))).toBeLessThanOrEqual(2);
+  expect(Math.abs(final.y - (anchor!.y + anchor!.height))).toBeLessThanOrEqual(16);
+  expect(first.scale).toBeLessThan(final.scale);
+  test.fail(true, '@jfrader/ui 0.19.1 Morph projects the first Floating UI position; trigger preloading does not fix it.');
+  expect(Math.hypot(first.x - final.x, first.y - final.y)).toBeLessThanOrEqual(2);
+  expect(Math.max(...frames.slice(1).map((frame, index) => Math.hypot(frame.x - frames[index]!.x, frame.y - frames[index]!.y)))).toBeLessThanOrEqual(2);
+});
+
 for (const width of [390, 1440]) {
   test.describe(`global money actions at ${width}`, () => {
     test.use({ viewport: { width, height: 900 } });
