@@ -46,7 +46,6 @@ test('cold money popover grows at its positioned anchor without a layout project
   expect(Math.abs(final.x - (anchor!.x + anchor!.width))).toBeLessThanOrEqual(2);
   expect(Math.abs(final.y - (anchor!.y + anchor!.height))).toBeLessThanOrEqual(16);
   expect(first.scale).toBeLessThan(final.scale);
-  test.fail(true, '@jfrader/ui 0.19.1 Morph projects the first Floating UI position; trigger preloading does not fix it.');
   expect(Math.hypot(first.x - final.x, first.y - final.y)).toBeLessThanOrEqual(2);
   expect(Math.max(...frames.slice(1).map((frame, index) => Math.hypot(frame.x - frames[index]!.x, frame.y - frames[index]!.y)))).toBeLessThanOrEqual(2);
 });
