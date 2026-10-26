@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { Select } from '@jfrader/ui';
+import { Select, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { TOUCH_TARGET } from '../../config';
-import { nodeChoiceLabel } from '../nodes/labels';
+import { accessLabel, NODE_STATUS, nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
 import { NODE_DESTINATIONS, surfacesFor } from './nav-model';
-import { useControlSize } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
 import { visuallyHidden } from './visually-hidden';
 
 /** Not a valid node ID, so it can never collide with one. */
 const ALL_NODES = '*';
+const Choice = styled.div({ minInlineSize: 0, inlineSize: '100%' });
+const Marker = styled.span<{ ready: boolean }>(({ theme, ready }) => ({ inlineSize: theme.space[2], blockSize: theme.space[2], flexShrink: 0, borderRadius: theme.radius.full, backgroundColor: ready ? theme.color.success : theme.color.warning, forcedColorAdjust: 'none' }));
 
 /**
  * Switching is a URL change: the same list on the other node, else its Overview. While a sent
@@ -22,7 +23,7 @@ export function NodeChooser() {
   const locked = useConfirmInFlight();
   const router = useRouter();
   const navigate = useNavigate();
-  const size = useControlSize();
+  const size = 'lg';
   const { nodeId, node, destination, pathname } = useShellNode();
   // The fleet feeds the open listbox only; every screen already has its own node summary.
   const [opened, setOpened] = useState(false);
@@ -43,12 +44,9 @@ export function NodeChooser() {
     router.buildLocation({ to: NODE_DESTINATIONS[destination].to, params: { nodeId } }).pathname === pathname;
 
   return (
+    <Choice>
     <Select
-      label="Node"
-      size={size}
       disabled={locked}
-      description={locked ? 'Sending…' : undefined}
-      options={options}
       value={nodeId ?? ALL_NODES}
       onOpenChange={(open) => { if (open) setOpened(true); }}
       onValueChange={(next) => {
@@ -64,12 +62,17 @@ export function NodeChooser() {
             : NODE_DESTINATIONS.overview.to;
         void navigate({ to, params: { nodeId: next } });
       }}
-      slotProps={{
-        root: { sx: { inlineSize: '100%', minInlineSize: 0 } },
-        label: { sx: visuallyHidden },
-        trigger: { sx: { inlineSize: '100%' } },
-        item: { sx: { minBlockSize: size === 'lg' ? TOUCH_TARGET : undefined } },
-      }}
-    />
+    >
+      <Select.Label sx={visuallyHidden}>Node</Select.Label>
+      <Select.Trigger size={size} sx={{ inlineSize: '100%', minInlineSize: 0 }} title={node ? nodeChoiceLabel(node) : 'All nodes'}>
+        {node && <Marker ready={node.status.status === 'online' && !node.read_only && node.kind !== 'bitcoin'} aria-hidden="true" />}
+        <Select.Value sx={{ minInlineSize: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} />
+      </Select.Trigger>
+      {(node || locked) && <Select.Description sx={locked ? undefined : visuallyHidden}>{locked ? 'Sending…' : node && `${NODE_STATUS[node.status.status].label} · ${accessLabel(node)}`}</Select.Description>}
+      <Select.Content>
+        {options.map((option) => <Select.Item key={option.value} value={option.value} sx={{ minBlockSize: TOUCH_TARGET }}>{option.label}</Select.Item>)}
+      </Select.Content>
+    </Select>
+    </Choice>
   );
 }

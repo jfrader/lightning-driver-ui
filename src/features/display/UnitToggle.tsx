@@ -6,13 +6,13 @@ import { useDisplayUnit } from './unit-context';
 
 const OPTIONS = keysOf(UNIT_LABEL).map((unit) => ({ value: unit, label: UNIT_LABEL[unit] }));
 
-export function UnitToggle() {
+export function UnitToggle({ size: requestedSize }: { size?: 'sm' | 'lg' } = {}) {
   const { unit, setUnit } = useDisplayUnit();
   const size = useControlSize();
   return (
     <SegmentedControl
       label="Display unit"
-      size={size}
+      size={requestedSize ?? size}
       options={OPTIONS}
       value={unit}
       onValueChange={(value) => {
