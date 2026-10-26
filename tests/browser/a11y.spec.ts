@@ -138,8 +138,8 @@ test.describe('200% zoom', () => {
   test.use({ viewport: { width: 640, height: 400 } });
 
   for (const [path, action] of [
-    ['/nodes/lnd-lab', { role: 'link', name: 'Pay invoice' }],
-    ['/nodes/lnd-lab/payments', { role: 'link', name: 'Pay invoice' }],
+    ['/nodes/lnd-lab', { role: 'button', name: 'Pay invoice' }],
+    ['/nodes/lnd-lab/payments', { role: 'button', name: 'Pay invoice' }],
     ['/nodes/lnd-lab/channels', { role: 'link', name: 'Open channel…' }],
     ['/nodes/lnd-lab/onchain/send', { role: 'button', name: 'Review send' }],
     [REVIEW_PATH, { role: 'button', name: 'Pay with passkey' }],

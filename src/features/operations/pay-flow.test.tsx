@@ -233,10 +233,14 @@ describe('review binding', () => {
   it('blocks confirmation of an expired review', async () => {
     vi.setSystemTime(new Date('2026-10-21T12:06:00Z'));
     mockJournal({ created: review() });
-    renderApp(`/nodes/lnd-lab/operations/${OPERATION_ID}`);
+    const view = renderApp(`/nodes/lnd-lab/operations/${OPERATION_ID}`);
 
     expect(await screen.findByText('This review expired.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pay with passkey' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Start a new review' })).toHaveAttribute('href', '/nodes/lnd-lab/payments/new');
+    expect(screen.getByRole('button', { name: 'Start a new review' })).toBeEnabled();
+    await view.user.click(screen.getByRole('button', { name: 'Start a new review' }));
+    expect(await screen.findByRole('dialog', { name: 'Send and receive' })).toBeInTheDocument();
+    expect(view.router.state.location.pathname).toBe(`/nodes/lnd-lab/operations/${OPERATION_ID}`);
+    expect(view.router.state.location.search).toMatchObject({ send: 1, action: 'pay_invoice' });
   });
 });

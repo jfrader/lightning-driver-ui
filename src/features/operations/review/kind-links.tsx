@@ -4,6 +4,7 @@ import { useOperationSheet } from '../sheet-context';
 import type { Operation } from '../../../api/types';
 import { ButtonLink } from '../../../components/ButtonLink';
 import { useControlSize } from '../../shell/use-shell-layout';
+import { MoneyActionButton } from '../../shell/MoneyActionButton';
 import { BACK_LABEL, type ActionList } from './kind-lists';
 
 interface KindLinkProps {
@@ -42,19 +43,14 @@ export function ListLink({ nodeId, list }: { nodeId: string; list: ActionList })
 export function FormLink({ operation, label, variant = 'outline', disabled = false }: KindLinkProps) {
   const sheet = useOperationSheet();
   const size = useControlSize();
+  const { request } = operation;
+  if (request.kind === 'pay_invoice' || request.kind === 'create_invoice' || request.kind === 'send_onchain' || request.kind === 'new_address') {
+    return <MoneyActionButton action={request.kind} size={size} variant={variant} disabled={disabled}>{label}</MoneyActionButton>;
+  }
   if (sheet) return <Button size={size} variant={variant} disabled={disabled} onClick={sheet.discard}>{label}</Button>;
   const nodeId = operation.node_id;
   const props = { size, variant, 'aria-disabled': disabled || undefined, onClick: inert(disabled) };
-  const { request } = operation;
   switch (request.kind) {
-    case 'pay_invoice':
-      return <ButtonLink to="/nodes/$nodeId/payments/new" params={{ nodeId }} {...props}>{label}</ButtonLink>;
-    case 'create_invoice':
-      return <ButtonLink to="/nodes/$nodeId/invoices/new" params={{ nodeId }} {...props}>{label}</ButtonLink>;
-    case 'send_onchain':
-      return <ButtonLink to="/nodes/$nodeId/onchain/send" params={{ nodeId }} {...props}>{label}</ButtonLink>;
-    case 'new_address':
-      return <ButtonLink to="/nodes/$nodeId/onchain/receive" params={{ nodeId }} {...props}>{label}</ButtonLink>;
     case 'open_channel':
       return (
         <ButtonLink to="/nodes/$nodeId/channels/new" params={{ nodeId }} search={{ peer: request.params.peer_pubkey }} {...props}>

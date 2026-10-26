@@ -11,7 +11,7 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router';
 import { isSessionLoss } from '../api/errors';
-import { feeEstimatesQueryOptions, nodePolicyQueryOptions, nodeQueryOptions } from '../api/node-queries';
+import { nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
 import { RoutePending } from '../components/RoutePending';
@@ -20,6 +20,7 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { publicPolicyQueryOptions, sessionQueryOptions } from '../features/auth/queries';
 import { CHANNEL_STATE } from '../features/channels/labels';
 import { INVOICE_STATE } from '../features/invoices/labels';
+import { prefetchOperationForm } from '../features/forms/prefetch-operation-form';
 import { NodeChooserPage } from '../features/nodes/NodeChooserPage';
 import { NodeLayout } from '../features/nodes/NodeLayout';
 import { NodeNotFound } from '../features/nodes/NodeNotFound';
@@ -199,13 +200,7 @@ function operationForm<TParams extends { nodeId: string } = { nodeId: string }>(
     component: Object.assign(() => <OperationFormRoute {...props}><Page /></OperationFormRoute>, {
       preload: async () => { await Promise.all([OperationFormRoute.preload?.(), Page.preload?.()]); },
     }),
-    loader: async ({ context, params }: { context: RouterContext; params: TParams }) => {
-      const policy = context.queryClient.prefetchQuery(nodePolicyQueryOptions(params.nodeId));
-      const estimates = ['open_channel', 'close_channel', 'send_onchain'].includes(props.kind)
-        ? context.queryClient.prefetchQuery(feeEstimatesQueryOptions(params.nodeId))
-        : undefined;
-      await Promise.all([policy, estimates]);
-    },
+    loader: ({ context, params }: { context: RouterContext; params: TParams }) => prefetchOperationForm(context.queryClient, params.nodeId, props.kind),
   };
 }
 

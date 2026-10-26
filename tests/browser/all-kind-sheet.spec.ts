@@ -14,7 +14,7 @@ for (const width of [390, 1440]) {
   test.describe(`all-kind sheets at ${width}`, () => {
     test.use({ viewport: { width, height: 900 } });
 
-    test('keyboard creates an invoice through its list sheet, review and result', async ({ page }) => {
+    test('keyboard creates an invoice through its list money surface, review and result', async ({ page }) => {
       test.slow();
       const requests = await installSyntheticApi(page);
       const completed = operation('create_invoice', 'succeeded', 'completed', true);
@@ -26,20 +26,21 @@ for (const width of [390, 1440]) {
         return route.fulfill({ json: completed });
       });
       await page.goto('/nodes/lnd-lab/invoices?status=unpaid');
-      const trigger = page.getByRole('link', { name: 'Create invoice', exact: true });
+      const trigger = page.getByRole('button', { name: 'Create invoice', exact: true });
       await tabTo(page, trigger);
       await page.keyboard.press('Enter');
-      const dialog = page.getByRole('dialog', { name: 'Create invoice', exact: true });
-      await expect(dialog).toBeVisible();
-      await expect(page).toHaveURL('/nodes/lnd-lab/invoices/new?status=unpaid');
-      await tabTo(page, dialog.getByRole('textbox', { name: /^Amount \(sat\)/ }));
+      const surface = page.getByRole('dialog', { name: 'Send and receive', exact: true });
+      await expect(surface).toBeVisible();
+      await expect(page).toHaveURL(url => url.pathname === '/nodes/lnd-lab/invoices' && url.searchParams.get('status') === 'unpaid' && url.searchParams.get('receive') === '1' && url.searchParams.get('action') === 'create_invoice');
+      await tabTo(page, surface.getByRole('textbox', { name: /^Amount \(sat\)/ }));
       await page.keyboard.type('2500');
-      await tabTo(page, dialog.getByRole('textbox', { name: /^Description/ }));
+      await tabTo(page, surface.getByRole('textbox', { name: /^Description/ }));
       await page.keyboard.type('Coffee');
-      await tabTo(page, dialog.getByRole('button', { name: 'Review invoice', exact: true }));
+      await tabTo(page, surface.getByRole('button', { name: 'Review invoice', exact: true }));
       await page.keyboard.press('Enter');
+      const dialog = page.getByRole('dialog', { name: 'Create invoice', exact: true });
       await expect(dialog.getByRole('heading', { name: 'Review invoice', exact: true })).toBeVisible();
-      await expect(page).toHaveURL(/\/invoices\/review\/[0-9a-f-]+\?status=unpaid$/);
+      await expect(page).toHaveURL(url => url.pathname === '/nodes/lnd-lab/invoices' && url.searchParams.get('status') === 'unpaid' && url.searchParams.get('operation') === completed.id);
       await page.keyboard.press('Escape');
       await expect(dialog).toBeVisible();
       expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(0);
@@ -51,7 +52,7 @@ for (const width of [390, 1440]) {
       await page.keyboard.press('Enter');
       await expect(dialog).toHaveCount(0);
       await expect(page).toHaveURL('/nodes/lnd-lab/invoices?status=unpaid');
-      await expect(trigger).toBeFocused();
+      await expect(page.getByRole('button', { name: 'Send and receive', exact: true })).toBeFocused();
     });
 
     test('keyboard palette pushes, pops, forwards, cold-loads and selects a non-payment sheet', async ({ page }) => {

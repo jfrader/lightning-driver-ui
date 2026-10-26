@@ -16,6 +16,7 @@ import { isKeyOf } from '../../lib/guards';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
+import { MoneyActionButton } from '../shell/MoneyActionButton';
 import { PAYMENT_STATE, PAYMENT_STATE_LABEL } from './labels';
 import { PAYMENT_SORT, paymentColumns } from './payment-columns';
 import { PaymentInspector } from './PaymentInspector';
@@ -88,9 +89,9 @@ export function PaymentsPage() {
         title="Payments"
         actions={
           <CapabilityAction node={node} capability="pay_invoice">
-            <ButtonLink to="/nodes/$nodeId/payments/new" params={{ nodeId: node.id }} search={search} size={size} tone="accent" variant="solid">
+            <MoneyActionButton action="pay_invoice" size={size} tone="accent" variant="solid">
               Pay invoice
-            </ButtonLink>
+            </MoneyActionButton>
           </CapabilityAction>
         }
       />

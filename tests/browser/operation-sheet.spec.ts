@@ -49,13 +49,16 @@ for (const width of [390, 1440]) {
       expect(await inspector.evaluate((element) => element.contains(document.activeElement))).toBe(false);
     });
 
-    test('keyboard opens over the list, traps focus, preserves state and returns focus on Escape', async ({ page }) => {
+    test('keyboard palette opens the addressable route sheet, traps focus and preserves list state on Escape', async ({ page }) => {
       await installSyntheticApi(page);
       const hash = fixture('payments_page').items[0].payment_hash;
       const path = `/nodes/lnd-lab/payments?status=succeeded&sort=amount&dir=asc&selected=${hash}`;
       await page.goto(path);
-      const trigger = page.getByRole('link', { name: 'Pay invoice', exact: true });
+      const trigger = page.getByRole('button', { name: 'Pay invoice', exact: true });
       await tabTo(page, trigger);
+      await page.keyboard.press('Control+k');
+      await page.getByRole('combobox', { name: 'Go to', exact: true }).fill('Pay invoice');
+      await page.keyboard.press('ArrowDown');
       await page.keyboard.press('Enter');
       const dialog = page.getByRole('dialog', { name: 'Pay invoice' });
       await expect(dialog).toBeVisible();
@@ -141,7 +144,7 @@ for (const width of [390, 1440]) {
       await expect(dialog).toBeVisible();
       await page.mouse.click(10, 10);
       await expect(dialog).toHaveCount(0);
-      await page.getByRole('link', { name: 'Pay invoice', exact: true }).click();
+      await page.goto('/nodes/lnd-lab/payments/new');
       await dialog.getByRole('textbox', { name: /^Invoice/ }).fill('SYNTHETIC_BOLT11_PAYMENT_NOT_PAYABLE');
       await dialog.getByRole('button', { name: 'Check invoice' }).click();
       await dialog.getByRole('button', { name: 'Review payment' }).click();

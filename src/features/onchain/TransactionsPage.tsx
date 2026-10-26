@@ -17,6 +17,7 @@ import { ShortIdentifier } from '../display/Identifier';
 import { CapabilityAction } from '../nodes/CapabilityAction';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { useControlSize } from '../shell/use-shell-layout';
+import { MoneyActionButton } from '../shell/MoneyActionButton';
 import {
   TransactionBlock,
   TransactionConfirmations,
@@ -105,7 +106,6 @@ export function TransactionsPage() {
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const transactions = useQuery(transactionsQueryOptions(node.id, { cursor: search.cursor }));
-  const params = { nodeId: node.id };
   const selected = search.selected
     ? (transactions.data?.items.find((transaction) => transaction.txid === search.selected) ?? null)
     : undefined;
@@ -130,14 +130,14 @@ export function TransactionsPage() {
         actions={
           <>
             <CapabilityAction node={node} capability="new_address">
-              <ButtonLink to="/nodes/$nodeId/onchain/receive" params={params} search={search} size={size} variant="outline">
+              <MoneyActionButton action="new_address" size={size} variant="outline">
                 New address
-              </ButtonLink>
+              </MoneyActionButton>
             </CapabilityAction>
             <CapabilityAction node={node} capability="send_onchain">
-              <ButtonLink to="/nodes/$nodeId/onchain/send" params={params} search={search} size={size} variant="outline">
+              <MoneyActionButton action="send_onchain" size={size} variant="outline">
                 Send on-chain
-              </ButtonLink>
+              </MoneyActionButton>
             </CapabilityAction>
           </>
         }
