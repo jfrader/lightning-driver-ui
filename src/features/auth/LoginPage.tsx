@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { Alert, Button, Flex, styled } from '@jfrader/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { useControlSize } from '../shell/use-shell-layout';
 import { visuallyHidden } from '../shell/visually-hidden';
 import { AuthLayout } from './AuthLayout';
 import { signInWithNostr, signInWithPasskey } from './ceremonies';
-import { EnrollForm } from './EnrollForm';
 import { HostInstruction } from './HostInstruction';
 import { LOGIN_NOTICE, loginState } from './login-state';
 import { NostrSignerControl } from './NostrSignerControl';
@@ -22,6 +21,7 @@ import { METHOD_COPY, SIGN_IN_COPY, signInProblem } from './sign-in-problem';
 import { useCooldown } from './use-cooldown';
 import { useSessionStart } from './use-session-start';
 
+const EnrollForm = lazy(() => import('./EnrollForm').then((module) => ({ default: module.EnrollForm })));
 const route = getRouteApi('/login');
 
 const Hidden = styled.span(visuallyHidden);
@@ -113,20 +113,22 @@ export function LoginPage() {
     case 'enroll':
       return (
         <AuthLayout title="Enroll">
-          <EnrollForm
-            browser={browser}
-            onBack={
-              bootstrap.data?.login_available
-                ? () => {
-                    if (enteredEnrollment.current) router.history.back();
-                    else void navigate({ to: '/login', search: { redirect, notice }, replace: true });
-                    setBackFromEnroll(true);
-                  }
-                : null
-            }
-            onSession={enter}
-            autoFocus={enteredEnrollment.current}
-          />
+          <Suspense fallback={<Hidden role="status">Loading enrollment</Hidden>}>
+            <EnrollForm
+              browser={browser}
+              onBack={
+                bootstrap.data?.login_available
+                  ? () => {
+                      if (enteredEnrollment.current) router.history.back();
+                      else void navigate({ to: '/login', search: { redirect, notice }, replace: true });
+                      setBackFromEnroll(true);
+                    }
+                  : null
+              }
+              onSession={enter}
+              autoFocus={enteredEnrollment.current}
+            />
+          </Suspense>
         </AuthLayout>
       );
     case 'sign_in': {

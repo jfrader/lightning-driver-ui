@@ -170,7 +170,7 @@ describe('sign in with Nostr', () => {
 describe('enroll with Nostr', () => {
   async function openNostrEnrollment(view: ReturnType<typeof renderApp>) {
     await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
-    await view.user.click(screen.getByRole('radio', { name: 'Nostr' }));
+    await view.user.click(await screen.findByRole('radio', { name: 'Nostr' }));
   }
 
   it('offers the method choice after the token, Nostr disabled with its reason without an extension', async () => {
@@ -178,7 +178,7 @@ describe('enroll with Nostr', () => {
     const view = renderApp('/login');
     await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
 
-    expect(screen.getByLabelText(/^Enrollment token/)).toHaveFocus();
+    expect(await screen.findByLabelText(/^Enrollment token/)).toHaveFocus();
     expect(screen.getByRole('radio', { name: 'Passkey' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Nostr' })).toBeDisabled();
     expect(screen.getByText('No Nostr extension found.')).toBeInTheDocument();
@@ -193,7 +193,7 @@ describe('enroll with Nostr', () => {
     const view = renderApp('/login');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Nostr' })).toBeChecked();
+    expect(await screen.findByRole('radio', { name: 'Nostr' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Passkey' })).toBeDisabled();
     await view.user.type(screen.getByLabelText(/^Enrollment token/), HEX_TOKEN);
     await view.user.click(screen.getByRole('button', { name: 'Sign with Nostr' }));

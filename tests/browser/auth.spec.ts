@@ -17,7 +17,10 @@ test('@layout sign-in and enrollment actions remain contained at 200% text size'
   for (const enrollment of [false, true]) {
     await page.goto('/login');
     await expect(page.getByRole('button', { name: 'Continue with passkey' })).toBeVisible();
-    if (enrollment) await page.getByRole('button', { name: 'Enroll a sign-in method' }).click();
+    if (enrollment) {
+      await page.getByRole('button', { name: 'Enroll a sign-in method' }).click();
+      await expect(page.getByRole('textbox', { name: /^Enrollment token/ })).toBeVisible();
+    }
     await doubleText(page);
     await expectNoHorizontalOverflow(page);
     for (const button of await page.getByRole('button').all()) {
