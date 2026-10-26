@@ -15,6 +15,8 @@ import { NodeChooser } from './NodeChooser';
 import { PhoneTabs } from './PhoneTabs';
 import { SideNav } from './SideNav';
 import { usePalette } from './use-palette';
+import { MoneySheetContext } from './money-sheet-context';
+import { useOverlayEntry } from './use-overlay-entry';
 import { useDesktopShell } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
 
@@ -143,6 +145,7 @@ export function AppShell() {
   const palette = usePalette();
   const { node, pathname } = useShellNode();
   const search = useSearch({ strict: false });
+  const moneySheet = useOverlayEntry('moneySheet', !!(search.send || search.receive || search.operation));
   const session = useCachedQueryData(sessionQueryOptions.queryKey);
   useSessionExpiry();
   if (!session) return null;
@@ -154,61 +157,63 @@ export function AppShell() {
 
   return (
     <OverlayInvokerContext value={palette.invoker}>
-      <SkipLink href={`#${CONTENT_ID}`}>Skip to content</SkipLink>
-      {desktop ? (
-        <Desktop>
-          <Rail aria-label="Node and sections">
-            <RailHead>
-              <NodeChooser />
-            </RailHead>
-            <RailBody>
-              <SideNav />
-            </RailBody>
-            <RailFoot>
-              <ThemeChoice />
-              <FootRow>
-                <Mark>
-                  <Wordmark />
-                  {APP_VERSION && <Version>App version {APP_VERSION}</Version>}
-                </Mark>
-                <LogoutButton />
-              </FootRow>
-            </RailFoot>
-          </Rail>
-          <Workspace>
-            <Suspense fallback={null}><StatusStrip onOpenPalette={() => palette.setOpen(true)} /></Suspense>
-            <DesktopMain id={CONTENT_ID} tabIndex={-1}>
+      <MoneySheetContext value={moneySheet}>
+        <SkipLink href={`#${CONTENT_ID}`}>Skip to content</SkipLink>
+        {desktop ? (
+          <Desktop>
+            <Rail aria-label="Node and sections">
+              <RailHead>
+                <NodeChooser />
+              </RailHead>
+              <RailBody>
+                <SideNav />
+              </RailBody>
+              <RailFoot>
+                <ThemeChoice />
+                <FootRow>
+                  <Mark>
+                    <Wordmark />
+                    {APP_VERSION && <Version>App version {APP_VERSION}</Version>}
+                  </Mark>
+                  <LogoutButton />
+                </FootRow>
+              </RailFoot>
+            </Rail>
+            <Workspace>
+              <Suspense fallback={null}><StatusStrip onOpenPalette={() => palette.setOpen(true)} /></Suspense>
+              <DesktopMain id={CONTENT_ID} tabIndex={-1}>
+                {content}
+              </DesktopMain>
+            </Workspace>
+          </Desktop>
+        ) : (
+          <>
+            <PhoneHeader>
+              <PhoneHeaderRow>
+                <NodeChooser />
+                <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
+              </PhoneHeaderRow>
+            </PhoneHeader>
+            <PhoneMain
+              id={CONTENT_ID}
+              tabIndex={-1}
+              onFocus={(event) => {
+                if (event.target !== event.currentTarget && event.target.matches(':focus-visible')) {
+                  event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                }
+              }}
+            >
+              <GroupLinks />
               {content}
-            </DesktopMain>
-          </Workspace>
-        </Desktop>
-      ) : (
-        <>
-          <PhoneHeader>
-            <PhoneHeaderRow>
-              <NodeChooser />
-              <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
-            </PhoneHeaderRow>
-          </PhoneHeader>
-          <PhoneMain
-            id={CONTENT_ID}
-            tabIndex={-1}
-            onFocus={(event) => {
-              if (event.target !== event.currentTarget && event.target.matches(':focus-visible')) {
-                event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-              }
-            }}
-          >
-            <GroupLinks />
-            {content}
-          </PhoneMain>
-          <PhoneTabs />
-        </>
-      )}
-      <Suspense fallback={null}>
-        {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
-        {node && search.operation && <GlobalMoneySheet key={node.id} node={node} />}
-      </Suspense>
+            </PhoneMain>
+            <PhoneTabs />
+          </>
+        )}
+        <Suspense fallback={null}>
+          {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
+          {node && search.operation && <GlobalMoneySheet key={node.id} node={node} />}
+        </Suspense>
+      </MoneySheetContext>
     </OverlayInvokerContext>
   );
 }
