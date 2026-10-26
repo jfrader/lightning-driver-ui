@@ -49,16 +49,25 @@ test('@layout enlarged Lightning header controls remain separate and quick actio
   await page.route('**/api/v1/nodes/lnd-lab', route => route.fulfill({ json: node }));
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await doubleText(page);
   const chooser = page.getByRole('combobox', { name: 'Node' });
-  const unresolved = page.getByRole('link', { name: /unresolved$/, exact: false }).first();
+  await expect(chooser).toHaveAttribute('title', 'LND lab · Regtest');
+  const unresolved = page.getByRole('button', { name: 'Operations: 1', exact: true });
   await expectNoHorizontalOverflow(page, 1);
   const first = await chooser.boundingBox();
   const second = await unresolved.boundingBox();
+  await page.screenshot({ path: test.info().outputPath('enlarged-header-320.png') });
   if (!first || !second) throw new Error('Missing header control geometry');
   expect(first.x + first.width <= second.x || second.x + second.width <= first.x || first.y + first.height <= second.y || second.y + second.height <= first.y, 'header targets must not overlap').toBe(true);
-  for (const control of [chooser, unresolved, page.getByRole('link', { name: 'Pay invoice', exact: true }), page.getByRole('link', { name: 'Receive', exact: true })]) {
+  const chooserHit = await chooser.evaluate((element) => {
+    const r = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return hit === element || element.contains(hit);
+  });
+  expect(chooserHit).toBe(true);
+  for (const control of [unresolved, page.getByRole('link', { name: 'Pay invoice', exact: true }), page.getByRole('link', { name: 'Receive', exact: true })]) {
     await control.scrollIntoViewIfNeeded();
     const usable = await control.evaluate(element => {
       const r = element.getBoundingClientRect();
@@ -119,7 +128,7 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   });
   expect.soft(unitHit, 'display unit control at 200% text').toBe(true);
   const stripControls = [
-    page.getByRole('link', { name: '1 unresolved', exact: true }),
+    page.getByRole('button', { name: 'Operations: 1', exact: true }),
     page.getByRole('button', { name: /^Go to/ }),
   ];
   for (const control of stripControls) {
@@ -269,8 +278,7 @@ test('@layout every status strip control shares one height and baseline', async 
   await installSyntheticApi(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/nodes/lnd-lab');
-  await expect(page.getByRole('main')).toBeVisible();
-  await page.waitForTimeout(300);
+  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
   const controls = page.evaluate(() => {
     const strip = [...document.querySelectorAll('div')].find((element) => {
       const style = getComputedStyle(element);

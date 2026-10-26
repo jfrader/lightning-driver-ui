@@ -62,7 +62,7 @@ describe('read-only node', () => {
   it('shows disabled mutation entries with announced reasons on the overview without posting operations', async () => {
     const { user } = renderApp(`/nodes/${RO}`);
     expect(await screen.findByRole('heading', { name: readOnlyNode.label })).toBeInTheDocument();
-    expect(within(screen.getByRole('list', { name: 'Node status' })).getByText('Read-only')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Node' })).toHaveAttribute('title', expect.stringContaining('read-only'));
     expect(await screen.findByRole('region', { name: 'Balances' })).toBeInTheDocument();
     await expectDisabledEntries(['Pay invoice', 'Create invoice', 'New address', 'Send on-chain', 'Open channel'], user);
   });

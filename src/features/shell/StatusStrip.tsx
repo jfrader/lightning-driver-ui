@@ -5,7 +5,6 @@ import { STRIP_HEIGHT } from '../../config';
 import { wrappingControlText } from '../../components/control-styles';
 import { UnitToggle } from '../display/UnitToggle';
 import { RegistryFacts, StatusFacts } from './StatusFacts';
-import { UnresolvedButton } from './UnresolvedButton';
 import { useShellNode } from './use-shell-node';
 import { GlobalMoneyActions } from './GlobalMoneyActions';
 
@@ -52,12 +51,11 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <RegistryFacts observedAt={fleet.data.observed_at} stale={fleet.data.stale} />
       )}
       <Controls>
-        {node && <UnresolvedButton node={node} />}
         <GlobalMoneyActions node={node} />
-        <UnitToggle />
+        <UnitToggle size="lg" />
         <Button
-          size="sm"
-          sx={wrappingControlText('sm')}
+          size="lg"
+          sx={wrappingControlText('lg')}
           variant="ghost"
           aria-keyshortcuts="Control+K Meta+K"
           onClick={onOpenPalette}

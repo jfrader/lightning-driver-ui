@@ -27,7 +27,7 @@ test('a polled terminal outcome refreshes unresolved counts and attention withou
   await page.getByRole('main').getByRole('link', { name: 'LND lab', exact: true }).click();
   await page.getByRole('main').getByRole('link', { name: 'View operation' }).click();
   await expect.poll(() => reads).toBeGreaterThan(0);
-  await expect(page.getByRole('link', { name: '1 unresolved', exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
   const sidebar = page.getByRole('navigation', { name: 'Node sections' });
   const desktop = (page.viewportSize()?.width ?? 0) >= 1024;
   if (desktop) await expect(sidebar.getByRole('link', { name: /Operations.*1 unresolved/ })).toBeVisible();
@@ -35,6 +35,7 @@ test('a polled terminal outcome refreshes unresolved counts and attention withou
   terminal = true;
   // The counter disappears when nothing is unresolved; that is the visible proof the poll landed.
   await expect(page.getByRole('link', { name: '1 unresolved', exact: true })).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.getByRole('button', { name: /^Operations:/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: '0 unresolved', exact: true })).toHaveCount(0);
   if (desktop) await expect(sidebar.getByRole('link', { name: 'Operations', exact: true })).toBeVisible();
 

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Button, styled } from '@jfrader/ui';
+import { styled } from '@jfrader/ui';
 import { Outlet, useSearch } from '@tanstack/react-router';
 import { useCachedQueryData } from '../../api/use-cached-query-data';
 import { Wordmark } from '../../components/Wordmark';
@@ -14,16 +14,13 @@ import { GroupLinks } from './GroupLinks';
 import { NodeChooser } from './NodeChooser';
 import { PhoneTabs } from './PhoneTabs';
 import { SideNav } from './SideNav';
-import { StatusFacts } from './StatusFacts';
 import { StatusStrip } from './StatusStrip';
-import { UnresolvedButton } from './UnresolvedButton';
 import { usePalette } from './use-palette';
 import { useDesktopShell } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
 import { GlobalMoneyActions } from './GlobalMoneyActions';
 
 const CONTENT_ID = 'content';
-const NODE_CHOICE_MEASURE = '8em';
 const NavPalette = lazy(() => import('./NavPalette').then((module) => ({ default: module.NavPalette })));
 const GlobalMoneySheet = lazy(() => import('./GlobalMoneySheet').then((module) => ({ default: module.GlobalMoneySheet })));
 
@@ -121,10 +118,11 @@ const PhoneHeader = styled.header(({ theme }) => ({
 const PhoneHeaderRow = styled.div(({ theme }) => ({
   display: 'flex',
   minInlineSize: 0,
-  flexWrap: 'wrap',
+  flexWrap: 'nowrap',
   alignItems: 'center',
   gap: theme.space[2],
-  '& > :first-child': { flex: '1 1 0', minInlineSize: `min(100%, ${NODE_CHOICE_MEASURE})`, inlineSize: 'auto' },
+  '& > :first-child': { flex: '1 1 0', minInlineSize: 0, inlineSize: 'auto' },
+  '& > button': { flexShrink: 0 },
 }));
 
 const PhoneMain = styled.main(({ theme }) => ({
@@ -189,16 +187,8 @@ export function AppShell() {
           <PhoneHeader>
             <PhoneHeaderRow>
               <NodeChooser />
-              <Button size="lg" variant="ghost" aria-label="Search" onClick={() => palette.setOpen(true)}>
-                <svg aria-hidden="true" focusable="false" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="10" cy="10" r="6" />
-                  <path d="m15 15 6 6" />
-                </svg>
-              </Button>
-              {node && <UnresolvedButton node={node} />}
               <GlobalMoneyActions node={node} />
             </PhoneHeaderRow>
-            {node && <StatusFacts node={node} compact />}
           </PhoneHeader>
           <PhoneMain
             id={CONTENT_ID}
@@ -217,7 +207,7 @@ export function AppShell() {
       )}
       <Suspense fallback={null}>
         {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
-        {node && (search.send || search.receive || search.operation) && <GlobalMoneySheet key={node.id} node={node} />}
+        {node && search.operation && <GlobalMoneySheet key={node.id} node={node} />}
       </Suspense>
     </OverlayInvokerContext>
   );
