@@ -125,24 +125,26 @@ export function TransactionsPage() {
 
   return (
     <Flex direction="column" gap="md">
-      <PageHeader
-        title="On-chain"
-        actions={
-          <>
-            <CapabilityAction node={node} capability="new_address">
-              <MoneyActionButton action="new_address" size={size} variant="outline">
-                New address
-              </MoneyActionButton>
-            </CapabilityAction>
-            <CapabilityAction node={node} capability="send_onchain">
-              <MoneyActionButton action="send_onchain" size={size} variant="outline">
-                Send on-chain
-              </MoneyActionButton>
-            </CapabilityAction>
-          </>
-        }
-      />
       <InspectorLayout
+        header={
+          <PageHeader
+            title="On-chain"
+            actions={
+              <>
+                <CapabilityAction node={node} capability="new_address">
+                  <MoneyActionButton action="new_address" size={size} variant="outline">
+                    New address
+                  </MoneyActionButton>
+                </CapabilityAction>
+                <CapabilityAction node={node} capability="send_onchain">
+                  <MoneyActionButton action="send_onchain" size={size} variant="outline">
+                    Send on-chain
+                  </MoneyActionButton>
+                </CapabilityAction>
+              </>
+            }
+          />
+        }
         list={list}
         inspectorLabel="Selected transaction"
         inspector={

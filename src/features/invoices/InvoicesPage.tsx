@@ -122,17 +122,19 @@ export function InvoicesPage() {
 
   return (
     <Flex direction="column" gap="md">
-      <PageHeader
-        title="Invoices"
-        actions={
-          <CapabilityAction node={node} capability="create_invoice">
-            <MoneyActionButton action="create_invoice" size={size} tone="accent" variant="solid">
-              Create invoice
-            </MoneyActionButton>
-          </CapabilityAction>
-        }
-      />
       <InspectorLayout
+        header={
+          <PageHeader
+            title="Invoices"
+            actions={
+              <CapabilityAction node={node} capability="create_invoice">
+                <MoneyActionButton action="create_invoice" size={size} tone="accent" variant="solid">
+                  Create invoice
+                </MoneyActionButton>
+              </CapabilityAction>
+            }
+          />
+        }
         list={list}
         inspectorLabel="Selected invoice"
         inspector={

@@ -60,8 +60,8 @@ export function BitcoinPeersPage() {
   const selected = peers.data?.items.find((peer) => peer.id === search.selected);
   return (
     <Flex direction="column" gap="md">
-      <PageHeader title="Peers" />
       <InspectorLayout
+        header={<PageHeader title="Peers" />}
         inspectorLabel="Selected Bitcoin peer"
         list={
           <PagedList

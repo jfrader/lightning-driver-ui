@@ -85,17 +85,19 @@ export function PaymentsPage() {
 
   return (
     <Flex direction="column" gap="md">
-      <PageHeader
-        title="Payments"
-        actions={
-          <CapabilityAction node={node} capability="pay_invoice">
-            <MoneyActionButton action="pay_invoice" size={size} tone="accent" variant="solid">
-              Pay invoice
-            </MoneyActionButton>
-          </CapabilityAction>
-        }
-      />
       <InspectorLayout
+        header={
+          <PageHeader
+            title="Payments"
+            actions={
+              <CapabilityAction node={node} capability="pay_invoice">
+                <MoneyActionButton action="pay_invoice" size={size} tone="accent" variant="solid">
+                  Pay invoice
+                </MoneyActionButton>
+              </CapabilityAction>
+            }
+          />
+        }
         list={list}
         inspectorLabel="Selected payment"
         inspector={

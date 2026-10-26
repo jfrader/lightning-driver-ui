@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, type ReactNode, type MouseEvent } from 'react';
+import { Flex } from '@jfrader/ui';
 import { WorkLayout } from './WorkLayout';
 
 interface InspectorLayoutProps {
+  header?: ReactNode;
   list: ReactNode;
   /** The selected record's inspector, or `null` when nothing is selected. */
   inspector: ReactNode | null;
@@ -9,7 +11,7 @@ interface InspectorLayoutProps {
 }
 
 /** A resource list with its inspector: beside it from 80rem, below it otherwise, and absent when nothing is selected. */
-export function InspectorLayout({ list, inspector, inspectorLabel }: InspectorLayoutProps) {
+export function InspectorLayout({ header, list, inspector, inspectorLabel }: InspectorLayoutProps) {
   const aside = useRef<HTMLElement>(null);
   const invoker = useRef<HTMLElement | null>(null);
   const pending = useRef(false);
@@ -38,5 +40,18 @@ export function InspectorLayout({ list, inspector, inspectorLabel }: InspectorLa
     }
     wasOpen.current = open;
   });
-  return <WorkLayout main={<div onClickCapture={captureOpen}>{list}</div>} aside={inspector} asideLabel={inspectorLabel} asideRef={aside} asideTabIndex={-1} />;
+  return (
+    <WorkLayout
+      main={
+        <Flex direction="column" gap="md" onClickCapture={captureOpen}>
+          {header}
+          {list}
+        </Flex>
+      }
+      aside={inspector}
+      asideLabel={inspectorLabel}
+      asideRef={aside}
+      asideTabIndex={-1}
+    />
+  );
 }
