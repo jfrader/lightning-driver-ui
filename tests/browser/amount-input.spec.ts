@@ -9,6 +9,45 @@ const unitChoice = (page: Page, unit: 'sat' | 'BTC') =>
   page.getByRole('radiogroup', { name: 'Amount unit' }).getByRole('radio', { name: unit });
 const creates = (requests: RecordedRequest[]) => requests.filter((r) => r.path.endsWith('/operations'));
 
+for (const width of [390, 1440]) {
+  test(`@layout amount inputs align with their units at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await installSyntheticApi(page);
+    for (const [path, label] of [
+      ['/nodes/lnd-lab?send=1&action=send_onchain', 'Amount'],
+      ['/nodes/lnd-lab?receive=1&action=create_invoice', 'Amount'],
+      ['/nodes/lnd-lab/channels/new', 'Channel size'],
+    ] as const) {
+      await page.goto(path);
+      const input = page.getByRole('textbox', { name: new RegExp(`^${label} \\(sat\\)`) });
+      await expect(input).toBeVisible();
+      await input.fill('10000');
+      await page.evaluate(() => document.fonts.ready);
+      await expect.poll(async () => input.evaluate((element) => {
+        const group = element.closest('[data-ui="text-field"]')!.parentElement!.querySelector('[role="radiogroup"]')!;
+        const a = element.getBoundingClientRect();
+        const b = group.getBoundingClientRect();
+        return Math.max(Math.abs(a.top - b.top), Math.abs(a.bottom - b.bottom));
+      })).toBeLessThanOrEqual(1);
+      await expect.poll(async () => input.evaluate((element) => {
+        const radio = element.closest('[data-ui="text-field"]')!.parentElement!.querySelector('[role="radio"]')!;
+        const text = radio.querySelector('span[id]')!;
+        const marker = document.createElement('span');
+        marker.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+        text.append(marker);
+        const radioBaseline = marker.getBoundingClientRect().top;
+        marker.remove();
+        const canvas = document.createElement('canvas').getContext('2d')!;
+        canvas.font = getComputedStyle(element).font;
+        const metrics = canvas.measureText('10000');
+        const rect = element.getBoundingClientRect();
+        const inputBaseline = rect.top + rect.height / 2 + (metrics.fontBoundingBoxAscent - metrics.fontBoundingBoxDescent) / 2;
+        return Math.abs(inputBaseline - radioBaseline);
+      })).toBeLessThanOrEqual(1);
+    }
+  });
+}
+
 async function openReceive(page: Page): Promise<RecordedRequest[]> {
   const requests = await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
