@@ -1,4 +1,5 @@
-import { theme, type ButtonProps } from '@jfrader/ui';
+import type { ButtonProps } from '@jfrader/ui';
+import { vars as theme } from '@jfrader/tokens/vars';
 
 const controlHeight = { sm: theme.space[8], md: theme.space[10], lg: theme.space[12] };
 

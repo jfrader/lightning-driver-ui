@@ -1,12 +1,18 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { nodeKeys } from '../../api/node-queries';
 import { booleanParam, moneySearch, operationIdParam } from '../../app/search';
 import { fixture } from '../../test/fixtures';
 import { mockJournal, operation } from '../../test/operation-journal';
 import { renderApp } from '../../test/render-app';
 import { api, readOnlyNode, server } from '../../test/server';
+import { assertion } from '../../test/webauthn-mock';
+
+const webauthn = vi.hoisted(() => ({ startAuthentication: vi.fn(), startRegistration: vi.fn() }));
+vi.mock('@simplewebauthn/browser', async (importOriginal) =>
+  (await import('../../test/webauthn-mock')).webauthnModule(importOriginal, webauthn),
+);
 
 describe('global money actions', () => {
   it('validates the shared codecs and preserves action deep links', () => {
@@ -80,6 +86,26 @@ describe('global money actions', () => {
     items = [];
     await view.queryClient.invalidateQueries({ queryKey: nodeKeys.all('lnd-lab') });
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Operations:/ })).not.toBeInTheDocument());
+  });
+
+  it('leaves an unanswered confirmation in the operation view even while the journal still awaits confirmation', async () => {
+    webauthn.startAuthentication.mockResolvedValue(assertion);
+    const created = operation('pay_invoice');
+    const calls = mockJournal({ created, confirm: () => HttpResponse.error() });
+    const view = renderApp(`/nodes/lnd-lab?operation=${created.id}`);
+    await view.user.click(await screen.findByRole('button', { name: 'Pay with passkey' }));
+    expect(await screen.findByRole('heading', { name: 'Payment operation' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Review payment' })).not.toBeInTheDocument();
+    expect(view.history.location.search).toBe(`?operation=${created.id}&confirmation=unanswered`);
+    expect(calls.confirms).toHaveLength(1);
+  });
+
+  it.each(['send', 'receive'])('returns from a %s form to its menu without changing mode', async (mode) => {
+    const action = mode === 'send' ? 'pay_invoice' : 'new_address';
+    const view = renderApp(`/nodes/lnd-lab?${mode}=1&action=${action}`);
+    await view.user.click(await screen.findByRole('button', { name: 'Back' }));
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(view.history.location.search).toBe(`?${mode}=1`);
   });
 
   it.each(['/fleet', '/more'])('disables the single control without a node on %s', async (path) => {

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Button, Kbd, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { fleetQueryOptions } from '../../api/node-queries';
@@ -6,7 +7,8 @@ import { wrappingControlText } from '../../components/control-styles';
 import { UnitToggle } from '../display/UnitToggle';
 import { RegistryFacts, StatusFacts } from './StatusFacts';
 import { useShellNode } from './use-shell-node';
-import { GlobalMoneyActions } from './GlobalMoneyActions';
+
+const GlobalMoneyActions = lazy(() => import('./GlobalMoneyActions').then((module) => ({ default: module.GlobalMoneyActions })));
 
 const Strip = styled.div(({ theme }) => ({
   position: 'sticky',
@@ -51,11 +53,11 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <RegistryFacts observedAt={fleet.data.observed_at} stale={fleet.data.stale} />
       )}
       <Controls>
-        <GlobalMoneyActions node={node} />
-        <UnitToggle size="lg" />
+        <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
+        <UnitToggle />
         <Button
-          size="lg"
-          sx={wrappingControlText('lg')}
+          size="sm"
+          sx={wrappingControlText('sm')}
           variant="ghost"
           aria-keyshortcuts="Control+K Meta+K"
           onClick={onOpenPalette}

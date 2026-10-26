@@ -1,5 +1,6 @@
 import { lazy, Suspense, useContext, useLayoutEffect, useRef } from 'react';
-import { Morph, styled } from '@jfrader/ui';
+import { styled } from '@jfrader/ui';
+import { Morph } from '@jfrader/ui/morph';
 import type { NodeSummary } from '../../api/types';
 import { MONEY_ACTIONS } from '../../app/search';
 import { OverlayInvokerContext } from '../../components/overlay-invoker-context';

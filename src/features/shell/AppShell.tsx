@@ -14,15 +14,15 @@ import { GroupLinks } from './GroupLinks';
 import { NodeChooser } from './NodeChooser';
 import { PhoneTabs } from './PhoneTabs';
 import { SideNav } from './SideNav';
-import { StatusStrip } from './StatusStrip';
 import { usePalette } from './use-palette';
 import { useDesktopShell } from './use-shell-layout';
 import { useShellNode } from './use-shell-node';
-import { GlobalMoneyActions } from './GlobalMoneyActions';
 
 const CONTENT_ID = 'content';
 const NavPalette = lazy(() => import('./NavPalette').then((module) => ({ default: module.NavPalette })));
 const GlobalMoneySheet = lazy(() => import('./GlobalMoneySheet').then((module) => ({ default: module.GlobalMoneySheet })));
+const GlobalMoneyActions = lazy(() => import('./GlobalMoneyActions').then((module) => ({ default: module.GlobalMoneyActions })));
+const StatusStrip = lazy(() => import('./StatusStrip').then((module) => ({ default: module.StatusStrip })));
 
 const SkipLink = styled.a(({ theme }) => ({
   position: 'absolute',
@@ -176,7 +176,7 @@ export function AppShell() {
             </RailFoot>
           </Rail>
           <Workspace>
-            <StatusStrip onOpenPalette={() => palette.setOpen(true)} />
+            <Suspense fallback={null}><StatusStrip onOpenPalette={() => palette.setOpen(true)} /></Suspense>
             <DesktopMain id={CONTENT_ID} tabIndex={-1}>
               {content}
             </DesktopMain>
@@ -187,7 +187,7 @@ export function AppShell() {
           <PhoneHeader>
             <PhoneHeaderRow>
               <NodeChooser />
-              <GlobalMoneyActions node={node} />
+              <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
             </PhoneHeaderRow>
           </PhoneHeader>
           <PhoneMain

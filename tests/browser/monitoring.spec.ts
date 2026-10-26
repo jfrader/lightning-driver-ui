@@ -21,7 +21,7 @@ test('Bitcoin workspace has monitoring sections, peers and no Lightning actions'
   for (const name of ['Needs attention', 'Chain', 'Network', 'Mempool', 'Storage', 'Node details']) {
     await expect(page.getByRole('main').getByRole('heading', { name, exact: true })).toBeVisible();
   }
-  await expect(page.getByText('Monitor only', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Node' })).toHaveAccessibleDescription('Online · Monitor only');
   await expect(page.getByText('9,007,199,254,740,993 bytes')).toBeVisible();
   const nav = page.getByRole('navigation', {
     name: (page.viewportSize()?.width ?? 0) < 1024 ? 'Sections' : 'Node sections',
@@ -44,7 +44,7 @@ test('Bitcoin workspace has monitoring sections, peers and no Lightning actions'
 test('Bitcoin IBD stays Online with progress; mismatch names both networks', async ({ page }) => {
   await installMonitoringApi(page, { syncing: true, mismatch: true });
   await page.goto('/nodes/bitcoin-lab');
-  await expect(page.getByText('Online', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Node' })).toHaveAccessibleDescription('Online · Monitor only');
   await expect(page.getByText('Syncing · 23.45%', { exact: true })).toBeVisible();
   await expect(page.getByText('Network mismatch', { exact: true })).toBeVisible();
   await expect(page.getByText('Expected Testnet4 · Reported Mainnet')).toBeVisible();
@@ -177,7 +177,7 @@ test('unavailable watchtower roles are guarded without reading their endpoints',
 test('offline Bitcoin retains configured peer navigation', async ({ page }) => {
   await installMonitoringApi(page, { offline: true, error: true });
   await page.goto('/nodes/bitcoin-lab');
-  await expect(page.getByText('Offline', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Node' })).toHaveAccessibleDescription('Offline · Monitor only');
   const nav = page.getByRole('navigation', {
     name: (page.viewportSize()?.width ?? 0) < 1024 ? 'Sections' : 'Node sections',
   });

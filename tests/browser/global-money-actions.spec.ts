@@ -25,9 +25,10 @@ for (const width of [390, 1440]) {
       await expect(operations).toBeVisible();
       const boxes = await Promise.all([chooser, operations, money].map((control) => control.boundingBox()));
       expect(boxes.every(Boolean)).toBe(true);
-      for (const box of boxes) {
+      const stripBoxes = width < 1024 ? boxes : boxes.slice(1);
+      for (const box of stripBoxes) {
         expect(box!.height).toBe(width < 1024 ? 48 : 32);
-        expect(Math.abs(box!.y + box!.height / 2 - (boxes[0]!.y + boxes[0]!.height / 2))).toBeLessThanOrEqual(2);
+        expect(Math.abs(box!.y + box!.height / 2 - (stripBoxes[0]!.y + stripBoxes[0]!.height / 2))).toBeLessThanOrEqual(2);
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
       if (width < 1024) await expect(page.getByRole('list', { name: 'Node status' })).toHaveCount(0);

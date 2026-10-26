@@ -57,7 +57,7 @@ for (const width of [390, 1440]) {
     test('keyboard palette pushes, pops, forwards, cold-loads and selects a non-payment sheet', async ({ page }) => {
       await installSyntheticApi(page);
       await page.goto('/nodes/lnd-lab/invoices?status=unpaid');
-      const trigger = page.getByRole('button', { name: width < 1024 ? 'Search' : /^Go to/ });
+      const trigger = page.getByRole('button', { name: width < 1024 ? 'Send and receive' : /^Go to/ });
       await tabTo(page, trigger);
       await page.keyboard.press('Control+k');
       const input = page.getByRole('combobox', { name: 'Go to', exact: true });

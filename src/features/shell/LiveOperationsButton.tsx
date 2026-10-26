@@ -9,18 +9,18 @@ import { formatInteger } from '../../lib/money';
 import { isInFlight, OPERATION_KIND, OPERATION_STAGE, OPERATION_STATE } from '../operations/labels';
 import { OperationAmount } from '../operations/OperationAmount';
 import { useOperationList } from '../operations/use-operation-list';
-import { useControlSize, useDesktopShell } from './use-shell-layout';
+import { useControlSize } from './use-shell-layout';
 
 const List = styled.ul(({ theme }) => ({ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: theme.space[4] }));
 
 function LiveTrigger(props: ComponentPropsWithRef<'button'>) {
-  return <Button {...props} size="lg" variant="ghost" sx={wrappingControlText('lg')} />;
+  const size = useControlSize();
+  return <Button {...props} size={size} variant="ghost" sx={wrappingControlText(size)} />;
 }
 
 export function LiveOperationsButton({ node }: { node: NodeSummary }) {
   const [open, setOpen] = useState(false);
   const size = useControlSize();
-  const desktop = useDesktopShell();
   const operations = useOperationList(node.id, { state: 'nonterminal' });
   const active = [...new Map(operations.data?.items.filter((operation) => operation.state === 'awaiting_confirmation' || isInFlight(operation.state)).map((operation) => [operation.id, operation])).values()];
   const more = !!(operations.data?.next_cursor || operations.data?.truncated);
@@ -47,7 +47,7 @@ export function LiveOperationsButton({ node }: { node: NodeSummary }) {
 
   if (operations.isPending || active.length === 0) return null;
   return (
-    <Popover open={open} onOpenChange={setOpen} placement="bottom-end" triggerLabel={<Pill tone="warning">{desktop ? `${count} ops` : count}</Pill>} label="Operations" slots={{ trigger: LiveTrigger }} slotProps={{ trigger: { 'aria-label': `Operations: ${count}` }, root: { sx: { flexShrink: 0 } } }} content={
+    <Popover open={open} onOpenChange={setOpen} placement="bottom-end" triggerLabel={<Pill tone="warning">{count}</Pill>} label="Operations" slots={{ trigger: LiveTrigger }} slotProps={{ trigger: { 'aria-label': `Operations: ${count}` }, root: { sx: { flexShrink: 0 } } }} content={
       <Flex direction="column" gap="md">
         {content}
         {more && <ButtonLink size={size} variant="ghost" to="/nodes/$nodeId/operations" params={{ nodeId: node.id }} search={{ state: 'nonterminal' }} onClick={() => setOpen(false)}>All unresolved operations</ButtonLink>}

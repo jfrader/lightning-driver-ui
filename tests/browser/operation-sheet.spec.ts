@@ -115,7 +115,7 @@ for (const width of [390, 1440]) {
       await installSyntheticApi(page);
       await page.goto('/nodes/lnd-lab/payments?sort=amount');
       await expect(page.getByRole('heading', { name: 'Payments', exact: true })).toBeVisible();
-      const trigger = page.getByRole('button', { name: width < 1024 ? 'Search' : /^Go to/ });
+      const trigger = page.getByRole('button', { name: width < 1024 ? 'Send and receive' : /^Go to/ });
       await tabTo(page, trigger);
       await page.keyboard.press('Control+k');
       await page.getByRole('combobox', { name: 'Go to', exact: true }).pressSequentially('Pay invoice');

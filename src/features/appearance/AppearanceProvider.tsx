@@ -1,7 +1,8 @@
 import { useCallback, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { Global } from '@emotion/react';
-import { ThemeRoot, theme } from '@jfrader/ui';
+import { ThemeRoot } from '@jfrader/ui';
+import { vars as theme } from '@jfrader/tokens/vars';
 import { LIGHT_SCHEME_QUERY, REDUCED_MOTION_MEDIA, REDUCED_MOTION_QUERY } from '../../config';
 import { useMediaQuery } from '../../lib/use-media-query';
 import { AppearanceContext } from './appearance-context';

@@ -126,8 +126,9 @@ test.describe('forced colors', () => {
           return { background: getComputedStyle(element).backgroundColor, word: (holder?.textContent ?? '').trim().slice(0, 30) };
         }),
     );
-    // Balance keys (4), the online marker, the unresolved marker and the payment state marker.
-    expect(keys.length).toBeGreaterThanOrEqual(7);
+    // Balance keys (4), the chooser's online marker and the payment state marker.
+    // Desktop also retains the status-strip markers; phone operations use a count pill.
+    expect(keys.length).toBeGreaterThanOrEqual(6);
     expect(keys.filter((key) => key.background === 'rgba(0, 0, 0, 0)' || key.word === '')).toEqual([]);
   });
 });

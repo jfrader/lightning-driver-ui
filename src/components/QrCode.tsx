@@ -1,5 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { Surface, ThemeRoot, styled, theme } from '@jfrader/ui';
+import { Surface, ThemeRoot, styled } from '@jfrader/ui';
+import { vars as theme } from '@jfrader/tokens/vars';
 
 const QR_SIZE_PX = 224;
 

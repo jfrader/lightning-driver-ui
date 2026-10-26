@@ -1,6 +1,7 @@
 import { useContext, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { BottomSheet, Button, Drawer, theme } from '@jfrader/ui';
+import { BottomSheet, Button, Drawer } from '@jfrader/ui';
+import { vars as theme } from '@jfrader/tokens/vars';
 import { useDesktopShell } from '../features/shell/use-shell-layout';
 import { OverlayInvokerContext } from './overlay-invoker-context';
 

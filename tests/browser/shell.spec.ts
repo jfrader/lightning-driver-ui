@@ -109,6 +109,9 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices');
   await expect(page.getByRole('heading', { name: 'Invoices', exact: true })).toBeVisible();
+  await expect(page.getByRole('radiogroup', { name: 'Display unit' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Go to/ })).toBeVisible();
   await doubleText(page);
   const rail = await page.getByRole('complementary', { name: 'Node and sections' }).boundingBox();
   if (!rail) throw new Error('Missing rail geometry');

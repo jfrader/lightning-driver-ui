@@ -1,5 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { Button, Flex, Morph, styled } from '@jfrader/ui';
+import { Button, Flex, styled } from '@jfrader/ui';
+import { Morph } from '@jfrader/ui/morph';
 import type { NodePolicy, NodeSummary } from '../../api/types';
 import { MONEY_ACTIONS, type MoneySearch } from '../../app/search';
 import { FlowFrame } from '../forms/FlowFrame';
