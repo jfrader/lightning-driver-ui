@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { styled } from '@jfrader/ui';
-import { Outlet, useSearch } from '@tanstack/react-router';
+import { Outlet, useLocation, useSearch } from '@tanstack/react-router';
 import { useCachedQueryData } from '../../api/use-cached-query-data';
 import { Wordmark } from '../../components/Wordmark';
 import { OverlayInvokerContext } from '../../components/overlay-invoker-context';
@@ -139,11 +139,21 @@ const PhoneMain = styled.main(({ theme }) => ({
   },
 }));
 
+function NodeMoneyActions() {
+  const { node } = useShellNode();
+  return <GlobalMoneyActions node={node} />;
+}
+
+function NodeMoneySheet() {
+  const { node } = useShellNode();
+  return node && <GlobalMoneySheet key={node.id} node={node} />;
+}
+
 /** The authenticated workbench: desktop sidebar + status strip, or phone header + bottom tabs. */
 export function AppShell() {
   const desktop = useDesktopShell();
   const palette = usePalette();
-  const { node, pathname } = useShellNode();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const search = useSearch({ strict: false });
   const moneySheet = useOverlayEntry('moneySheet', !!(search.send || search.receive || search.operation));
   const session = useCachedQueryData(sessionQueryOptions.queryKey);
@@ -191,7 +201,7 @@ export function AppShell() {
             <PhoneHeader>
               <PhoneHeaderRow>
                 <NodeChooser />
-                <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
+                <Suspense fallback={null}><NodeMoneyActions /></Suspense>
               </PhoneHeaderRow>
             </PhoneHeader>
             <PhoneMain
@@ -211,7 +221,7 @@ export function AppShell() {
         )}
         <Suspense fallback={null}>
           {palette.open && <NavPalette open onOpenChange={palette.setOpen} />}
-          {node && search.operation && <GlobalMoneySheet key={node.id} node={node} />}
+          {search.operation && <NodeMoneySheet />}
         </Suspense>
       </MoneySheetContext>
     </OverlayInvokerContext>

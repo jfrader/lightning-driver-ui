@@ -26,8 +26,8 @@ export function NodeChooser() {
   const size = 'lg';
   const { nodeId, node, destination, pathname } = useShellNode();
   // The fleet feeds the open listbox only; every screen already has its own node summary.
-  const [opened, setOpened] = useState(false);
-  const fleet = useQuery({ ...fleetQueryOptions(), enabled: opened });
+  const [open, setOpen] = useState(false);
+  const fleet = useQuery({ ...fleetQueryOptions(), enabled: open, staleTime: 0 });
 
   // The open node reads from its own summary, the read the header shows and refetches with every
   // observation; the fleet page may predate that observation.
@@ -48,7 +48,7 @@ export function NodeChooser() {
     <Select
       disabled={locked}
       value={nodeId ?? ALL_NODES}
-      onOpenChange={(open) => { if (open) setOpened(true); }}
+      onOpenChange={setOpen}
       onValueChange={(next) => {
         if (next === (nodeId ?? ALL_NODES)) return;
         if (next === ALL_NODES) {

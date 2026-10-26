@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { Flex, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
@@ -41,6 +41,7 @@ const Line = styled.div(({ theme }) => ({
 const Small = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
 
 type Open = (peer: Peer, label: ReactNode) => ReactNode;
+const getRowId = (peer: Peer) => peer.pubkey;
 
 function PeerAddress({ peer }: { peer: Peer }) {
   return peer.address ? <Mono>{peer.address}</Mono> : <NotReported>Address not reported</NotReported>;
@@ -88,7 +89,7 @@ function LightningPeersPage() {
   const navigate = route.useNavigate();
   const peers = useQuery(peersQueryOptions(node.id, { cursor: search.cursor }));
 
-  const open: Open = (peer, label) => (
+  const open: Open = useCallback((peer, label) => (
     <TextLink
       from="/nodes/$nodeId/peers"
       search={(previous) => ({ ...previous, selected: peer.pubkey })}
@@ -98,16 +99,18 @@ function LightningPeersPage() {
       {label}
       <VisuallyHidden>{` (Open peer ${peer.pubkey.slice(0, 8)})`}</VisuallyHidden>
     </TextLink>
-  );
+  ), []);
+  const peerColumns = useMemo(() => columns(open), [open]);
+  const renderRow = useCallback((peer: Peer) => <PeerRow peer={peer} open={open} />, [open]);
   const selected = search.selected ? (peers.data?.items.find((peer) => peer.pubkey === search.selected) ?? null) : undefined;
 
   const list = (
     <PagedList
       caption="Peers"
       query={peers}
-      columns={columns(open)}
-      getRowId={(peer) => peer.pubkey}
-      renderRow={(peer) => <PeerRow peer={peer} open={open} />}
+      columns={peerColumns}
+      getRowId={getRowId}
+      renderRow={renderRow}
       emptyTitle="No peers on this node."
       cursor={search.cursor}
       onCursor={(cursor) => void navigate({ search: { cursor } })}

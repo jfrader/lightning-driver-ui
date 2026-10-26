@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { Flex, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
@@ -48,6 +48,7 @@ const Meta = styled.span(({ theme }) => ({
 }));
 
 type Open = (channel: Channel, label: ReactNode) => ReactNode;
+const getRowId = (channel: Channel) => channel.id;
 
 function channelColumns(open: Open): ResourceColumn<Channel>[] {
   return [
@@ -86,7 +87,7 @@ export function ChannelsPage() {
   const navigate = route.useNavigate();
   const channels = useQuery(channelsQueryOptions(node.id, { state: search.state, cursor: search.cursor }));
 
-  const open: Open = (channel, label) => (
+  const open: Open = useCallback((channel, label) => (
     <TextLink
       from="/nodes/$nodeId/channels"
       search={(previous) => ({ ...previous, selected: channel.id })}
@@ -96,7 +97,9 @@ export function ChannelsPage() {
     >
       {label}
     </TextLink>
-  );
+  ), []);
+  const columns = useMemo(() => channelColumns(open), [open]);
+  const renderRow = useCallback((channel: Channel) => <ChannelRow channel={channel} open={open} />, [open]);
   const selected = search.selected
     ? (channels.data?.items.find((channel) => channel.id === search.selected) ?? null)
     : undefined;
@@ -113,9 +116,9 @@ export function ChannelsPage() {
       <PagedList
         caption="Channels"
         query={channels}
-        columns={channelColumns(open)}
-        getRowId={(channel) => channel.id}
-        renderRow={(channel) => <ChannelRow channel={channel} open={open} />}
+        columns={columns}
+        getRowId={getRowId}
+        renderRow={renderRow}
         emptyTitle={search.state ? `No channels in state ${CHANNEL_STATE[search.state].label}.` : 'No channels on this node.'}
         cursor={search.cursor}
         onCursor={(cursor) => void navigate({ search: (previous) => ({ ...previous, cursor, selected: undefined }) })}
