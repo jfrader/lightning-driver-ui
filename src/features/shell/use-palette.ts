@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { booleanCodec } from '../../app/search';
+import { useOverlayEntry } from './use-overlay-entry';
 
 declare module '@tanstack/react-router' {
   interface HistoryState { paletteEntry?: boolean }
@@ -22,6 +23,7 @@ export function usePalette() {
   const router = useRouter();
   const returnFocus = useRef<HTMLElement | null>(null);
   const invoker = useRef<HTMLElement | null>(null);
+  const entered = useOverlayEntry('paletteEntry', open);
 
   const setOpen = useCallback((next: boolean) => {
     if (next) {
@@ -31,13 +33,17 @@ export function usePalette() {
         returnFocus.current = document.activeElement;
         invoker.current = document.activeElement;
       }
+      entered.current = 'opened';
       void navigate({ to: '.', search: (previous) => ({ ...previous, palette: booleanCodec.serialize(next) }), state: (previous) => ({ ...previous, paletteEntry: true }), hash: location.hash, resetScroll: false });
       return;
     }
-    if (!open) return;
-    if (location.state.paletteEntry) router.history.back();
-    else void navigate({ to: '.', search: (previous) => ({ ...previous, palette: booleanCodec.serialize(next) }), hash: location.hash, replace: true, resetScroll: false });
-  }, [open, navigate, location.hash, location.state.paletteEntry, router]);
+    if (!open || entered.current === 'closing') return;
+    if (entered.current === 'opened' && location.state.paletteEntry) {
+      entered.current = 'closing';
+      router.history.back();
+    }
+    else void navigate({ to: '.', search: (previous) => ({ ...previous, palette: booleanCodec.serialize(next) }), state: (previous) => ({ ...previous, paletteEntry: undefined }), hash: location.hash, replace: true, resetScroll: false });
+  }, [open, navigate, location.hash, location.state.paletteEntry, router, entered]);
 
   useEffect(() => {
     if (open) return;
