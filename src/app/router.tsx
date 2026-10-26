@@ -11,7 +11,7 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router';
 import { isSessionLoss } from '../api/errors';
-import { nodeQueryOptions } from '../api/node-queries';
+import { feeEstimatesQueryOptions, nodePolicyQueryOptions, nodeQueryOptions } from '../api/node-queries';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
 import { RoutePending } from '../components/RoutePending';
@@ -194,10 +194,19 @@ function operationList(Page: RouteComponent) {
   return Object.assign(() => <OperationListLayout><Page /></OperationListLayout>, { preload: Page.preload });
 }
 
-function operationForm(Page: RouteComponent, props: Omit<ComponentProps<typeof OperationFormRoute>, 'children'>) {
-  return Object.assign(() => <OperationFormRoute {...props}><Page /></OperationFormRoute>, {
-    preload: async () => { await Promise.all([OperationFormRoute.preload?.(), Page.preload?.()]); },
-  });
+function operationForm<TParams extends { nodeId: string } = { nodeId: string }>(Page: RouteComponent, props: Omit<ComponentProps<typeof OperationFormRoute>, 'children'>) {
+  return {
+    component: Object.assign(() => <OperationFormRoute {...props}><Page /></OperationFormRoute>, {
+      preload: async () => { await Promise.all([OperationFormRoute.preload?.(), Page.preload?.()]); },
+    }),
+    loader: async ({ context, params }: { context: RouterContext; params: TParams }) => {
+      const policy = context.queryClient.prefetchQuery(nodePolicyQueryOptions(params.nodeId));
+      const estimates = ['open_channel', 'close_channel', 'send_onchain'].includes(props.kind)
+        ? context.queryClient.prefetchQuery(feeEstimatesQueryOptions(params.nodeId))
+        : undefined;
+      await Promise.all([policy, estimates]);
+    },
+  };
 }
 
 function operationReview(list: ComponentProps<typeof OperationReviewRoute>['list']) {
@@ -223,7 +232,7 @@ const invoicesRoute = createRoute({
   }),
   component: operationList(InvoicesPage),
 });
-const receiveInvoiceRoute = createRoute({ getParentRoute: () => invoicesRoute, path: '/new', component: operationForm(ReceiveInvoicePage, { list: 'invoices', kind: 'create_invoice' }) });
+const receiveInvoiceRoute = createRoute({ getParentRoute: () => invoicesRoute, path: '/new', ...operationForm(ReceiveInvoicePage, { list: 'invoices', kind: 'create_invoice' }) });
 const invoiceReviewRoute = createRoute({ getParentRoute: () => invoicesRoute, path: '/review/$operationId', component: operationReview('invoices') });
 const paymentsRoute = createRoute({
   ...node('/payments'),
@@ -237,7 +246,7 @@ const paymentsRoute = createRoute({
   }),
   component: operationList(PaymentsPage),
 });
-const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', component: operationForm(PayInvoicePage, { list: 'payments', kind: 'pay_invoice' }) });
+const payInvoiceRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/new', ...operationForm(PayInvoicePage, { list: 'payments', kind: 'pay_invoice' }) });
 const payReviewRoute = createRoute({ getParentRoute: () => paymentsRoute, path: '/review/$operationId', component: operationReview('payments') });
 const peersRoute = createRoute({
   ...node('/peers'),
@@ -247,7 +256,7 @@ const peersRoute = createRoute({
   }),
   component: operationList(PeersPage),
 });
-const connectPeerRoute = createRoute({ getParentRoute: () => peersRoute, path: '/new', component: operationForm(ConnectPeerPage, { list: 'peers', kind: 'connect_peer' }) });
+const connectPeerRoute = createRoute({ getParentRoute: () => peersRoute, path: '/new', ...operationForm(ConnectPeerPage, { list: 'peers', kind: 'connect_peer' }) });
 const peerReviewRoute = createRoute({ getParentRoute: () => peersRoute, path: '/review/$operationId', component: operationReview('peers') });
 const channelsRoute = createRoute({
   ...node('/channels'),
@@ -261,9 +270,9 @@ const channelsRoute = createRoute({
 const openChannelRoute = createRoute({
   getParentRoute: () => channelsRoute, path: '/new',
   validateSearch: (search: Record<string, unknown>): { peer?: string } => ({ peer: pubkeyParam(search.peer) }),
-  component: operationForm(OpenChannelPage, { list: 'channels', kind: 'open_channel' }),
+  ...operationForm(OpenChannelPage, { list: 'channels', kind: 'open_channel' }),
 });
-const closeChannelRoute = createRoute({ getParentRoute: () => channelsRoute, path: '/$channelId/close', component: operationForm(CloseChannelPage, { list: 'channels', kind: 'close_channel' }) });
+const closeChannelRoute = createRoute({ getParentRoute: () => channelsRoute, path: '/$channelId/close', ...operationForm<{ nodeId: string; channelId: string }>(CloseChannelPage, { list: 'channels', kind: 'close_channel' }) });
 const channelReviewRoute = createRoute({ getParentRoute: () => channelsRoute, path: '/review/$operationId', component: operationReview('channels') });
 const transactionsRoute = createRoute({
   ...node('/onchain'),
@@ -273,8 +282,8 @@ const transactionsRoute = createRoute({
   }),
   component: operationList(TransactionsPage),
 });
-const receiveAddressRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/receive', component: operationForm(ReceiveAddressPage, { list: 'onchain', kind: 'new_address' }) });
-const sendOnchainRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/send', component: operationForm(SendOnchainPage, { list: 'onchain', kind: 'send_onchain' }) });
+const receiveAddressRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/receive', ...operationForm(ReceiveAddressPage, { list: 'onchain', kind: 'new_address' }) });
+const sendOnchainRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/send', ...operationForm(SendOnchainPage, { list: 'onchain', kind: 'send_onchain' }) });
 const onchainReviewRoute = createRoute({ getParentRoute: () => transactionsRoute, path: '/review/$operationId', component: operationReview('onchain') });
 const operationsRoute = createRoute({
   ...history('/operations'),
