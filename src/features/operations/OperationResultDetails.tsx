@@ -2,7 +2,7 @@ import { Flex } from '@jfrader/ui';
 import type { OperationResult } from '../../api/types';
 import { CopyValue } from '../../components/CopyValue';
 import { DetailList, type DetailItem } from '../../components/DetailList';
-import { QrCode } from '../../components/QrCode';
+import { InlineCode } from '../../components/InlineCode';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { CLOSE_TYPE } from '../channels/labels';
 import { Amount } from '../display/Amount';
@@ -15,7 +15,7 @@ function resultItems(result: OperationResult): DetailItem[] {
   switch (result.kind) {
     case 'create_invoice':
       return [
-        { label: 'Invoice', value: <CopyValue value={result.bolt11} label="Invoice" align="start" /> },
+        { label: 'Invoice', value: <InlineCode>{result.bolt11}</InlineCode> },
         { label: 'Payment hash', value: <CopyValue value={result.payment_hash} label="Payment hash" /> },
       ];
     case 'pay_invoice':
@@ -60,18 +60,10 @@ function resultItems(result: OperationResult): DetailItem[] {
   }
 }
 
-function qrFor(result: OperationResult): { value: string; label: string } | null {
-  if (result.kind === 'create_invoice') return { value: result.bolt11.toUpperCase(), label: 'Invoice QR code' };
-  if (result.kind === 'new_address') return { value: result.address, label: 'Address QR code' };
-  return null;
-}
-
 /** Server-reported references; they can appear before the operation is final. */
 export function OperationResultDetails({ result }: { result: OperationResult }) {
-  const qr = qrFor(result);
   return (
     <Flex direction="column" gap="md" align="start">
-      {qr && <QrCode value={qr.value} label={qr.label} />}
       <DetailList items={resultItems(result)} />
     </Flex>
   );

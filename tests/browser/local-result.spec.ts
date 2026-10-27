@@ -39,11 +39,33 @@ for (const width of [390, 1440]) {
       expect(requests.filter(request => request.path.includes('/authorize'))).toHaveLength(0);
       const body = dialog.locator('[data-ui="drawer-body"], [data-ui="bottom-sheet-body"]');
       await expect(body).toHaveCount(1);
+      const receipt = dialog.getByRole('region', { name: kind === 'create_invoice' ? 'Invoice receipt' : 'Address receipt' });
+      await expect(receipt).toBeVisible();
+      expect(await receipt.evaluate(element => element.parentElement?.firstElementChild === element)).toBe(true);
+      const state = receipt.getByText('Succeeded', { exact: true });
+      const created = receipt.getByText(/^Created /);
+      const hero = receipt.getByText(kind === 'create_invoice' ? '2,500 sat' : fixture('new_address_result').address, { exact: true });
+      await expect(state).toBeVisible();
+      await expect(created).toHaveText('Created 1 minute ago · 12:00:00 UTC');
+      await expect(hero).toBeVisible();
+      const visibleTargets = [qr, copy, hero, state, created];
+      if (kind === 'create_invoice') {
+        const expiry = receipt.getByText(/^Expires /);
+        await expect(expiry).toHaveText('Expires in 59 minutes · 13:00:00 UTC');
+        await expect(receipt.getByText('Synthetic invoice', { exact: true })).toBeVisible();
+        visibleTargets.push(expiry);
+      } else {
+        await expect(receipt.getByText(/sat|BTC|Any amount/)).toHaveCount(0);
+        await expect(receipt.getByText(/^Expires /)).toHaveCount(0);
+      }
+      await expect(dialog.getByRole('img', { name: /QR code/ })).toHaveCount(1);
+      const qrBounds = await qr.boundingBox();
+      expect(qrBounds?.width).toBeGreaterThanOrEqual(224);
       expect(await body.evaluate(element => element.scrollTop)).toBe(0);
       await expect.poll(async () => {
         const bounds = await body.boundingBox();
         if (!bounds) throw new Error('Missing sheet body');
-        return Promise.all([qr, copy].map(async target => {
+        return Promise.all(visibleTargets.map(async target => {
           const box = await target.boundingBox();
           if (!box) throw new Error('Missing result payload');
           return {
@@ -53,7 +75,7 @@ for (const width of [390, 1440]) {
             right: box.x + box.width <= Math.min(bounds.x + bounds.width, width),
           };
         }));
-      }).toEqual(Array.from({ length: 2 }, () => ({ top: true, bottom: true, left: true, right: true })));
+      }).toEqual(Array.from({ length: visibleTargets.length }, () => ({ top: true, bottom: true, left: true, right: true })));
       expect(await body.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await expect(dialog.getByRole('list', { name: 'Operation timeline' })).toHaveCount(1);
@@ -72,6 +94,24 @@ for (const width of [390, 1440]) {
     });
   }
 }
+
+test('invoice receipt uses request values, the session unit and the operation state', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 844 });
+  await installSyntheticApi(page);
+  const completed = {
+    ...operation('create_invoice', 'pending', 'submitted', true),
+    request: { ...fixture('create_invoice_request'), params: { amount_msat: '3123456', description: '', expiry_seconds: 1800 } },
+  };
+  await page.route(`**/api/v1/nodes/lnd-lab/operations/${completed.id}`, route => route.fulfill({ json: completed }));
+  await page.goto(`/nodes/lnd-lab/operations/${completed.id}`);
+  const receipt = page.getByRole('region', { name: 'Invoice receipt' });
+  await expect(receipt.getByText('3,123.456 sat', { exact: true })).toBeVisible();
+  await expect(receipt.getByText('Pending', { exact: true })).toBeVisible();
+  await expect(receipt.getByText(/^Expires /)).toHaveText('Expires in 29 minutes · 12:30:00 UTC');
+  await expect(receipt.getByText('Synthetic invoice', { exact: true })).toHaveCount(0);
+  await page.getByRole('radiogroup', { name: 'Display unit' }).getByRole('radio', { name: 'BTC', exact: true }).click();
+  await expect(receipt.getByText('0.00003123456 BTC', { exact: true })).toBeVisible();
+});
 
 test('a long invoice keeps Copy at the beginning of the payload above the fold at 390', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

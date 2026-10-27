@@ -11,6 +11,7 @@ import { ConsentBlock } from '../payments/review/ConsentBlock';
 import { useControlSize } from '../shell/use-shell-layout';
 import { AUTHORIZATION_STATUS, NODE_OBSERVED_KINDS, OPERATION_NOUN, OPERATION_STAGE, OPERATION_STATE, outcomeLabel } from './labels';
 import { OperationResultDetails } from './OperationResultDetails';
+import { OperationReceipt } from './OperationReceipt';
 import { KindConsent } from './review/KindConsent';
 import { OperationStatusNotice } from './OperationStatusNotice';
 import { OperationTimeline } from './OperationTimeline';
@@ -55,6 +56,8 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
   const outcome = outcomeLabel(operation);
   const isPayment = operation.request.kind === 'pay_invoice';
   const localResult = operation.result && !NODE_OBSERVED_KINDS[operation.result.kind];
+  const hasReceipt = (operation.request.kind === 'create_invoice' && operation.result?.kind === 'create_invoice') ||
+    (operation.request.kind === 'new_address' && operation.result?.kind === 'new_address');
 
   const status = (
     <DetailList
@@ -75,6 +78,9 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
       <Section title="Timeline">
         <OperationTimeline operation={operation} />
       </Section>
+      {hasReceipt && operation.result?.kind === 'create_invoice' && (
+        <Section title="Invoice details"><OperationResultDetails result={operation.result} /></Section>
+      )}
       {operation.result && !localResult && (
         <Section title="Result">
           <OperationResultDetails result={operation.result} />
@@ -96,7 +102,8 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
   const paymentHash = operation.review.payment_hash;
   return (
     <Flex direction="column" gap="md">
-      {localResult && operation.result && (
+      {hasReceipt && <OperationReceipt operation={operation} />}
+      {localResult && !hasReceipt && operation.result && (
         <Section title="Result">
           <OperationResultDetails result={operation.result} />
         </Section>
