@@ -24,7 +24,7 @@ import { prefetchOperationForm } from '../features/forms/prefetch-operation-form
 import { NodeChooserPage } from '../features/nodes/NodeChooserPage';
 import { NodeLayout } from '../features/nodes/NodeLayout';
 import { NodeNotFound } from '../features/nodes/NodeNotFound';
-import { NodeOverviewRoute } from '../features/nodes/NodeOverviewRoute';
+import { NodeOverviewPage } from '../features/nodes/NodeOverviewPage';
 import {
   forgetRememberedNodeId,
   isNodeId,
@@ -44,7 +44,6 @@ import {
   FleetPage,
   InvoicesPage,
   MorePage,
-  NodeOverviewPage,
   OpenChannelPage,
   OperationPage,
   OperationsPage,
@@ -211,8 +210,7 @@ function operationReview(list: ComponentProps<typeof OperationReviewRoute>['list
 
 const nodeOverviewRoute = createRoute({
   ...node('/'),
-  beforeLoad: ({ preload }) => { if (preload) void NodeOverviewPage.preload?.(); },
-  component: NodeOverviewRoute,
+  component: NodeOverviewPage,
 });
 const watchtowerClientRoute = createRoute({
   ...node('/watchtower'),

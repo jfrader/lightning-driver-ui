@@ -6,13 +6,12 @@ export const MoneySurface = lazyRouteComponent(() => import('../features/shell/M
 
 /**
  * Screens loaded on first visit (implementation spec §12). The entry keeps only the shell and the
- * landing screens: node chooser and sign-in. Sign-in stays in the entry because a
+ * landing screens: node chooser, node overview, and sign-in. Sign-in stays in the entry because a
  * 401 must replace the workbench at once (§8.1); while a lazy chunk loaded, the old screen stayed
  * mounted and its observers re-read the session after it ended. Every other screen is its own
  * chunk, and code shared between screens lands in shared chunks, never in per-screen copies.
  */
 export const FleetPage = lazyRouteComponent(() => import('../features/nodes/FleetPage'), 'FleetPage');
-export const NodeOverviewPage = lazyRouteComponent(() => import('../features/nodes/NodeOverviewPage'), 'NodeOverviewPage');
 export const BitcoinOverview = lazyRouteComponent(() => import('../features/bitcoin/BitcoinOverview'), 'BitcoinOverview');
 export const WatchtowerClientPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerClientPage'), 'WatchtowerClientPage');
 export const WatchtowerServerPage = lazyRouteComponent(() => import('../features/watchtower/WatchtowerServerPage'), 'WatchtowerServerPage');

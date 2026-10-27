@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { installSyntheticApi, operation } from './synthetic-api';
+import { installSyntheticApi } from './synthetic-api';
 
 test('the global money form is preloaded before its payment entry opens', async ({ page }) => {
   await installSyntheticApi(page);
@@ -69,33 +69,4 @@ test('hovering the money control preloads its surface without opening it', async
   await control.click();
   await expect(page.getByRole('dialog', { name: 'Send and receive', exact: true })).toBeVisible();
   expect(surfaceRequests).toHaveLength(1);
-});
-
-test('overview waits for navigation intent and a cold click removes the previous review immediately', async ({ page }) => {
-  await installSyntheticApi(page);
-  let releaseChunk!: () => void;
-  const chunkReady = new Promise<void>((resolve) => { releaseChunk = resolve; });
-  const overviewRequests: string[] = [];
-  await page.route('**/assets/NodeOverviewPage-*.js', async (route) => {
-    overviewRequests.push(route.request().url());
-    await chunkReady;
-    await route.continue();
-  });
-  const reviewPath = `/nodes/lnd-lab/operations/${operation('pay_invoice').id}`;
-  await page.goto(reviewPath);
-  await expect(page.getByRole('button', { name: 'Pay with passkey' })).toBeVisible();
-  expect(overviewRequests).toHaveLength(0);
-  const overview = page.getByRole('link', { name: 'Overview', exact: true });
-  if ((page.viewportSize()?.width ?? 0) < 1024) {
-    await overview.hover();
-    await expect.poll(() => overviewRequests.length).toBe(1);
-    await expect(page).toHaveURL(reviewPath);
-    await expect(page.getByRole('button', { name: 'Pay with passkey' })).toBeVisible();
-  }
-  await overview.click();
-  await expect(page).toHaveURL('/nodes/lnd-lab');
-  await expect.poll(() => overviewRequests.length).toBe(1);
-  await expect(page.getByRole('button', { name: 'Pay with passkey' })).toHaveCount(0);
-  releaseChunk();
-  await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
 });
