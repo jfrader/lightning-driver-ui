@@ -12,6 +12,7 @@ export const DISPLAY_TIME_ZONE = 'UTC';
 export const REQUEST_TIMEOUT_MS = 20_000;
 export const CONFIRM_TIMEOUT_MS = 30_000;
 export const NODE_REFRESH_MS = 30_000;
+export const INVOICE_RECEIPT_REFRESH_MS = 5_000;
 export const READ_STALE_MS = 10_000;
 /** Floor between session re-checks, so a client clock ahead of the server cannot spin. */
 export const SESSION_RECHECK_MIN_MS = 1_000;

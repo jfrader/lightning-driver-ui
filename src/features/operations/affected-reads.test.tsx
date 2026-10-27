@@ -69,7 +69,9 @@ describe('reads a confirmed operation affects', () => {
     await view.router.navigate({ to: '/nodes/$nodeId/invoices/new', params: { nodeId: 'lnd-lab' } });
     await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
     await view.user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
-    expect(await screen.findByText('Invoice created.')).toBeInTheDocument();
+    const receipt = await screen.findByRole('region', { name: 'Invoice receipt' });
+    expect(await within(receipt).findByText('Unpaid')).toBeInTheDocument();
+    expect(screen.queryByText('Invoice created.')).not.toBeInTheDocument();
 
     await view.router.navigate({ to: '/nodes/$nodeId/invoices', params: { nodeId: 'lnd-lab' } });
     const hash = fixture('invoices_page').items[0].payment_hash;
