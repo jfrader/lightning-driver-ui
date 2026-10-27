@@ -28,23 +28,17 @@ for (const size of SIZES) {
   test.describe(`at ${size.width}`, () => {
     test.use({ viewport: size });
 
-    test('low-risk: an invoice form creates a review, one explicit confirm sends it, the operation follows', async ({ page }) => {
+    test('low-risk: one invoice Create press confirms it and the operation follows without review', async ({ page }) => {
       const requests = await installSyntheticApi(page);
       await page.goto('/nodes/lnd-lab/invoices/new');
       await page.getByLabel(/^Amount \(sat\)/).fill('2500');
       await page.getByRole('textbox', { name: /^Description/ }).fill('Coffee');
       await expectNoHorizontalOverflow(page);
-      await page.getByRole('button', { name: 'Review invoice' }).click();
-
-      await expect(page.getByRole('heading', { name: 'Review invoice' })).toBeVisible();
-      await expect(page.getByText('Not sent')).toBeVisible();
-      await expectNoHorizontalOverflow(page);
-      expect(requests.map((r) => r.path)).toEqual(['/nodes/lnd-lab/operations']);
-      await expectVisibleConfirmation(page, 'Create invoice');
-
       await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
 
       await expect(page.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Review invoice' })).toHaveCount(0);
+      await expectNoHorizontalOverflow(page);
       await expect(page.getByText('Sent to the node. No invoice reported yet.')).toBeVisible();
       expect(requests.map((r) => r.path)).toEqual([
         '/nodes/lnd-lab/operations',

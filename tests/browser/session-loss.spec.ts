@@ -26,8 +26,7 @@ test('a 401 on the explicit low-risk confirm signs out instead of showing node d
   await page.getByLabel(/^Amount \(sat\)/).click();
   await page.keyboard.type('2500');
 
-  // The form creates the review; the low-risk confirm is the one explicit action on it.
-  await page.getByRole('button', { name: 'Review invoice' }).click();
+  // The local-result form creates and confirms with one action.
   await page.getByRole('dialog', { name: 'Create invoice', exact: true }).getByRole('button', { name: 'Create invoice', exact: true }).click();
 
   await expect(page).toHaveURL(/\/login\?redirect=/);

@@ -15,7 +15,7 @@ function resultItems(result: OperationResult): DetailItem[] {
   switch (result.kind) {
     case 'create_invoice':
       return [
-        { label: 'Invoice', value: <CopyValue value={result.bolt11} label="Invoice" /> },
+        { label: 'Invoice', value: <CopyValue value={result.bolt11} label="Invoice" align="start" /> },
         { label: 'Payment hash', value: <CopyValue value={result.payment_hash} label="Payment hash" /> },
       ];
     case 'pay_invoice':
@@ -49,7 +49,7 @@ function resultItems(result: OperationResult): DetailItem[] {
         { label: 'Confirmations', value: confirmations(result.confirmations) },
       ];
     case 'new_address':
-      return [{ label: 'Address', value: <CopyValue value={result.address} label="Address" /> }];
+      return [{ label: 'Address', value: <CopyValue value={result.address} label="Address" align="start" /> }];
     case 'send_onchain':
       return [
         { label: 'Transaction', value: <CopyValue value={result.txid} label="Transaction ID" /> },

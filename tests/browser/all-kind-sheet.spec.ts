@@ -14,7 +14,7 @@ for (const width of [390, 1440]) {
   test.describe(`all-kind sheets at ${width}`, () => {
     test.use({ viewport: { width, height: 900 } });
 
-    test('keyboard creates an invoice through its list money surface, review and result', async ({ page }) => {
+    test('keyboard creates an invoice through its list money surface with one press and no review', async ({ page }) => {
       test.slow();
       const requests = await installSyntheticApi(page);
       const completed = operation('create_invoice', 'succeeded', 'completed', true);
@@ -36,17 +36,12 @@ for (const width of [390, 1440]) {
       await page.keyboard.type('2500');
       await tabTo(page, surface.getByRole('textbox', { name: /^Description/ }));
       await page.keyboard.type('Coffee');
-      await tabTo(page, surface.getByRole('button', { name: 'Review invoice', exact: true }));
+      await tabTo(page, surface.getByRole('button', { name: 'Create invoice', exact: true }));
       await page.keyboard.press('Enter');
       const dialog = page.getByRole('dialog', { name: 'Create invoice', exact: true });
-      await expect(dialog.getByRole('heading', { name: 'Review invoice', exact: true })).toBeVisible();
-      await expect(page).toHaveURL(url => url.pathname === '/nodes/lnd-lab/invoices' && url.searchParams.get('status') === 'unpaid' && url.searchParams.get('operation') === completed.id);
-      await page.keyboard.press('Escape');
-      await expect(dialog).toBeVisible();
-      expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(0);
-      await tabTo(page, dialog.getByRole('button', { name: 'Create invoice', exact: true }));
-      await page.keyboard.press('Enter');
       await expect(dialog.getByRole('img', { name: 'Invoice QR code' })).toBeVisible();
+      await expect(dialog.getByRole('heading', { name: 'Review invoice', exact: true })).toHaveCount(0);
+      await expect(page).toHaveURL(url => url.pathname === '/nodes/lnd-lab/invoices' && url.searchParams.get('status') === 'unpaid' && url.searchParams.get('operation') === completed.id);
       expect(requests.filter((request) => request.path.endsWith('/confirm'))).toHaveLength(1);
       await tabTo(page, dialog.getByRole('button', { name: 'Close', exact: true }));
       await page.keyboard.press('Enter');

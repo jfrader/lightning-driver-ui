@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import type { Operation } from '../../api/types';
 
 interface OperationSheetContextValue {
-  onCreated: (operation: Operation) => void;
+  onCreated: (operation: Operation, unanswered?: boolean) => void;
   onUnanswered: () => void;
   discard: () => void;
 }

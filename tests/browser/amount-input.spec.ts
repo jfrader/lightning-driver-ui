@@ -67,7 +67,7 @@ for (const [method, enter] of [
         await enter(page, text);
 
         await expect(amountField(page)).toHaveValue(text);
-        await page.getByRole('button', { name: 'Review invoice' }).click();
+        await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
 
         await expect(page.getByText(MALFORMED_ERROR)).toBeVisible();
         expect(requests).toEqual([]);
@@ -84,7 +84,7 @@ test('keeps a pasted malformed amount as pasted and sends nothing', async ({ pag
   await page.keyboard.press('ControlOrMeta+V');
 
   await expect(amountField(page)).toHaveValue('1,234.5');
-  await page.getByRole('button', { name: 'Review invoice' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
   await expect(page.getByText(MALFORMED_ERROR)).toBeVisible();
   expect(requests).toEqual([]);
 });
@@ -113,8 +113,8 @@ test('keeps every digit of a large amount through editing, arrow keys, blur and 
   await unitChoice(page, 'sat').click();
   await expect(amountField(page)).toHaveValue('9007199254740.993');
 
-  await page.getByRole('button', { name: 'Review invoice' }).click();
-  await expect(page.getByRole('heading', { name: 'Review invoice' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
 
   expect(creates(requests)).toEqual([
     {
@@ -132,8 +132,8 @@ test('keeps a pasted large amount exact', async ({ page }) => {
   await page.keyboard.press('ArrowUp');
   await expect(amountField(page)).toHaveValue('9007199254740.993');
 
-  await page.getByRole('button', { name: 'Review invoice' }).click();
-  await expect(page.getByRole('heading', { name: 'Review invoice' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
   expect(creates(requests).map((r) => r.body)).toEqual([
     { kind: 'create_invoice', params: { amount_msat: '9007199254740993', description: '', expiry_seconds: 3600 } },
   ]);

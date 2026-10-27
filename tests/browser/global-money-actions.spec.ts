@@ -200,7 +200,7 @@ for (const width of [390, 1440]) {
       await page.keyboard.press('ArrowDown');
       await expect(send).toBeFocused();
       await page.goto('/nodes/lnd-lab?receive=1&action=new_address');
-      await expect(page.getByRole('dialog', { name: 'Send and receive', exact: true }).getByRole('button', { name: 'Review new address', exact: true })).toBeVisible();
+      await expect(page.getByRole('dialog', { name: 'Send and receive', exact: true }).getByRole('button', { name: 'Create address', exact: true })).toBeVisible();
       await page.goto('/fleet');
       const money = page.getByRole('button', { name: 'Send and receive', exact: true });
       await expect(money).toBeDisabled();

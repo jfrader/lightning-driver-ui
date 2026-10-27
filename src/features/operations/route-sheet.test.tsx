@@ -6,12 +6,12 @@ import { renderApp } from '../../test/render-app';
 import { OPERATION_KIND } from './labels';
 
 const cases = [
-  { kind: 'create_invoice', list: 'invoices', heading: 'Invoices', entry: 'new', submit: 'Review invoice', fields: [[/^Amount \(sat\)/, '2500']] },
+  { kind: 'create_invoice', list: 'invoices', heading: 'Invoices', entry: 'new', submit: 'Create invoice', fields: [[/^Amount \(sat\)/, '2500']] },
   { kind: 'connect_peer', list: 'peers', heading: 'Peers', entry: 'new', submit: 'Review connection', fields: [[/^Node public key/, fixture('peers_page').items[0].pubkey], [/^Host/, 'peer.example.invalid'], [/^Port/, '9735']] },
   { kind: 'open_channel', list: 'channels', heading: 'Channels', entry: 'new', submit: 'Review channel open', fields: [[/^Peer public key/, fixture('peers_page').items[0].pubkey], [/^Channel size \(sat\)/, '1000000'], [/^Fee rate/, '2']] },
   { kind: 'close_channel', list: 'channels', heading: 'Channels', entry: `${fixture('channels_page').items[0].id}/close`, submit: 'Review close', fields: [[/^Fee rate/, '2']] },
   { kind: 'send_onchain', list: 'onchain', heading: 'On-chain', entry: 'send', submit: 'Review send', fields: [[/^Address/, 'SYNTHETIC_REGTEST_ADDRESS_NOT_SENDABLE'], [/^Amount \(sat\)/, '10000'], [/^Fee rate/, '2']] },
-  { kind: 'new_address', list: 'onchain', heading: 'On-chain', entry: 'receive', submit: 'Review new address', fields: [] },
+  { kind: 'new_address', list: 'onchain', heading: 'On-chain', entry: 'receive', submit: 'Create address', fields: [] },
 ] as const;
 
 describe.each(cases)('$kind route sheet', ({ kind, list, heading, entry, submit, fields }) => {
@@ -52,7 +52,7 @@ describe.each(cases)('$kind route sheet', ({ kind, list, heading, entry, submit,
     expect(await screen.findByRole('dialog', { name: OPERATION_KIND[kind] })).toBeInTheDocument();
   });
 
-  it('replaces the form with a review URL, refuses Escape and discards to the same form', async () => {
+  it('replaces the form with an operation URL; only observed kinds require a non-dismissible review', async () => {
     const created = operation(kind);
     const calls = mockJournal({ created });
     const view = renderApp(`${path}?cursor=synthetic`);
@@ -61,8 +61,18 @@ describe.each(cases)('$kind route sheet', ({ kind, list, heading, entry, submit,
     await view.user.click(await within(dialog).findByRole('button', { name: submit }));
     await waitFor(() => expect(view.router.state.location.pathname).toBe(`${listPath}/review/${created.id}`));
     const review = await screen.findByRole('dialog', { name: OPERATION_KIND[kind] });
-    await within(review).findByRole('button', { name: 'Discard review' });
     expect(view.history.length).toBe(1);
+    if (kind === 'create_invoice' || kind === 'new_address') {
+      await within(review).findByRole('button', { name: 'Close' });
+      expect(calls.confirms).toHaveLength(1);
+      expect(calls.authorizes).toEqual([]);
+      expect(within(review).queryByRole('button', { name: 'Discard review' })).not.toBeInTheDocument();
+      await view.user.click(within(review).getByRole('button', { name: 'Close' }));
+      await waitFor(() => expect(view.router.state.location.pathname).toBe(listPath));
+      expect(view.router.state.location.search).toMatchObject({ cursor: 'synthetic' });
+      return;
+    }
+    await within(review).findByRole('button', { name: 'Discard review' });
     expect(calls.confirms).toEqual([]);
     expect(fireEvent(review, new Event('cancel', { cancelable: true }))).toBe(false);
     await view.user.click(within(review).getByRole('button', { name: 'Discard review' }));

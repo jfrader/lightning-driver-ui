@@ -78,7 +78,7 @@ export function ReceiveInvoiceForm({ nodeId, policy }: ReceiveInvoiceFormProps) 
           error={show(expiry)}
           required
         />
-        <ReviewSubmit label="Review invoice" pending={submit.isPending} error={submit.error} nodeId={nodeId} fields={FIELDS} />
+        <ReviewSubmit label="Create invoice" pending={submit.isPending} error={submit.error} nodeId={nodeId} fields={FIELDS} />
       </Flex>
     </form>
   );

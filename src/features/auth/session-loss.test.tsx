@@ -46,17 +46,14 @@ async function expectSignedOut(view: View) {
   expect(screen.queryByText('Open the review')).not.toBeInTheDocument();
 }
 
-/** The form only creates the review. */
+/** Creating a local result also confirms it. */
 async function createInvoice(view: View) {
   await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
-  await view.user.click(screen.getByRole('button', { name: 'Review invoice' }));
+  await view.user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
 }
 
-/** The low-risk confirm is the one explicit action on the invoice review. */
 async function createAndConfirmInvoice(view: View) {
   await createInvoice(view);
-  const review = await screen.findByRole('dialog', { name: 'Create invoice' });
-  await view.user.click(await within(review).findByRole('button', { name: 'Create invoice' }));
 }
 
 describe('a 401 ends the current session wherever it arrives', () => {

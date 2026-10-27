@@ -151,9 +151,9 @@ test('@layout keyboard-focused phone actions stay visible inside the sheet at en
   await page.setViewportSize({ width: 390, height: 844 });
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
-  await expect(page.getByRole('button', { name: 'Review invoice' })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true })).toBeVisible();
   await doubleText(page);
-  const submit = page.getByRole('button', { name: 'Review invoice' });
+  const submit = page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true });
   for (let step = 0; step < 20 && !await submit.evaluate(el => el === document.activeElement); step++) {
     await page.keyboard.press('Tab');
     await expect.poll(async () => page.evaluate(() => {
@@ -232,7 +232,7 @@ test('the phone sheet primary action is unobscured when scrolled to the end', as
   test.skip(!isPhone(page), 'phone shell only');
   await installSyntheticApi(page);
   await page.goto('/nodes/lnd-lab/invoices/new');
-  const submit = page.getByRole('button', { name: 'Review invoice' });
+  const submit = page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true });
   await expect(submit).toBeVisible();
   await submit.scrollIntoViewIfNeeded();
   const action = await submit.boundingBox();

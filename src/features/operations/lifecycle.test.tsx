@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { nodeKeys } from '../../api/node-queries';
@@ -129,7 +129,7 @@ describe('leaving a review while its confirmation is in flight', () => {
     );
     const view = renderApp('/nodes/lnd-lab/invoices/new');
     await view.user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
-    await view.user.click(screen.getByRole('button', { name: 'Review invoice' }));
+    await view.user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
     const mutation = lastMutation(view);
 
     await view.router.navigate({ to: '/nodes/$nodeId/payments', params: { nodeId: 'lnd-lab' } });

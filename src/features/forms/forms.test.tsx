@@ -163,13 +163,14 @@ describe('close channel form', () => {
 });
 
 describe('new address form', () => {
-  it('creates one native SegWit address review and nothing else', async () => {
+  it('creates and confirms one native SegWit address even after a double press', async () => {
     const calls = mockJournal({ created: operation('new_address') });
     const { user } = renderApp('/nodes/lnd-lab/onchain/receive');
-    await user.dblClick(await screen.findByRole('button', { name: 'Review new address' }));
-    await screen.findByRole('heading', { name: 'Review new address' });
+    await user.dblClick(await within(await screen.findByRole('dialog')).findByRole('button', { name: 'Create address' }));
+    await screen.findByRole('heading', { name: 'Address operation' });
     expect(calls.creates.map((call) => call.body)).toEqual([{ kind: 'new_address', params: { address_type: 'p2wpkh' } }]);
-    expect(calls.confirms).toEqual([]);
+    expect(calls.confirms).toHaveLength(1);
+    expect(calls.authorizes).toEqual([]);
   });
 });
 
@@ -195,7 +196,7 @@ describe('server create errors', () => {
     const busy = safeError('resource_busy', 'Busy.', 'not_dispatched', operation('pay_invoice').id);
     server.use(http.post(api('/nodes/:nodeId/operations'), () => HttpResponse.json(busy, { status: 409 })));
     const { user } = renderApp('/nodes/lnd-lab/onchain/receive');
-    await user.click(await screen.findByRole('button', { name: 'Review new address' }));
+    await user.click(await screen.findByRole('button', { name: 'Create address' }));
 
     expect(await screen.findByText('Another operation on this node is unresolved.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View operation' })).toHaveAttribute(

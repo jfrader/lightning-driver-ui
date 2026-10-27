@@ -14,7 +14,7 @@ interface ReviewSubmitProps {
   tone?: 'accent' | 'danger';
 }
 
-/** The form's one submit: it creates a review and opens it; nothing is sent to the node from here. */
+/** The form's submit action and any field-independent submission errors. */
 export function ReviewSubmit({ label, pending, error, nodeId, fields, tone = 'accent' }: ReviewSubmitProps) {
   const size = useControlSize();
   return (

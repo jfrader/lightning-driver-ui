@@ -59,9 +59,8 @@ test('a created invoice is on the invoice list when the operator returns to it, 
   await expect(page.getByText('No invoices on this node.')).toBeVisible();
   await page.getByRole('button', { name: 'Create invoice' }).click();
   await page.getByLabel(/^Amount \(sat\)/).fill('2500');
-  await page.getByRole('button', { name: 'Review invoice' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create invoice', exact: true }).click();
   const review = page.getByRole('dialog', { name: 'Create invoice', exact: true });
-  await review.getByRole('button', { name: 'Create invoice', exact: true }).click();
   await expect(review.getByRole('heading', { name: 'Invoice operation' })).toBeVisible();
 
   await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
