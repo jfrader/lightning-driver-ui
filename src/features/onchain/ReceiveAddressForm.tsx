@@ -15,7 +15,7 @@ export function ReceiveAddressForm({ nodeId }: { nodeId: string }) {
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
         <DetailList items={[{ label: 'Address type', value: 'Native SegWit (P2WPKH)' }]} />
-        <ReviewSubmit label="Review new address" pending={submit.isPending} error={submit.error} nodeId={nodeId} />
+        <ReviewSubmit label="Create address" pending={submit.isPending} error={submit.error} nodeId={nodeId} />
       </Flex>
     </form>
   );

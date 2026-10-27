@@ -71,7 +71,7 @@ function ActionForm({ action, node, policy }: { action: MoneyAction; node: NodeS
 export function MoneySurface({ node }: { node: NodeSummary }) {
   const sheet = useMoneySheet();
   const size = useControlSize();
-  return <OperationSheetContext value={{ onCreated: (created) => sheet.update({ operation: created.id }), onUnanswered: () => sheet.update({ operation: sheet.search.operation, confirmation: 'unanswered' }), discard: sheet.close }}>
+  return <OperationSheetContext value={{ onCreated: (created, unanswered) => sheet.update({ operation: created.id, confirmation: unanswered ? 'unanswered' : undefined }), onUnanswered: () => sheet.update({ operation: sheet.search.operation, confirmation: 'unanswered' }), discard: sheet.close }}>
     <Morph.Surface label="Send and receive" width={{ menu: '360px', ...Object.fromEntries(ACTIONS.map((action) => [`action:${action}`, '480px'])) }}>
       <Morph.Step id="menu" detent={0.38}>
         <MoneyMenu node={node} />

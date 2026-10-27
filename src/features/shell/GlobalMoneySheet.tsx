@@ -36,7 +36,7 @@ export function GlobalMoneySheet({ node }: { node: NodeSummary }) {
 
   return (
     <OperationSheetContext value={{
-      onCreated: (created) => sheet.update({ operation: created.id }),
+      onCreated: (created, unanswered) => sheet.update({ operation: created.id, confirmation: unanswered ? 'unanswered' : undefined }),
       onUnanswered: () => sheet.update({ operation: operationId, confirmation: 'unanswered' }),
       discard: sheet.close,
     }}>

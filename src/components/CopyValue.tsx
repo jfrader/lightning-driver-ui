@@ -8,13 +8,14 @@ const keepTargetSize = { flexShrink: 0 };
 interface CopyValueProps {
   value: string;
   label: string;
+  align?: 'start' | 'center';
 }
 
 /** A machine value (hash, address, invoice) shown in full with a copy action. */
-export function CopyValue({ value, label }: CopyValueProps) {
+export function CopyValue({ value, label, align = 'center' }: CopyValueProps) {
   const size = useControlSize();
   return (
-    <Flex gap="sm" align="center">
+    <Flex gap="sm" align={align}>
       <InlineCode>{value}</InlineCode>
       <CopyButton
         iconOnly

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useOperationSheet } from './sheet-context';
 import { ContractError } from '../../api/errors';
@@ -99,6 +99,22 @@ interface ConfirmAttempt {
   attempt: Attempt;
 }
 
+export function useCreatedConfirmationError(operationId: string) {
+  const errors = useMutationState({
+    filters: {
+      mutationKey: ['confirm-operation'],
+      predicate: (mutation) => {
+        const variables = mutation.state.variables;
+        return typeof variables === 'object' && variables !== null && 'reviewed' in variables
+          && typeof variables.reviewed === 'object' && variables.reviewed !== null
+          && 'id' in variables.reviewed && variables.reviewed.id === operationId;
+      },
+    },
+    select: (mutation) => mutation.options.mutationKey?.[1] === undefined ? mutation.state.error : null,
+  });
+  return errors.at(-1);
+}
+
 /**
  * Confirms exactly the reviewed server operation it was given: node, operation ID and digest
  * all come from that record, never from form state or the current URL. Leaving the review
@@ -106,13 +122,13 @@ interface ConfirmAttempt {
  * Once confirm is sent it is not aborted; a late answer for a screen or session that has ended
  * is ignored, and the journal shows the outcome on the next read.
  */
-export function useConfirmOperation(operation: Operation) {
+export function useConfirmOperation(operation?: Operation) {
   const sheet = useOperationSheet();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const startAttempt = useAttempt();
   const inFlight = useRef(false);
-  const { id: operationId, node_id: nodeId } = operation;
+  const operationId = operation?.id;
 
   const mutation = useMutation({
     mutationKey: ['confirm-operation', operationId],
@@ -137,16 +153,18 @@ export function useConfirmOperation(operation: Operation) {
         markConfirmAnswered(queryClient, reviewed.id);
       }
     },
-    onSuccess: (confirmed, { attempt }) => {
+    onSuccess: (confirmed, { reviewed, attempt }) => {
       if (!attempt.isCurrent()) {
         void invalidateAffectedReads(queryClient, confirmed);
         return;
       }
-      queryClient.setQueryData(nodeKeys.operation(nodeId, operationId), confirmed);
+      queryClient.setQueryData(nodeKeys.operation(reviewed.node_id, reviewed.id), confirmed);
     },
-    onError: (error, { attempt }) => {
+    onError: (error, { reviewed, attempt }) => {
       if (!attempt.isCurrent()) return;
-      void queryClient.invalidateQueries({ queryKey: nodeKeys.operation(nodeId, operationId) });
+      const { node_id: nodeId, id } = reviewed;
+      void queryClient.invalidateQueries({ queryKey: nodeKeys.operation(nodeId, id) });
+      if (!operation) return;
       if (error instanceof UnansweredConfirmationError) {
         if (sheet) {
           sheet.onUnanswered();
@@ -154,7 +172,7 @@ export function useConfirmOperation(operation: Operation) {
         }
         void navigate({
           to: '/nodes/$nodeId/operations/$operationId',
-          params: { nodeId, operationId },
+          params: { nodeId, operationId: id },
           search: { confirmation: 'unanswered' },
           replace: true,
         });
@@ -166,10 +184,15 @@ export function useConfirmOperation(operation: Operation) {
   });
 
   const confirm = () => {
-    if (inFlight.current) return;
+    if (!operation || inFlight.current) return;
     inFlight.current = true;
     mutation.mutate({ reviewed: operation, attempt: startAttempt() });
   };
 
-  return { confirm, isPending: mutation.isPending, error: mutation.error };
+  return {
+    confirm,
+    confirmCreated: (reviewed: Operation, attempt: Attempt) => mutation.mutateAsync({ reviewed, attempt }),
+    isPending: mutation.isPending,
+    error: mutation.error,
+  };
 }

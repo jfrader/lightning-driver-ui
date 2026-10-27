@@ -28,7 +28,7 @@ function useListNavigation(list: OperationList) {
   return {
     node,
     close: () => void navigate({ to: OPERATION_LISTS[list], params: { nodeId: node.id }, search: (previous) => previous }),
-    review: (operationId: string) => void navigate({ to: `${OPERATION_LISTS[list]}/review/$operationId`, params: { nodeId: node.id, operationId }, search: (previous) => ({ ...previous, confirmation: undefined }), replace: true }),
+    review: (operationId: string, unanswered = false) => void navigate({ to: `${OPERATION_LISTS[list]}/review/$operationId`, params: { nodeId: node.id, operationId }, search: (previous) => ({ ...previous, confirmation: unanswered ? 'unanswered' : undefined }), replace: true }),
     unanswered: () => void navigate({ to: '.', search: (previous) => ({ ...previous, confirmation: 'unanswered' }), replace: true }),
   };
 }
@@ -38,7 +38,7 @@ export function OperationFormRoute({ list, kind, children }: { list: OperationLi
   const navigation = useListNavigation(list);
   if (search.send || search.receive || search.operation) return null;
   return (
-    <OperationSheetContext value={{ onCreated: (created) => navigation.review(created.id), onUnanswered: navigation.close, discard: navigation.close }}>
+    <OperationSheetContext value={{ onCreated: (created, unanswered) => navigation.review(created.id, unanswered), onUnanswered: navigation.close, discard: navigation.close }}>
       <OperationSheet title={OPERATION_KIND[kind]} hasReview={false} busy={false} onClose={navigation.close} onDiscard={navigation.close}>{children}</OperationSheet>
     </OperationSheetContext>
   );
@@ -71,7 +71,7 @@ export function OperationReviewRoute({ list }: { list: OperationList }) {
   };
   if (search.send || search.receive || search.operation) return null;
   return (
-    <OperationSheetContext value={{ onCreated: (created) => navigation.review(created.id), onUnanswered: navigation.unanswered, discard }}>
+    <OperationSheetContext value={{ onCreated: (created, unanswered) => navigation.review(created.id, unanswered), onUnanswered: navigation.unanswered, discard }}>
       <OperationSheet title={operation.data ? OPERATION_KIND[operation.data.request.kind] : 'Operation'} hasReview={operation.data === undefined || (operation.data.state === 'awaiting_confirmation' && !unanswered)} busy={busy} onClose={navigation.close} onDiscard={discard}>
         {operation.isPending ? <LoadingState label="Loading operation" /> : operation.isError ? <ErrorNotice error={operation.error} onRetry={() => void operation.refetch()} /> : <OperationView operation={operation.data} node={navigation.node} unanswered={unanswered} />}
       </OperationSheet>

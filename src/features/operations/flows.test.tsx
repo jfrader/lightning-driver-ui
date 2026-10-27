@@ -12,9 +12,8 @@ vi.mock('@simplewebauthn/browser', async (importOriginal) =>
   }),
 );
 
-/** A form only creates a review; the review is where the one explicit confirmation happens. */
 describe('receive', () => {
-  it('creates a review from the form, confirms it with one explicit action, then shows the invoice with copy and QR', async () => {
+  it('creates and confirms the invoice with one action, then shows copy and QR without review', async () => {
     const calls = mockJournal({
       created: operation('create_invoice'),
       confirm: () => HttpResponse.json(operation('create_invoice', 'succeeded', 'completed', true)),
@@ -23,16 +22,14 @@ describe('receive', () => {
 
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
     await user.type(screen.getByLabelText(/^Description/), 'Coffee');
-    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
 
-    await screen.findByRole('heading', { name: 'Review invoice' });
+    await screen.findByRole('img', { name: 'Invoice QR code' });
     expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/invoices/review/${operation('create_invoice').id}`);
     expect(calls.creates.map((call) => call.body)).toEqual([
       { kind: 'create_invoice', params: { amount_msat: '2500000', description: 'Coffee', expiry_seconds: 3600 } },
     ]);
-    expect(calls.confirms).toEqual([]);
-
-    await user.click(within(screen.getByRole('dialog', { name: 'Create invoice' })).getByRole('button', { name: 'Create invoice' }));
+    expect(screen.queryByRole('heading', { name: 'Review invoice' })).not.toBeInTheDocument();
 
     expect(await screen.findByRole('img', { name: 'Invoice QR code' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Invoice' })).toBeInTheDocument();
@@ -48,13 +45,28 @@ describe('receive', () => {
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
 
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '9007199254740.993');
-    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
 
-    await screen.findByRole('heading', { name: 'Review invoice' });
+    await screen.findByRole('heading', { name: 'Invoice operation' });
     expect(calls.creates[0]?.body).toEqual({
       kind: 'create_invoice',
       params: { amount_msat: '9007199254740993', description: '', expiry_seconds: 3600 },
     });
+  });
+
+  it('opens an unanswered local confirmation for observation without offering another automatic confirm', async () => {
+    const calls = mockJournal({ created: operation('create_invoice'), confirm: () => HttpResponse.error() });
+    const { user, router } = renderApp('/nodes/lnd-lab/invoices/new');
+    await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '2500');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
+
+    expect(await screen.findByText('No answer to the confirmation')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/nodes/lnd-lab/invoices/review/${operation('create_invoice').id}`);
+    expect(router.state.location.search).toMatchObject({ confirmation: 'unanswered' });
+    expect(screen.queryByRole('heading', { name: 'Review invoice' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).queryByRole('button', { name: 'Create invoice' })).not.toBeInTheDocument();
+    expect(calls.confirms).toHaveLength(1);
+    expect(calls.authorizes).toEqual([]);
   });
 
   it.each(['1 2', '1,2', '١٢', '1e3'])('keeps the typed entry %j as typed and creates nothing', async (text) => {
@@ -63,7 +75,7 @@ describe('receive', () => {
     const amount = await screen.findByLabelText(/^Amount \(sat\)/);
 
     await user.type(amount, text);
-    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
 
     expect(amount).toHaveValue(text);
     expect(await screen.findByText('Use digits and a decimal point only, without spaces or commas.')).toBeInTheDocument();
@@ -87,9 +99,9 @@ describe('receive', () => {
     await user.type(await screen.findByLabelText(/^Amount \(sat\)/), '150000');
     await user.click(within(screen.getByRole('radiogroup', { name: 'Amount unit' })).getByRole('radio', { name: 'BTC' }));
     expect(screen.getByLabelText(/^Amount \(BTC\)/)).toHaveValue('0.0015');
-    await user.click(screen.getByRole('button', { name: 'Review invoice' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' }));
 
-    await screen.findByRole('heading', { name: 'Review invoice' });
+    await screen.findByRole('heading', { name: 'Invoice operation' });
     expect(calls.creates[0]?.body).toMatchObject({ params: { amount_msat: '150000000' } });
   });
 
@@ -103,7 +115,7 @@ describe('receive', () => {
     );
     const { user } = renderApp('/nodes/lnd-lab/invoices/new');
     const amount = await screen.findByLabelText(/^Amount \(sat\)/);
-    const create = screen.getByRole('button', { name: 'Review invoice' });
+    const create = within(screen.getByRole('dialog')).getByRole('button', { name: 'Create invoice' });
 
     await user.type(amount, '1000');
     await user.click(create);

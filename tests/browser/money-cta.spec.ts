@@ -25,7 +25,7 @@ for (const width of [390, 1440]) {
         await page.getByRole('button', { name: entry.label, exact: true }).click();
         const morph = page.getByRole('dialog', { name: 'Send and receive', exact: true });
         await expect(morph).toBeVisible();
-        if (entry.action === 'new_address') await expect(morph.getByRole('button', { name: 'Review new address', exact: true })).toBeVisible();
+        if (entry.action === 'new_address') await expect(morph.getByRole('button', { name: 'Create address', exact: true })).toBeVisible();
         else await expect(morph.getByLabel(entry.field, { exact: false })).toBeVisible();
         await expect(page.getByRole('dialog')).toHaveCount(1);
         await expect(page.locator('[data-ui="morph-surface"]')).toBeVisible();
