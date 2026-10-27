@@ -8,8 +8,12 @@ const Row = styled.nav(({ theme }) => ({
   display: 'flex',
   gap: theme.space[1],
   marginBlockEnd: theme.space[4],
+  paddingBlockEnd: '1px',
   borderBlockEnd: `1px solid ${theme.color.border}`,
   overflowX: 'auto',
+  overflowY: 'hidden',
+  scrollbarWidth: 'none',
+  '&::-webkit-scrollbar': { display: 'none' },
 }));
 
 const ItemAnchor = styled.a(({ theme }) => ({

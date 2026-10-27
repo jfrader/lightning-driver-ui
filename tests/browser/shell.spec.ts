@@ -4,6 +4,72 @@ import { doubleText } from './text-size';
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
+test('@layout phone section links scroll only horizontally and reveal keyboard focus', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone-390', 'phone sibling navigation only');
+  await installSyntheticApi(page);
+  const node = fixture('node_lnd');
+  const monitoringNode = {
+    ...node,
+    read_availability: {
+      ...node.read_availability,
+      watchtower_client: { enabled: true, reason: null },
+      watchtower_server: { enabled: true, reason: null },
+    },
+  };
+  await page.route('**/api/v1/nodes/lnd-lab', route => route.fulfill({ json: monitoringNode }));
+  await page.goto('/nodes/lnd-lab/channels');
+  const strip = page.getByRole('navigation', { name: 'Network', exact: true });
+  await expect(strip).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const geometry = await strip.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+      scrollbarWidth: style.scrollbarWidth,
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    };
+  });
+  console.log('Phone section links:', geometry);
+  await page.screenshot({ path: testInfo.outputPath('phone-section-links-390.png') });
+  expect.soft(geometry.overflowX).toBe('auto');
+  expect.soft(geometry.overflowY).toBe('hidden');
+  expect.soft(geometry.scrollbarWidth).toBe('none');
+  expect.soft(geometry.scrollWidth).toBeGreaterThan(geometry.clientWidth);
+  expect.soft(geometry.scrollHeight).toBe(geometry.clientHeight);
+  await expect(strip.getByRole('link', { name: 'Channels', exact: true })).toHaveAttribute('aria-current', 'page');
+  const links = await strip.getByRole('link').all();
+  await links[0].focus();
+  await page.keyboard.press('Shift+Tab');
+  for (const [index, link] of links.entries()) {
+    await page.keyboard.press('Tab');
+    await expect(link).toBeFocused();
+    const focus = await link.evaluate(element => {
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      const row = element.parentElement!.getBoundingClientRect();
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: parseFloat(style.outlineWidth),
+        outlineOffset: parseFloat(style.outlineOffset),
+        outlineColor: style.outlineColor,
+        revealed: box.left >= row.left && box.right <= row.right && box.top >= row.top && box.bottom <= row.bottom,
+      };
+    });
+    expect(focus.outlineStyle).toBe('solid');
+    expect(focus.outlineWidth).toBeGreaterThan(0);
+    expect(focus.outlineOffset + focus.outlineWidth).toBeLessThanOrEqual(0);
+    expect(focus.outlineColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(focus.revealed).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`phone-section-focus-${index}-390.png`) });
+  }
+  await page.keyboard.press('Tab');
+  expect(await strip.evaluate(element => element.contains(document.activeElement))).toBe(false);
+});
+
 test('@layout missing-node recovery is touch-sized and opens the fleet', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await installSyntheticApi(page);
