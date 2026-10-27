@@ -1,5 +1,5 @@
 import type { Operation, OperationStage, OperationState } from '../../api/types';
-import { AUTHORIZATION_STATUS, OPERATION_STAGE } from './labels';
+import { AUTHORIZATION_STATUS, NODE_OBSERVED_KINDS, OPERATION_STAGE } from './labels';
 
 /** done: the record proves it; attention: proven but the outcome is unknown; not_observed: not proven yet. */
 export type StepStatus = 'done' | 'attention' | 'not_observed';
@@ -33,9 +33,9 @@ export const TIME_NOT_RECORDED = 'Time not recorded';
 export const NOT_OBSERVED_YET = 'Not observed yet';
 
 /**
- * Timeline steps built only from `created_at`, `updated_at`, `last_reconciled_at`, `state`, `stage`
- * and `authorization`. A step the record proves but does not timestamp keeps `at: null`; a step it
- * cannot prove yet is `not_observed`. No time is ever invented.
+ * Timeline steps built only from the operation kind, `created_at`, `updated_at`, `last_reconciled_at`,
+ * `state`, `stage` and `authorization`. A step the record proves but does not timestamp keeps
+ * `at: null`; a step it cannot prove yet is `not_observed`. No time is ever invented.
  */
 export function operationSteps(operation: Operation): OperationStep[] {
   const authorizationNeeded = operation.authorization.status !== 'not_required';
@@ -78,22 +78,24 @@ export function operationSteps(operation: Operation): OperationStep[] {
       at: operation.updated_at,
       missing: TIME_NOT_RECORDED,
     },
-    {
+  );
+  if (NODE_OBSERVED_KINDS[operation.request.kind]) {
+    steps.push({
       id: 'reconciled',
       label: 'Last checked with the node',
       detail: null,
       status: operation.last_reconciled_at ? 'done' : 'not_observed',
       at: operation.last_reconciled_at,
       missing: NOT_OBSERVED_YET,
-    },
-    {
-      id: 'final',
-      label: 'Final outcome',
-      detail: final ? null : 'Outcome not final',
-      status: final ? 'done' : 'not_observed',
-      at: final ? operation.updated_at : null,
-      missing: NOT_OBSERVED_YET,
-    },
-  );
+    });
+  }
+  steps.push({
+    id: 'final',
+    label: 'Final outcome',
+    detail: final ? null : 'Outcome not final',
+    status: final ? 'done' : 'not_observed',
+    at: final ? operation.updated_at : null,
+    missing: NOT_OBSERVED_YET,
+  });
   return steps;
 }

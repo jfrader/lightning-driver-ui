@@ -4,7 +4,7 @@ import type { Operation } from '../../api/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { Section } from '../../components/Section';
-import { isInFlight } from '../operations/labels';
+import { isInFlight, NODE_OBSERVED_KINDS } from '../operations/labels';
 import { LastChecked } from '../operations/LastChecked';
 import { OperationAmount } from '../operations/OperationAmount';
 import { operationSentence, reconciliationSentence } from '../operations/operation-sentence';
@@ -80,7 +80,7 @@ export function AttentionList({ nodeId }: { nodeId: string }) {
               <Body>{operationSentence(operation)}</Body>
               {reconciliation !== null && <Body>{reconciliation}</Body>}
               <Line>
-                <LastChecked at={operation.last_reconciled_at} />
+                {NODE_OBSERVED_KINDS[operation.request.kind] && <LastChecked at={operation.last_reconciled_at} />}
                 <ButtonLink
                   to="/nodes/$nodeId/operations/$operationId"
                   params={{ nodeId, operationId: operation.id }}

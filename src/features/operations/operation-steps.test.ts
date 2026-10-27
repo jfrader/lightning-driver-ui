@@ -40,7 +40,17 @@ describe('operation timeline steps', () => {
 
   it('omits authorization for a kind that does not need it', () => {
     const op = asOperation(operation('create_invoice', 'succeeded', 'completed', true));
-    expect(operationSteps(op).map((step) => step.id)).toEqual(['created', 'dispatch', 'updated', 'reconciled', 'final']);
+    expect(operationSteps(op).map((step) => step.id)).toEqual(['created', 'dispatch', 'updated', 'final']);
+  });
+
+  it.each(['new_address', 'create_invoice'] as const)('omits node reconciliation for a settled %s result', (kind) => {
+    const op = asOperation(operation(kind, 'succeeded', 'completed', true));
+    expect(operationSteps(op).map((step) => step.id)).toEqual(['created', 'dispatch', 'updated', 'final']);
+  });
+
+  it('keeps an unobserved check for a pending payment', () => {
+    const op = asOperation({ ...operation('pay_invoice', 'pending', 'submitted'), last_reconciled_at: null });
+    expect(byId(operationSteps(op)).reconciled).toMatchObject({ status: 'not_observed', at: null, missing: NOT_OBSERVED_YET });
   });
 
   it('times the final outcome with the recorded update time only once it is final', () => {

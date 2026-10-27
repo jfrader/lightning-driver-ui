@@ -1,6 +1,7 @@
 import { Alert, Flex, type AlertTone } from '@jfrader/ui';
 import type { Operation, OperationState } from '../../api/types';
 import { LastChecked } from './LastChecked';
+import { NODE_OBSERVED_KINDS } from './labels';
 import { operationSentence, reconciliationSentence } from './operation-sentence';
 
 interface OperationStatusNoticeProps {
@@ -19,7 +20,7 @@ const TONE: Record<OperationState, AlertTone> = {
 };
 
 /**
- * What the operator may rely on right now, with when the server last checked with the node. The
+ * What the operator may rely on right now, with the last node check for node-observed kinds. The
  * state word lives in the page pill; this says what is known and what not to do. Unknown is never
  * shown as a failure, and nothing here retries.
  */
@@ -39,7 +40,7 @@ export function OperationStatusNotice({ operation, unanswered }: OperationStatus
       <Flex direction="column" gap="xs">
         <span>{sentence}</span>
         {reconciliation !== null && <span>{reconciliation}</span>}
-        <LastChecked at={operation.last_reconciled_at} />
+        {NODE_OBSERVED_KINDS[operation.request.kind] && <LastChecked at={operation.last_reconciled_at} />}
       </Flex>
     </Alert>
   );
