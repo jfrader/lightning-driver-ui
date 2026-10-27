@@ -33,7 +33,7 @@ describe('receive', () => {
 
     expect(await screen.findByRole('img', { name: 'Invoice QR code' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Invoice' })).toBeInTheDocument();
-    expect(screen.getByText('SYNTHETIC_BOLT11_CREATED_NOT_PAYABLE')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Invoice value' }).textContent).toBe('SYNTHETIC_BOLT11_CREATED_NOT_PAYABLE');
     expect(calls.confirms).toEqual([
       expect.objectContaining({ body: { review_digest: operation('create_invoice').review.digest, authorization_id: null } }),
     ]);

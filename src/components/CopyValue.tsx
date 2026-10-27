@@ -8,6 +8,30 @@ const Value = styled(InlineCode)<{ prominent: boolean }>(({ theme, prominent }) 
   fontSize: prominent ? theme.textSize.lg : theme.textSize.sm,
 }));
 
+const Field = styled.div(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  alignItems: 'start',
+  gap: theme.space[2],
+  inlineSize: '100%',
+  minInlineSize: 0,
+  boxSizing: 'border-box',
+  padding: theme.space[2],
+  border: `1px solid ${theme.color.border}`,
+  borderRadius: theme.radius.sm,
+}));
+
+const FieldValue = styled(InlineCode)({
+  display: 'block',
+  lineHeight: 1.4,
+  maxBlockSize: '5lh',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  overflowWrap: 'anywhere',
+  whiteSpace: 'pre-wrap',
+  userSelect: 'text',
+});
+
 interface CopyValueProps {
   value: string;
   label: string;
@@ -15,19 +39,29 @@ interface CopyValueProps {
   prominent?: boolean;
 }
 
-export function CopyAction({ value, label }: Pick<CopyValueProps, 'value' | 'label'>) {
+export function CopyAction({ value, label, iconOnly = true }: Pick<CopyValueProps, 'value' | 'label'> & { iconOnly?: boolean }) {
   const size = useControlSize();
   return (
     <CopyButton
-      iconOnly
+      iconOnly={iconOnly}
       size={size}
       text={value}
-      label={`Copy ${label}`}
+      label={iconOnly ? `Copy ${label}` : 'Copy'}
+      aria-label={`Copy ${label}`}
       pendingLabel="Copying"
-      copiedLabel={`${label} copied`}
+      copiedLabel={iconOnly ? `${label} copied` : 'Copied'}
       errorLabel="Copy failed"
       sx={keepTargetSize}
     />
+  );
+}
+
+export function CopyField({ value, label }: Pick<CopyValueProps, 'value' | 'label'>) {
+  return (
+    <Field>
+      <FieldValue role="region" aria-label={`${label} value`} tabIndex={0}>{value}</FieldValue>
+      <CopyAction value={value} label={label} iconOnly={false} />
+    </Field>
   );
 }
 

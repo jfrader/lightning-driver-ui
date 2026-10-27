@@ -62,7 +62,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
   const status = (
     <DetailList
       items={[
-        { label: 'State', value: OPERATION_STATE[operation.state].label },
+        { label: 'State', value: hasReceipt && operation.state === 'succeeded' ? 'Created' : OPERATION_STATE[operation.state].label },
         { label: 'Stage', value: OPERATION_STAGE[operation.stage] },
         { label: 'Authorization', value: AUTHORIZATION_STATUS[operation.authorization.status] },
         { label: 'Result', value: operation.result ? 'Reported' : <NotReported>None reported</NotReported> },
@@ -73,7 +73,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
 
   const main = (
     <>
-      <OperationStatusNotice operation={operation} unanswered={unanswered} />
+      {!hasReceipt && <OperationStatusNotice operation={operation} unanswered={unanswered} />}
       <Section title="Status">{status}</Section>
       <Section title="Timeline">
         <OperationTimeline operation={operation} />
@@ -128,7 +128,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
         </Links>}
         <TitleRow>
           <Title>{`${OPERATION_NOUN[operation.request.kind]} operation`}</Title>
-          <Pill tone={outcome.tone}>{outcome.label}</Pill>
+          {!hasReceipt && <Pill tone={outcome.tone}>{outcome.label}</Pill>}
         </TitleRow>
       </Head>
       {isPayment && node && paymentHash ? (
