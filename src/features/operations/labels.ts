@@ -19,6 +19,17 @@ export const OPERATION_KIND: Record<OperationKind, string> = {
   send_onchain: 'Send on-chain',
 };
 
+export const NODE_OBSERVED_KINDS: Record<OperationKind, boolean> = {
+  create_invoice: false,
+  pay_invoice: true,
+  connect_peer: true,
+  disconnect_peer: true,
+  open_channel: true,
+  close_channel: true,
+  new_address: false,
+  send_onchain: true,
+};
+
 export const OPERATION_STATE: Record<OperationState, { label: string; tone: PillTone }> = {
   awaiting_confirmation: { label: 'Awaiting confirmation', tone: 'neutral' },
   dispatching: { label: 'Sending to node', tone: 'accent' },
