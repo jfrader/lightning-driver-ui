@@ -2,6 +2,7 @@ import { lazyRouteComponent } from '@tanstack/react-router';
 
 export const OperationFormRoute = lazyRouteComponent(() => import('../features/operations/OperationRouteSheet'), 'OperationFormRoute');
 export const OperationReviewRoute = lazyRouteComponent(() => import('../features/operations/OperationRouteSheet'), 'OperationReviewRoute');
+export const MoneySurface = lazyRouteComponent(() => import('../features/shell/MoneySurface'), 'MoneySurface');
 
 /**
  * Screens loaded on first visit (implementation spec §12). The entry keeps only the shell and the

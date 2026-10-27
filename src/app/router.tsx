@@ -208,7 +208,10 @@ function operationReview(list: ComponentProps<typeof OperationReviewRoute>['list
   return Object.assign(() => <OperationReviewRoute list={list} />, { preload: OperationReviewRoute.preload });
 }
 
-const nodeOverviewRoute = createRoute({ ...node('/'), component: NodeOverviewPage });
+const nodeOverviewRoute = createRoute({
+  ...node('/'),
+  component: NodeOverviewPage,
+});
 const watchtowerClientRoute = createRoute({
   ...node('/watchtower'),
   validateSearch: (search: Record<string, unknown>): PagedSearch & { selected?: string } => ({

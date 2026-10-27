@@ -83,7 +83,7 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
     await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
 
     expect(screen.getByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Enrollment token/)).toHaveFocus();
+    expect(await screen.findByLabelText(/^Enrollment token/)).toHaveFocus();
     expect(view.router.state.location.pathname).toBe('/login');
     expect(view.router.state.location.search).toEqual({ enroll: 1 });
 
