@@ -59,6 +59,15 @@ for (const width of [390, 1440]) {
       const input = page.getByRole('combobox', { name: 'Go to', exact: true });
       await expect(input).toBeFocused();
       await expect(page).toHaveURL('/nodes/lnd-lab/invoices?status=unpaid&palette=1');
+      // With no query, the money forms lead: the palette is a shortcut to act, not only to navigate.
+      const palette = page.getByRole('dialog', { name: 'Go to' });
+      const pay = palette.getByRole('option', { name: 'Pay invoice…', exact: true });
+      await expect(pay).toBeVisible();
+      await expect.poll(async () => {
+        const list = await palette.getByRole('listbox').boundingBox();
+        const option = await pay.boundingBox();
+        return list !== null && option !== null && option.y + option.height <= list.y + list.height + 1;
+      }).toBe(true);
       await page.keyboard.press('Escape');
       await expect(input).toHaveCount(0);
       await expect(trigger).toBeFocused();
