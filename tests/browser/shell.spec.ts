@@ -382,6 +382,12 @@ test('@layout the status strip stays one row at 1280', async ({ page }) => {
   if (!statusBox || !goBox) throw new Error('Missing strip geometry');
   expect(Math.abs(statusBox.y + statusBox.height / 2 - (goBox.y + goBox.height / 2))).toBeLessThanOrEqual(2);
   await expect(go.evaluate((element) => element.getBoundingClientRect().right)).resolves.toBeLessThanOrEqual(1280 - 20);
+  // The shortcut is one unit: Ctrl and K never split across two lines.
+  const keys = go.locator('kbd');
+  const ctrl = await keys.nth(0).boundingBox();
+  const k = await keys.nth(1).boundingBox();
+  if (!ctrl || !k) throw new Error('Missing shortcut geometry');
+  expect(Math.abs(ctrl.y - k.y)).toBeLessThanOrEqual(1);
 });
 
 test('@layout theme segments stay equal and separated', async ({ page }) => {

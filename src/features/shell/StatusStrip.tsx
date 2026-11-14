@@ -60,14 +60,16 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <UnitToggle />
         <Button
           size="sm"
-          sx={wrappingControlText('sm')}
+          // A keyboard hint never breaks across lines: the shortcut is one unit even when the strip
+          // is tight or the text is enlarged.
+          sx={{ ...wrappingControlText('sm'), whiteSpace: 'nowrap', overflowWrap: 'normal', flexShrink: 0 }}
           variant="ghost"
           aria-keyshortcuts="Control+K Meta+K"
           onClick={onOpenPalette}
           endIcon={
-            <Kbd.Group>
-              <Kbd>{isApple() ? '⌘' : 'Ctrl'}</Kbd>
-              <Kbd>K</Kbd>
+            <Kbd.Group sx={{ flexWrap: 'nowrap', flexShrink: 0 }}>
+              <Kbd sx={{ flexShrink: 0 }}>{isApple() ? '⌘' : 'Ctrl'}</Kbd>
+              <Kbd sx={{ flexShrink: 0 }}>K</Kbd>
             </Kbd.Group>
           }
         >
