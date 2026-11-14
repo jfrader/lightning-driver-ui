@@ -25,16 +25,18 @@ test('historical-node navigation has usable phone targets and still opens the jo
     await page.goto(`/nodes/${formerId}/operations/${former.id}`);
     await expect(page.getByText('This node is not configured', { exact: true })).toBeVisible();
     if (enlarged) await doubleText(page);
+    // The content owns the recovery actions; the phone tab bar also has a Fleet destination.
+    const content = page.locator('#content');
     for (const name of ['Operation history', 'Fleet']) {
-      const action = page.getByRole('link', { name, exact: true });
+      const action = content.getByRole('link', { name, exact: true });
       const box = await action.boundingBox();
       if (!box) throw new Error('Missing historical-node action');
       expect(box.width).toBeGreaterThanOrEqual(44);
       expect(box.height).toBeGreaterThanOrEqual(44);
     }
-    await page.getByRole('link', { name: 'Operation history', exact: true }).click();
+    await content.getByRole('link', { name: 'Operation history', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Operations', exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Fleet', exact: true }).focus();
+    await content.getByRole('link', { name: 'Fleet', exact: true }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: 'Fleet', exact: true })).toBeVisible();
   }
