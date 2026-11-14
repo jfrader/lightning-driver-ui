@@ -9,6 +9,9 @@ import { Section } from '../../components/Section';
 import { ButtonLink } from '../../components/ButtonLink';
 import { WorkLayout } from '../../components/WorkLayout';
 import { DISPLAY_LOCALE } from '../../config';
+import { formatDurationSeconds } from '../../lib/duration';
+import { parseWireDecimal } from '../../lib/money';
+import { formatByteSize, formatBytes } from '../../lib/size';
 import { NETWORK_LABEL } from '../nodes/labels';
 import { useCurrentNode } from '../nodes/use-current-node';
 import { numberValue, unitValue } from '../display/quantity';
@@ -33,6 +36,8 @@ export function BitcoinOverview() {
   const progress = new Intl.NumberFormat(DISPLAY_LOCALE, { style: 'percent', maximumFractionDigits: 2 }).format(
     Number(info.verification_progress_bp) / BASIS_POINTS_PER_UNIT,
   );
+  const chainData = info.size_on_disk === null ? null : parseWireDecimal(info.size_on_disk);
+  const uptime = info.uptime_seconds === null ? null : parseWireDecimal(info.uptime_seconds);
   return (
     <WorkLayout
       asideLabel="Node details"
@@ -100,7 +105,10 @@ export function BitcoinOverview() {
           <Section title="Storage">
             <DetailList
               items={[
-                { label: 'Chain data', value: unitValue(info.size_on_disk, 'byte') },
+                {
+                  label: 'Chain data',
+                  value: chainData === null ? 'Not reported' : `${formatByteSize(chainData)} (${formatBytes(chainData)})`,
+                },
                 { label: 'Pruned', value: info.pruned ? 'Yes' : 'No' },
                 { label: 'Prune height', value: numberValue(info.prune_height) },
               ]}
@@ -113,9 +121,9 @@ export function BitcoinOverview() {
           <DetailList
             items={[
               { label: 'Network', value: NETWORK_LABEL[info.network] },
-              { label: 'Version', value: numberValue(info.version) },
+              { label: 'Protocol version', value: numberValue(info.version) },
               { label: 'Subversion', value: info.subversion || 'Not reported' },
-              { label: 'Uptime', value: unitValue(info.uptime_seconds, 'second') },
+              { label: 'Uptime', value: uptime === null ? 'Not reported' : formatDurationSeconds(Number(uptime)) },
             ]}
           />
           <Freshness observedAt={info.observed_at} stale={info.stale} />

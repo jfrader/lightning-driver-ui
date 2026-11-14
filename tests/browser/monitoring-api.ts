@@ -15,10 +15,12 @@ export interface MonitoringOptions {
   restricted?: boolean;
   paged?: boolean;
   expired?: boolean;
+  /** The app origin this run serves, when it is not the browser suite's. */
+  appOrigin?: string;
 }
 
 export async function installMonitoringApi(page: Page, options: MonitoringOptions = {}) {
-  const mutations = await installSyntheticApi(page);
+  const mutations = await installSyntheticApi(page, { appOrigin: options.appOrigin });
   const bitcoin = fixture('node_bitcoin');
   const lnd = fixture('node_lnd');
   const enabled = { enabled: true, reason: null };
