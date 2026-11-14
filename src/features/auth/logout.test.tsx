@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { sessionCsrfToken } from '../../api/csrf';
 import { fixture } from '../../test/fixtures';
 import { renderApp } from '../../test/render-app';
-import { api, server } from '../../test/server';
+import { api, safeError, server } from '../../test/server';
 
 vi.mock('@simplewebauthn/browser', async (importOriginal) => ({
   ...await importOriginal<typeof import('@simplewebauthn/browser')>(),
@@ -35,5 +35,22 @@ describe('session revocation', () => {
       await waitFor(() => expect(tokens).toEqual([fixture('session').csrf_token, fixture('session').csrf_token]));
       expect(sessionCsrfToken()).toBeNull();
     }
+  });
+
+  it('treats a session already revoked on the server as a completed sign-out', async () => {
+    let revokeAttempted = false;
+    server.use(
+      http.delete(api('/session'), () => { revokeAttempted = true; return HttpResponse.error(); }),
+      http.get(api('/session'), () => revokeAttempted
+        ? HttpResponse.json(safeError('session_required', 'Sign in required.'), { status: 401 })
+        : HttpResponse.json(fixture('session'))),
+    );
+    const view = renderApp('/more');
+    await screen.findByRole('region', { name: 'Session' });
+    await view.user.click(screen.getByRole('button', { name: /^Sign out$/ }));
+    await screen.findByText('Session revocation failed. Retry sign out.');
+    await view.user.click(screen.getByRole('button', { name: 'Retry sign out' }));
+    expect(await screen.findByText('Signed out.')).toBeInTheDocument();
+    expect(screen.queryByText('Session revocation failed. Retry sign out.')).not.toBeInTheDocument();
   });
 });
