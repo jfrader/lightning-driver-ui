@@ -91,7 +91,7 @@ export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChanne
           label="Peer"
           size={size}
           options={[
-            { value: '', label: peers.isPending ? 'Loading peers…' : peerItems.length > 0 ? 'Choose a peer' : 'No peers on this node' },
+            { value: '', label: peers.isPending ? 'Loading peers…' : peers.isError ? 'Peers not loaded' : peerItems.length > 0 ? 'Choose a peer' : 'No peers on this node' },
             ...peerItems.map((item) => ({ value: item.pubkey, label: peerChoiceLabel(item) })),
           ]}
           value={picked?.pubkey ?? ''}
