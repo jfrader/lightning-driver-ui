@@ -137,7 +137,7 @@ export function TransactionsPage() {
                   </MoneyActionButton>
                 </CapabilityAction>
                 <CapabilityAction node={node} capability="send_onchain">
-                  <MoneyActionButton action="send_onchain" size={size} variant="outline">
+                  <MoneyActionButton action="send_onchain" size={size} tone="accent" variant="solid">
                     Send on-chain
                   </MoneyActionButton>
                 </CapabilityAction>
