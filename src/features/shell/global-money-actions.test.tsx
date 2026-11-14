@@ -76,16 +76,16 @@ describe('global money actions', () => {
     let items = [pending, pending, review, operation('send_onchain', 'succeeded', 'reconciling', true), operation('connect_peer', 'failed', 'reconciling')];
     server.use(http.get(api('/nodes/lnd-lab/operations'), () => HttpResponse.json({ ...fixture('operations_page'), node_id: 'lnd-lab', items })));
     const view = renderApp('/nodes/lnd-lab/payments');
-    await view.user.click(await screen.findByRole('button', { name: 'Operations: 2' }));
+    await view.user.click(await screen.findByRole('button', { name: '2 unresolved operations' }));
     const popover = await screen.findByRole('dialog', { name: 'Operations' });
     expect(within(popover).getAllByRole('link', { name: 'Pay invoice' })).toHaveLength(1);
     view.queryClient.setQueryData(nodeKeys.operation('lnd-lab', pending.id), pending);
     items = [review];
     view.queryClient.setQueryData(nodeKeys.operation('lnd-lab', pending.id), { ...pending, state: 'succeeded', stage: 'settled', result: fixture('pay_invoice_result') });
-    expect(await screen.findByRole('button', { name: 'Operations: 1' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '1 unresolved operation' })).toBeInTheDocument();
     items = [];
     await view.queryClient.invalidateQueries({ queryKey: nodeKeys.all('lnd-lab') });
-    await waitFor(() => expect(screen.queryByRole('button', { name: /^Operations:/ })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: /unresolved/ })).not.toBeInTheDocument());
   });
 
   it('leaves an unanswered confirmation in the operation view even while the journal still awaits confirmation', async () => {
@@ -108,22 +108,17 @@ describe('global money actions', () => {
     expect(view.history.location.search).toBe(`?${mode}=1`);
   });
 
-  it.each(['/fleet', '/more'])('disables the single control without a node on %s', async (path) => {
+  it.each(['/fleet', '/more'])('hides the single control without a node on %s', async (path) => {
     let reads = 0;
     server.use(http.get(api('/nodes/:nodeId/operations'), () => { reads++; return HttpResponse.json(fixture('operations_page')); }));
     renderApp(path);
-    const trigger = await screen.findByRole('button', { name: 'Send and receive' });
-    expect(trigger).toBeDisabled();
-    expect(trigger).toHaveAccessibleDescription('Select a node.');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Send and receive' })).not.toBeInTheDocument());
     expect(reads).toBe(0);
   });
 
-  it('keeps monitor-only menu entries visible with their reason', async () => {
-    renderApp('/nodes/bitcoin-lab?receive=1');
-    const menu = await screen.findByRole('menu');
-    for (const entry of within(menu).getAllByRole('menuitem')) {
-      expect(entry).toBeDisabled();
-      expect(entry).toHaveAccessibleDescription('This node is monitor only.');
-    }
+  it('shows no money control on a monitor-only node', async () => {
+    renderApp('/nodes/bitcoin-lab');
+    await screen.findByRole('heading', { name: 'Bitcoin Core lab' });
+    expect(screen.queryByRole('button', { name: 'Send and receive' })).not.toBeInTheDocument();
   });
 });

@@ -115,12 +115,12 @@ test('@layout enlarged Lightning header controls remain separate and quick actio
   await page.route('**/api/v1/nodes/lnd-lab', route => route.fulfill({ json: node }));
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await doubleText(page);
   const chooser = page.getByRole('combobox', { name: 'Node' });
   await expect(chooser).toHaveAttribute('title', 'LND lab · Regtest');
-  const unresolved = page.getByRole('button', { name: 'Operations: 1', exact: true });
+  const unresolved = page.getByRole('button', { name: '1 unresolved operation', exact: true });
   await expectNoHorizontalOverflow(page, 1);
   const first = await chooser.boundingBox();
   const second = await unresolved.boundingBox();
@@ -176,7 +176,7 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   await page.goto('/nodes/lnd-lab/invoices');
   await expect(page.getByRole('heading', { name: 'Invoices', exact: true })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Display unit' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Go to/ })).toBeVisible();
   await doubleText(page);
   const rail = await page.getByRole('complementary', { name: 'Node and sections' }).boundingBox();
@@ -197,7 +197,7 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   });
   expect.soft(unitHit, 'display unit control at 200% text').toBe(true);
   const stripControls = [
-    page.getByRole('button', { name: 'Operations: 1', exact: true }),
+    page.getByRole('button', { name: '1 unresolved operation', exact: true }),
     page.getByRole('button', { name: /^Go to/ }),
   ];
   for (const control of stripControls) {
@@ -347,7 +347,7 @@ test('@layout every status strip control shares one height and baseline', async 
   await installSyntheticApi(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/nodes/lnd-lab');
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   const controls = page.evaluate(() => {
     const strip = [...document.querySelectorAll('div')].find((element) => {
       const style = getComputedStyle(element);

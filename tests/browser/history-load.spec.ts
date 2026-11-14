@@ -38,12 +38,13 @@ test('fresh entry from another site never goes back on load', async ({ page }) =
 test('fresh root entry and restored closed overlays stay in the app', async ({ page }) => {
   await instrument(page);
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Send and receive', exact: true })).toBeVisible();
+  // No current node on the chooser: the money control is not rendered, so the root itself is the check.
+  await expect(page.getByRole('heading', { name: 'Choose a node', exact: true })).toBeVisible();
   const root = page.url();
   await expectNoBack(page);
   await page.evaluate(() => history.replaceState({ ...history.state, moneySheet: true, paletteEntry: true }, ''));
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Send and receive', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose a node', exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => !!(history.state.moneySheet || history.state.paletteEntry))).toBe(false);
   await page.keyboard.press('Escape');
   await expectNoBack(page);

@@ -60,7 +60,7 @@ for (const width of [390, 1440]) {
       const money = page.getByRole('button', { name: 'Send and receive', exact: true });
       await expect(money).toBeVisible();
       const chooser = page.getByRole('combobox', { name: 'Node' });
-      const operations = page.getByRole('button', { name: 'Operations: 1', exact: true });
+      const operations = page.getByRole('button', { name: '1 unresolved operation', exact: true });
       await expect(operations).toBeVisible();
       const boxes = await Promise.all([chooser, operations, money].map((control) => control.boundingBox()));
       expect(boxes.every(Boolean)).toBe(true);
@@ -171,7 +171,7 @@ for (const width of [390, 1440]) {
         await expect(dialog).toHaveCount(0);
         await expect(page.getByRole('button', { name: 'Send and receive', exact: true })).toBeFocused();
       }
-      const operations = page.getByRole('button', { name: 'Operations: 1' });
+      const operations = page.getByRole('button', { name: '1 unresolved operation' });
       await tabTo(page, operations);
       await page.keyboard.press('Enter');
       const popover = page.getByRole('dialog', { name: 'Operations', exact: true });
@@ -202,9 +202,7 @@ for (const width of [390, 1440]) {
       await page.goto('/nodes/lnd-lab?receive=1&action=new_address');
       await expect(page.getByRole('dialog', { name: 'Send and receive', exact: true }).getByRole('button', { name: 'Create address', exact: true })).toBeVisible();
       await page.goto('/fleet');
-      const money = page.getByRole('button', { name: 'Send and receive', exact: true });
-      await expect(money).toBeDisabled();
-      await expect(money).toHaveAccessibleDescription('Select a node.');
+      await expect(page.getByRole('button', { name: 'Send and receive', exact: true })).toHaveCount(0);
     });
   });
 }

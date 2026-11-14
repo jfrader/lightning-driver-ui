@@ -120,10 +120,12 @@ const PhoneHeader = styled.header(({ theme }) => ({
 const PhoneHeaderRow = styled.div(({ theme }) => ({
   display: 'flex',
   minInlineSize: 0,
-  flexWrap: 'nowrap',
+  flexWrap: 'wrap',
   alignItems: 'center',
   gap: theme.space[2],
-  '& > :first-child': { flex: '1 1 0', minInlineSize: 0, inlineSize: 'auto' },
+  // The chooser keeps a usable minimum: below it, the row wraps instead of squeezing the selector to
+  // a sliver at 320 px or doubled text. The pill and the money action then share the second line.
+  '& > :first-child': { flex: '1 1 10rem', minInlineSize: 0, inlineSize: 'auto' },
   '& > button': { flexShrink: 0 },
 }));
 
@@ -140,8 +142,8 @@ const PhoneMain = styled.main(({ theme }) => ({
 }));
 
 function NodeMoneyActions() {
-  const { node } = useShellNode();
-  return <GlobalMoneyActions node={node} />;
+  const { node, nodeId } = useShellNode();
+  return <GlobalMoneyActions node={node} nodeId={nodeId} />;
 }
 
 function NodeMoneySheet() {

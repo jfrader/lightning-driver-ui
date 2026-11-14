@@ -43,7 +43,7 @@ function isApple(): boolean {
 
 /** Desktop status strip: node state, unresolved count, unit and the palette trigger. */
 export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
-  const { node, pathname } = useShellNode();
+  const { node, nodeId, pathname } = useShellNode();
   // Only the fleet landing screen reads the registry summary; node screens have their own strip.
   const fleet = useQuery({ ...fleetQueryOptions(), enabled: !node && pathname === '/fleet' });
   return (
@@ -53,7 +53,7 @@ export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
         <RegistryFacts observedAt={fleet.data.observed_at} stale={fleet.data.stale} />
       )}
       <Controls>
-        <Suspense fallback={null}><GlobalMoneyActions node={node} /></Suspense>
+        <Suspense fallback={null}><GlobalMoneyActions node={node} nodeId={nodeId} /></Suspense>
         <UnitToggle />
         <Button
           size="sm"
