@@ -8,20 +8,26 @@ import { wrappingControlText } from '../../components/control-styles';
 
 const Reason = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
 
+/** The one visible reason a caller renders for a group of actions blocked by the same cause. */
+export const CapabilityReason = Reason;
+
 interface CapabilityActionProps {
   node: NodeSummary;
   capability: CapabilityKey;
   /** The enabled entry point, usually a ButtonLink. */
   children: ReactNode;
   showUnavailable?: boolean;
+  /** The id of one visible reason the caller already renders for several blocked actions. */
+  describedBy?: string;
 }
 
 /**
  * A blocked entry stays visible, disabled, with
  * its reason as adjacent text (never a tooltip).
  */
-export function CapabilityAction({ node, capability, children, showUnavailable = false }: CapabilityActionProps) {
-  const reasonId = useId();
+export function CapabilityAction({ node, capability, children, showUnavailable = false, describedBy }: CapabilityActionProps) {
+  const localReasonId = useId();
+  const reasonId = describedBy ?? localReasonId;
   const size = useControlSize();
   if (!showUnavailable && !surfacesFor(node).includes(ACTION_SURFACES[capability])) return null;
   const reason = capabilityBlock(node, capability);
@@ -32,7 +38,7 @@ export function CapabilityAction({ node, capability, children, showUnavailable =
       <Button size={size} variant="outline" sx={wrappingControlText(size)} disabled aria-describedby={reasonId}>
         {CAPABILITY_LABEL[capability]}
       </Button>
-      <Reason id={reasonId}>{capabilityReasonText(reason, node)}</Reason>
+      {!describedBy && <Reason id={reasonId}>{capabilityReasonText(reason, node)}</Reason>}
     </Flex>
   );
 }
