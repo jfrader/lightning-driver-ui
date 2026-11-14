@@ -77,6 +77,7 @@ test('@layout missing-node recovery is touch-sized and opens the fleet', async (
     await page.goto('/nodes/unconfigured-synthetic-node');
     await expect(page.getByRole('heading', { name: 'Node not found', exact: true })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: /^(Overview|Wallet|Channels)$/ })).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: 'Fleet', exact: true })).toBeVisible();
     if (enlarged) await doubleText(page);
     const recovery = page.getByRole('link', { name: 'Open fleet', exact: true });
     const box = await recovery.boundingBox();
@@ -366,4 +367,19 @@ test('@layout every status strip control shares one height and baseline', async 
   expect(boxes.length).toBeGreaterThanOrEqual(4);
   expect(new Set(boxes.map((box) => box.height)).size).toBe(1);
   expect(new Set(boxes.map((box) => box.top))).toEqual(new Set([boxes[0].top]));
+});
+
+test('@layout the status strip stays one row at 1280', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installSyntheticApi(page);
+  await page.goto('/nodes/lnd-lab');
+  const status = page.getByRole('list', { name: 'Node status' });
+  const go = page.getByRole('button', { name: /Go to/ });
+  await expect(status).toBeVisible();
+  await expect(go).toBeVisible();
+  const statusBox = await status.boundingBox();
+  const goBox = await go.boundingBox();
+  if (!statusBox || !goBox) throw new Error('Missing strip geometry');
+  expect(Math.abs(statusBox.y + statusBox.height / 2 - (goBox.y + goBox.height / 2))).toBeLessThanOrEqual(2);
+  await expect(go.evaluate((element) => element.getBoundingClientRect().right)).resolves.toBeLessThanOrEqual(1280 - 20);
 });

@@ -15,7 +15,11 @@ export function ThemeChoice() {
       options={OPTIONS}
       value={preference}
       sx={{ minInlineSize: 0, maxInlineSize: '100%' }}
-      slotProps={{ track: { sx: { flexWrap: 'wrap' } } }}
+      slotProps={{
+        track: { sx: { flexWrap: 'nowrap' } },
+        // Three equal segments read as one control; content-sized segments looked like stray links.
+        item: { sx: { flex: '1 1 0', justifyContent: 'center', paddingInline: '0.5rem' } },
+      }}
       onValueChange={(value) => {
         if (isKeyOf(THEME_PREFERENCE_LABEL, value)) setPreference(value);
       }}

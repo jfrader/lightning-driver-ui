@@ -31,7 +31,13 @@ export const ACTION_SURFACES: Record<CapabilityKey, NodeDestination> = {
   close_channel: 'channels',
 };
 
-export type PhoneTab = 'overview' | 'wallet' | 'channels' | 'peers' | 'more';
+export type PhoneTab = 'overview' | 'wallet' | 'channels' | 'peers' | 'fleet' | 'more';
+
+export interface PhoneTabSpec {
+  key: PhoneTab;
+  label: string;
+  destination: NodeDestination | null;
+}
 
 export interface DestinationGroup {
   key: string;
@@ -54,7 +60,7 @@ export const DESTINATION_GROUPS: readonly DestinationGroup[] = [
   { key: 'records', items: ['operations'], tab: 'overview' },
 ];
 
-export const PHONE_TABS: readonly { key: PhoneTab; label: string; destination: NodeDestination | null }[] = [
+export const PHONE_TABS: readonly PhoneTabSpec[] = [
   { key: 'overview', label: 'Overview', destination: 'overview' },
   { key: 'wallet', label: 'Wallet', destination: 'payments' },
   { key: 'channels', label: 'Channels', destination: 'channels' },
@@ -114,8 +120,14 @@ export function groupsFor(node: NodeSummary): DestinationGroup[] {
   })).filter((group) => group.items.length > 0);
 }
 
-export function phoneTabsFor(node: NodeSummary | null): typeof PHONE_TABS {
-  if (!node) return PHONE_TABS.filter((tab) => tab.destination === null);
+/** Without a node only Fleet and More exist; the node tabs would all open the chooser. */
+export const NO_NODE_PHONE_TABS: readonly PhoneTabSpec[] = [
+  { key: 'fleet', label: 'Fleet', destination: null },
+  { key: 'more', label: 'More', destination: null },
+];
+
+export function phoneTabsFor(node: NodeSummary | null): readonly PhoneTabSpec[] {
+  if (!node) return NO_NODE_PHONE_TABS;
   const groups = groupsFor(node);
   const tabs =
     node.kind === 'bitcoin'

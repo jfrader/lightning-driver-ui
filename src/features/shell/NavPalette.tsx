@@ -98,7 +98,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       open={open}
       onOpenChange={(next) => { if (!selected.current) onOpenChange(next); }}
       onSelect={() => { selected.current = true; }}
-      slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } }, list: { sx: { maxBlockSize: 'min(60dvh, 520px)' } } }}
+      slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } }, list: { sx: { maxBlockSize: 'min(60dvh, 520px)', scrollbarWidth: 'thin' } } }}
     />
   );
 }

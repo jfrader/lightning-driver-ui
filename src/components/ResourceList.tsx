@@ -86,6 +86,7 @@ const HEADER_NO_WRAP = {
 const Table = styled.div({
   minInlineSize: 0,
   '& [data-numeric]': { whiteSpace: 'nowrap' },
+  '& [data-ui="data-table-scroller"]': { scrollbarWidth: 'thin' },
 });
 
 function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {

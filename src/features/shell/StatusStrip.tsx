@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Button, Kbd, styled } from '@jfrader/ui';
 import { useQuery } from '@tanstack/react-query';
+import { useMediaQuery } from '../../lib/use-media-query';
 import { fleetQueryOptions } from '../../api/node-queries';
 import { STRIP_HEIGHT } from '../../config';
 import { wrappingControlText } from '../../components/control-styles';
@@ -44,11 +45,13 @@ function isApple(): boolean {
 /** Desktop status strip: node state, unresolved count, unit and the palette trigger. */
 export function StatusStrip({ onOpenPalette }: { onOpenPalette: () => void }) {
   const { node, nodeId, pathname } = useShellNode();
+  // Below 90rem the strip keeps one row by dropping the observation clock (the age stays).
+  const wide = useMediaQuery('(min-width: 90rem)');
   // Only the fleet landing screen reads the registry summary; node screens have their own strip.
   const fleet = useQuery({ ...fleetQueryOptions(), enabled: !node && pathname === '/fleet' });
   return (
     <Strip>
-      {node && <StatusFacts node={node} compact={false} />}
+      {node && <StatusFacts node={node} compact={!wide} />}
       {!node && pathname === '/fleet' && fleet.data && (
         <RegistryFacts observedAt={fleet.data.observed_at} stale={fleet.data.stale} />
       )}
