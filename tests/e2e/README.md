@@ -101,3 +101,8 @@ The real e2e is a manual `workflow_dispatch` job (`e2e: true`); it needs a runne
 with Docker and a `LIGHTNING_DRIVER_CHECKOUT_TOKEN` secret that can read
 `jfrader/lightning-driver`, because the backend checkout is a second repository.
 Image digests are pinned in `tests/e2e/stack/docker-compose.yml`.
+
+Actions are pinned to commit SHAs; Dependabot proposes updates for review. The backend
+checkout is also pinned in `ci.yml`. Update its `ref` in a PR after reviewing the backend
+diff and the frozen API contract, and run the manual real-e2e job against that revision
+before merging the pin update. Do not replace it with a branch or tag.
