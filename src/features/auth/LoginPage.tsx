@@ -20,6 +20,7 @@ import { SignInNotice } from './SignInNotice';
 import { METHOD_COPY, SIGN_IN_COPY, signInProblem } from './sign-in-problem';
 import { useCooldown } from './use-cooldown';
 import { useSessionStart } from './use-session-start';
+import { LogoutButton } from './LogoutButton';
 
 const EnrollForm = lazy(() => import('./EnrollForm').then((module) => ({ default: module.EnrollForm })));
 const route = getRouteApi('/login');
@@ -77,6 +78,14 @@ export function LoginPage() {
 
   const browser = { passkey: browserSupportsWebAuthn(), nostr: signerAvailable };
   const state = loginState({ browser: { ...browser, nostr: true }, bootstrap, enrolling });
+  if (notice === 'sign_out_failed') {
+    return (
+      <AuthLayout title="Sign out">
+        <Alert tone="warning">{LOGIN_NOTICE[notice]}</Alert>
+        <LogoutButton variant="outline" retry />
+      </AuthLayout>
+    );
+  }
   switch (state.kind) {
     case 'loading':
       return (

@@ -52,6 +52,7 @@ export function loginState({ browser, bootstrap, enrolling }: LoginStateInput): 
 export const LOGIN_NOTICE = {
   session_ended: 'Session ended.',
   signed_out: 'Signed out.',
+  sign_out_failed: 'Session revocation failed. Retry sign out.',
 } as const;
 
 export type LoginNotice = keyof typeof LOGIN_NOTICE;
