@@ -383,3 +383,20 @@ test('@layout the status strip stays one row at 1280', async ({ page }) => {
   expect(Math.abs(statusBox.y + statusBox.height / 2 - (goBox.y + goBox.height / 2))).toBeLessThanOrEqual(2);
   await expect(go.evaluate((element) => element.getBoundingClientRect().right)).resolves.toBeLessThanOrEqual(1280 - 20);
 });
+
+test('@layout theme segments stay equal and separated', async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.goto('/more');
+  const theme = page.locator('[aria-label="Theme"]').first();
+  const boxes = [];
+  for (const name of ['Dark', 'Light', 'System']) {
+    const box = await theme.getByRole('radio', { name, exact: true }).boundingBox();
+    if (!box) throw new Error(`Missing ${name} segment`);
+    boxes.push(box);
+  }
+  const widths = boxes.map((box) => box.width);
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1);
+  for (let index = 1; index < boxes.length; index += 1) {
+    expect(boxes[index].x - (boxes[index - 1].x + boxes[index - 1].width)).toBeGreaterThanOrEqual(2);
+  }
+});
