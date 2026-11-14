@@ -116,6 +116,13 @@ describe('global money actions', () => {
     expect(reads).toBe(0);
   });
 
+  it('waits disabled while the node summary is unknown', async () => {
+    renderApp('/nodes/former-node');
+    const control = await screen.findByRole('button', { name: 'Send and receive' });
+    expect(control).toBeDisabled();
+    expect(control).toHaveAccessibleDescription('Node not loaded.');
+  });
+
   it('shows no money control on a monitor-only node', async () => {
     renderApp('/nodes/bitcoin-lab');
     await screen.findByRole('heading', { name: 'Bitcoin Core lab' });

@@ -30,7 +30,7 @@ export function LiveOperationsButton({ node }: { node: NodeSummary }) {
   const total = operations.data ? `${formatInteger(BigInt(active.length))}${more ? '+' : ''}` : '…';
   // "1 unresolved" / "2 unresolved": the word is the same, the count is localised.
   const count = `${total} unresolved`;
-  const plural = PLURAL.select(active.length) === 'one' ? 'operation' : 'operations';
+  const plural = more || PLURAL.select(active.length) !== 'one' ? 'operations' : 'operation';
 
   let content: ReactNode;
   if (operations.isPending) content = <LoadingState label="Loading operations" />;
