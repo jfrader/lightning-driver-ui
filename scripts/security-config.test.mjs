@@ -14,3 +14,15 @@ it('runs secret-free UI checks on fork PRs and reserves the credentialed job for
   expect(privileged).toContain('secrets.LIGHTNING_DRIVER_CHECKOUT_TOKEN');
   expect(workflow.match(/persist-credentials: false/g)).toHaveLength(3);
 });
+
+it('publishes only the host API ports on loopback; peer traffic stays on Compose', () => {
+  const compose = readFileSync('tests/e2e/stack/docker-compose.yml', 'utf8');
+  const publications = [...compose.matchAll(/^      - "([\d.:]+)"$/gm)].map(match => match[1]);
+  expect(publications).toEqual([
+    '127.0.0.1:18443:18443', '127.0.0.1:10009:10009',
+    '127.0.0.1:8081:8080', '127.0.0.1:3011:3010',
+  ]);
+  const runner = readFileSync('tests/e2e/run.mjs', 'utf8');
+  for (const port of [10009, 8081, 3011]) expect(runner).toContain(`https://localhost:${port}`);
+  expect(runner).toContain('@cln:9735');
+});
