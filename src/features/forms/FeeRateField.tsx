@@ -64,8 +64,8 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
             {reported.length === 0
               ? 'No fee estimates reported.'
               : estimates.data.observed_at === null
-                ? 'Estimate time not reported'
-                : `Estimated ${formatClockTime(estimates.data.observed_at) ?? estimates.data.observed_at} UTC`}
+                ? 'Fee estimate time not reported'
+                : `Fee estimates from ${formatClockTime(estimates.data.observed_at) ?? estimates.data.observed_at} UTC`}
           </Muted>
           {reported.some(({ key }) => {
             const estimate = estimates.data[key];
