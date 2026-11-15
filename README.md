@@ -11,9 +11,13 @@ performs every node action. The browser only talks to `/api/v1` on its own origi
 Sign in with a passkey, or with a Nostr key through a NIP-07 extension. The app is Vite, TanStack
 Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/tokens.
 
-![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
+![Node overview, channel inspection and invoice review in Lightning Driver UI](docs/screenshots/walkthrough.gif)
+
+Demo data: overview, channel details and invoice review. The walkthrough stops before payment confirmation.
 
 ## Screenshots
+
+![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
 
 | Channels and the channel inspector | Reviewing a payment |
 | --- | --- |
@@ -21,7 +25,7 @@ Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/
 
 <img src="docs/screenshots/phone-channels.png" alt="Channels as cards on a phone" width="280">
 
-`npm run screenshots` rewrites them.
+`npm run screenshots` refreshes the PNG screenshots.
 
 ## Setup
 
@@ -97,7 +101,7 @@ run `npm run api:generate`.
 | `npm run test:browser` | Playwright tests in headless Chromium at 390 px and 1280 px against a fresh production build, including 44 px targets, forced colors, 200% zoom, reduced motion and the phone tab-bar clearance |
 | `npm run verify` | `api:check`, `lint`, `typecheck`, `test`, `build`, `budget` and `test:browser`, in that order |
 | `npm run test:e2e`, `test:e2e:passkey`, `test:e2e:restart` | Opt-in real-node suite against disposable Polar/Docker regtest containers: both journeys, the passkey scenario alone, or the daemon restart drill. Needs Docker, Chromium and `LIGHTNING_DRIVER_BACKEND` pointing at a checkout with a built release API; not part of `verify` |
-| `npm run screenshots` | Rewrites the README images in `docs/screenshots` from a fresh production build at 1440×1000 and 390×844; not part of `verify`, because it writes files |
+| `npm run screenshots` | Refreshes the PNG screenshots in `docs/screenshots` from a fresh production build at 1440×1000 and 390×844; not part of `verify`, because it writes files |
 
 `test:browser` needs a Chromium for Playwright: either `npx playwright install chromium`, or an
 existing binary through `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. It starts and stops
