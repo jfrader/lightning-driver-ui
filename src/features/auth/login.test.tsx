@@ -80,6 +80,10 @@ describe('sign-in states and copy (screens spec §6.1)', () => {
   it('L2 → enrollment and back: focus follows the operator and the mode is in search', async () => {
     hostAllows(true, true);
     const view = renderApp('/login');
+    // Reads are not retried by policy. A transient bootstrap failure renders the error block with
+    // Reload; recover the way the operator does, and fail if the second read fails too.
+    const first = await screen.findByRole('button', { name: /^(Enroll a sign-in method|Reload)$/ });
+    if (first.textContent?.includes('Reload')) await view.user.click(first);
     await view.user.click(await screen.findByRole('button', { name: 'Enroll a sign-in method' }));
 
     expect(screen.getByRole('heading', { level: 1, name: 'Enroll' })).toBeInTheDocument();
