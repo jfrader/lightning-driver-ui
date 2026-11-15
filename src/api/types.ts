@@ -39,7 +39,6 @@ export type OperationKind = Schemas['OperationKind'];
 export type OperationState = Schemas['OperationState'];
 export type OperationStage = Schemas['OperationStage'];
 export type Operation = Schemas['Operation'];
-export type OperationReview = Schemas['OperationReview'];
 export type OperationResult = Schemas['OperationResult'];
 export type OperationAuthorization = Schemas['OperationAuthorization'];
 export type AuthorizationStart = Schemas['AuthorizationStart'];

@@ -34,7 +34,6 @@ export const ASIDE_MEDIA = `@media ${ASIDE_QUERY}`;
 export const READING_WIDTH = '42rem';
 export const AUTH_COLUMN_WIDTH = '24rem';
 export const ASIDE_WIDTH = '20rem';
-export const NARROW_LAYOUT_MEDIA = '@media (max-width: 30rem)';
 export const LIGHT_SCHEME_QUERY = '(prefers-color-scheme: light)';
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 export const REDUCED_MOTION_MEDIA = `@media ${REDUCED_MOTION_QUERY}`;
