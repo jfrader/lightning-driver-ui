@@ -10,10 +10,11 @@ import { ListLink } from './kind-links';
 import { LIST_OF_KIND } from './kind-lists';
 import { useOperationSheet } from '../sheet-context';
 
-const Head = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], justifyItems: 'start' }));
+const Head = styled.div(({ theme }) => ({ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: theme.space[1] }));
 
 const TitleRow = styled.div(({ theme }) => ({
   display: 'flex',
+  minInlineSize: 0,
   flexWrap: 'wrap',
   alignItems: 'center',
   columnGap: theme.space[3],
@@ -22,7 +23,7 @@ const TitleRow = styled.div(({ theme }) => ({
 
 const Title = styled.h2(({ theme }) => ({ margin: 0, fontSize: theme.textSize.xl, fontWeight: theme.fontWeight.semibold }));
 
-const Expiry = styled.span(({ theme }) => ({ fontSize: theme.textSize.sm, color: theme.color.textMuted, whiteSpace: 'nowrap' }));
+const Expiry = styled.span(({ theme }) => ({ fontSize: theme.textSize.sm, color: theme.color.textMuted }));
 
 const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono }));
 

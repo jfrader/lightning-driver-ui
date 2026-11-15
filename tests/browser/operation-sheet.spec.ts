@@ -23,6 +23,10 @@ for (const width of [390, 1440]) {
       await page.route('**/api/v1/nodes/lnd-lab/payments?*', (route) => route.fulfill({ json: payments }));
       await page.goto('/nodes/lnd-lab/payments');
       const link = page.locator('[data-row-primary]').nth(20);
+      // The page must be scrolled for the preservation assertion; set it explicitly instead of
+      // relying on focus scrolling (the table can fit the viewport under some font metrics).
+      await link.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollBy(0, 120));
       await link.focus();
       const original = await link.elementHandle();
       if (!original) throw new Error('Missing row link');

@@ -31,8 +31,18 @@ for (const width of [390, 1440]) {
         expect(await text.evaluate(element => {
           const range = document.createRange();
           range.selectNodeContents(element);
-          const box = element.getBoundingClientRect();
-          return [...range.getClientRects()].every(rect => rect.left >= box.left - 1 && rect.right <= innerWidth + 1 && rect.top >= box.top - 1 && rect.bottom <= box.bottom + 1);
+          const rects = [...range.getClientRects()];
+          if (!rects.length) return false;
+          if (!rects.every(rect => rect.left >= -1 && rect.right <= innerWidth + 1)) return false;
+          // Readable means inside the viewport and not cut by a clipping ancestor; the inline
+          // element's own box is font-metric noise at 200% (glyph boxes overhang the line box).
+          for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            const style = getComputedStyle(ancestor);
+            if (!['auto', 'scroll', 'hidden', 'clip'].some(value => style.overflowX === value || style.overflowY === value)) continue;
+            const clip = ancestor.getBoundingClientRect();
+            return rects.every(rect => rect.left >= clip.left - 1 && rect.right <= clip.right + 1 && rect.top >= clip.top - 1 && rect.bottom <= clip.bottom + 1);
+          }
+          return true;
         })).toBe(true);
       }
       const signOut = section.getByRole('button', { name: 'Sign out', exact: true });
