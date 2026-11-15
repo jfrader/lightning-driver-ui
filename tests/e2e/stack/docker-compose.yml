@@ -48,9 +48,8 @@ services:
     volumes:
       - ${E2E_DATA:?E2E_DATA is required}/lnd:/home/lnd/.lnd
     ports:
-      - "10009:10009"
-      - "8081:8080"
-      - "9735:9735"
+      - "127.0.0.1:10009:10009"
+      - "127.0.0.1:8081:8080"
     depends_on:
       bitcoind:
         condition: service_healthy
@@ -74,8 +73,7 @@ services:
     volumes:
       - ${E2E_DATA:?E2E_DATA is required}/cln:/home/clightning/.lightning
     ports:
-      - "3011:3010"
-      - "9835:9735"
+      - "127.0.0.1:3011:3010"
     depends_on:
       bitcoind:
         condition: service_healthy

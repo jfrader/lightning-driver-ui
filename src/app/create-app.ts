@@ -1,6 +1,7 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import type { RouterHistory } from '@tanstack/react-router';
-import { clearSessionCsrfToken, sessionCsrfToken } from '../api/csrf';
+import { sessionCsrfToken } from '../api/csrf';
+import { clearSession, publishSessionEvent } from '../features/auth/session-events';
 import { isSessionLoss } from '../api/errors';
 import { READ_STALE_MS } from '../config';
 import { safeRedirectPath } from '../lib/safe-redirect';
@@ -30,8 +31,8 @@ export function createApp(history?: RouterHistory): { queryClient: QueryClient; 
   const router = createAppRouter(queryClient, history);
 
   function handleSessionLoss() {
-    clearSessionCsrfToken();
-    queryClient.clear();
+    clearSession(queryClient);
+    publishSessionEvent('session_ended');
     const { pathname, href } = router.state.location;
     if (pathname === '/login') return;
     void router.navigate({

@@ -40,6 +40,36 @@ configured with the dev server's origin for its Origin and CSRF checks.
 In production, build static files with `npm run build` and serve `dist/` from the same HTTPS origin as
 the API, with `/api/v1/*` routed to the API server and every other path falling back to `index.html`.
 
+### Deployment security headers
+
+The static server/reverse proxy must send these response headers on HTML, including SPA
+fallbacks. Header enforcement belongs to the backend deployment, not Vite's preview server.
+
+```http
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+```
+
+Scripts and lazy chunks load from the same origin; no inline script or `unsafe-eval` is
+required. Emotion, theme variables and charts require inline styles. The favicon uses a
+data URL. API requests are same-origin. For NIP-46 remote signing, append the explicitly
+approved `wss://` relay origins to `connect-src`; relay URLs outside that allowlist must
+remain blocked. Do not enable arbitrary HTTPS/WebSocket destinations. NIP-07 extensions
+do not require an additional page connection destination.
+
+Keep CSP in a response header: `frame-ancestors` is not enforced in a meta CSP. The existing
+referrer meta tag is a fallback, not a substitute for the response headers. Serve static
+assets with correct MIME types and `nosniff` too.
+
+Before deployment, run `npm run test:browser -- tests/browser/deployment-policy.spec.ts`
+to check the production bundle against this baseline policy. On the deployed HTTPS origin,
+inspect `curl -sSI "$ORIGIN/login"` and `curl -sSI "$ORIGIN/nodes/lnd-lab"` for all three
+headers; inspect an actual JS asset URL for its MIME type and `nosniff`. Then exercise
+sign-in, a node page, a chart and (if enabled) the approved remote signer in Chromium with
+the console open: no CSP violations, no blocked required requests. The browser test injects
+headers locally; it does not prove that the deployment sends them.
+
 ## API contract
 
 `contract/openapi.v1.json` and `contract/examples.v1.json` are consumer copies of the frozen API v1
