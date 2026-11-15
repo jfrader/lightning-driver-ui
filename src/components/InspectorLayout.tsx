@@ -28,7 +28,14 @@ export function InspectorLayout({ header, list, inspector, inspectorLabel }: Ins
   useLayoutEffect(() => {
     const open = inspector !== null;
     if (open && pending.current) {
-      aside.current?.focus();
+      const element = aside.current;
+      element?.focus({ preventScroll: true });
+      // Stacked layouts put the inspector below the list, so it has to be brought into view;
+      // beside the list its top is already on screen and the page must not move.
+      const list = element?.previousElementSibling;
+      if (element && list && element.getBoundingClientRect().top >= list.getBoundingClientRect().bottom - 1) {
+        element.scrollIntoView({ block: 'start' });
+      }
       pending.current = false;
     } else if (!open && wasOpen.current) {
       if (invoker.current?.isConnected) {

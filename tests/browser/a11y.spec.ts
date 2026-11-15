@@ -69,13 +69,12 @@ test.describe('reduced motion', () => {
     expect(await motion()).toEqual({ animate: 0, viewTransitions: 0 });
   });
 
-  test('no preference: the screen change animates and the theme crossfades once', async ({ page }) => {
+  test('no preference: the screen change crossfades and the theme crossfades once', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     const motion = await recordMotion(page);
     await changeScreenThenTheme(page);
-    const counted = await motion();
-    expect(counted.animate).toBeGreaterThan(0);
-    expect(counted.viewTransitions).toBe(1);
+    // One view transition for the screen change, one for the theme.
+    expect(await motion()).toEqual({ animate: 0, viewTransitions: 2 });
   });
 });
 

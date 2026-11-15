@@ -5,3 +5,20 @@ html {
 html[data-theme='light'] {
   color-scheme: light;
 }
+
+/*
+ * Screen changes run as a view transition: the shell cross-fades its outgoing paint into the
+ * incoming screen, so the content region never blanks between routes.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--ui-motion-duration-base, 180ms);
+  animation-timing-function: var(--ui-motion-ease-standard, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

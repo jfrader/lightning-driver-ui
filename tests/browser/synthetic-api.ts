@@ -114,6 +114,8 @@ export interface SyntheticOptions {
   appOrigin?: string;
   /** Screenshot runs replace the info fixture's sentinel alias and version with demo values. */
   nodeInfo?: Partial<Fixtures['node_info']['value']>;
+  /** Serves the journal's one unresolved payment and its matching node count. Defaults to true. */
+  unresolvedOperation?: boolean;
 }
 
 /**
@@ -146,8 +148,9 @@ export async function installSyntheticApi(page: Page, options: SyntheticOptions 
     issued.delete(path);
     return challenge && isSignedTemplate(event, challenge.event) ? challenge : null;
   };
-  // Counts the one unresolved operation the journal list serves.
-  const node = { ...fixture('node_lnd'), unresolved_operation_count: '1' };
+  // Counts the one unresolved operation the journal list serves, unless a demo capture asks for a clear journal.
+  const unresolved = options.unresolvedOperation ?? true;
+  const node = { ...fixture('node_lnd'), unresolved_operation_count: unresolved ? '1' : '0' };
   const page$ = (nodeId: string) => ({ node_id: nodeId, network: node.network, observed_at: '2026-10-21T12:00:00Z' });
 
   await page.clock.setFixedTime(FIXTURE_NOW);
@@ -247,7 +250,7 @@ export async function installSyntheticApi(page: Page, options: SyntheticOptions 
     }
     if (sub === 'operations') {
       // One unresolved operation of this node, so the overview has an attention item.
-      return json(route, { ...fixture('operations_page'), ...page$(nodeId), items: [unresolvedOperation()] });
+      return json(route, { ...fixture('operations_page'), ...page$(nodeId), items: unresolved ? [unresolvedOperation()] : [] });
     }
     return route.abort();
   });

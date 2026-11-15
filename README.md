@@ -11,13 +11,13 @@ performs every node action. The browser only talks to `/api/v1` on its own origi
 Sign in with a passkey, or with a Nostr key through a NIP-07 extension. The app is Vite, TanStack
 Router and TanStack Query on [@jfrader/ui](https://ui.jfrader.com) and @jfrader/tokens.
 
-![Node overview, channel inspection and invoice review in Lightning Driver UI](docs/screenshots/walkthrough.gif)
+![Node overview, channel inspection and invoice review in Lightning Driver UI](docs/screenshots/walkthrough.webp)
 
 Demo data: overview, channel details and invoice review. The walkthrough stops before payment confirmation.
 
 ## Screenshots
 
-![Node overview: unresolved operations, on-chain and channel balances, quick actions and node policy](docs/screenshots/overview.png)
+![Node overview: balances, recent payments, quick actions and node policy](docs/screenshots/overview.png)
 
 | Channels and the channel inspector | Reviewing a payment |
 | --- | --- |
