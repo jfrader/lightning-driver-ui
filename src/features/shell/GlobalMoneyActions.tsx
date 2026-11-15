@@ -6,13 +6,14 @@ import { MONEY_ACTIONS } from '../../app/search';
 import { MoneySurface } from '../../app/lazy-screens';
 import { OverlayInvokerContext } from '../../components/overlay-invoker-context';
 import { useControlSize, useDesktopShell } from './use-shell-layout';
+import { visuallyHidden } from '../../components/visually-hidden';
 import { useMoneySheet } from './use-money-sheet';
 import { surfacesFor } from './nav-model';
 
 const LiveOperationsButton = lazy(() => import('./LiveOperationsButton').then((module) => ({ default: module.LiveOperationsButton })));
 
 /** The reason a not-yet-known node cannot act; announced, not painted over the strip. */
-const Reason = styled.span({ position: 'absolute', inlineSize: '1px', blockSize: '1px', overflow: 'hidden', clipPath: 'inset(50%)' });
+const Reason = styled.span(visuallyHidden);
 
 export function GlobalMoneyActions({ node, nodeId }: { node: NodeSummary | null; nodeId: string | null }) {
   const sheet = useMoneySheet();

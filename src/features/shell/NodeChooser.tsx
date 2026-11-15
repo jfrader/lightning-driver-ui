@@ -8,7 +8,7 @@ import { accessLabel, NODE_STATUS, nodeChoiceLabel } from '../nodes/labels';
 import { useConfirmInFlight } from '../operations/confirming';
 import { NODE_DESTINATIONS, surfacesFor } from './nav-model';
 import { useShellNode } from './use-shell-node';
-import { visuallyHidden } from './visually-hidden';
+import { visuallyHidden } from '../../components/visually-hidden';
 
 /** Not a valid node ID, so it can never collide with one. */
 const ALL_NODES = '*';

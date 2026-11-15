@@ -1,15 +1,7 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fixture, installSyntheticApi, UNRESOLVED_OPERATION_ID } from './synthetic-api';
-
-async function tabTo(page: Page, target: Locator) {
-  await target.waitFor({ state: 'visible' });
-  for (let step = 0; step < 50; step++) {
-    if (await target.evaluate((element) => element === document.activeElement)) return;
-    await page.keyboard.press('Tab');
-  }
-  await expect(target).toBeFocused();
-}
+import { tabTo } from './support';
 
 test('cold money popover grows at its positioned anchor without a layout projection jump', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

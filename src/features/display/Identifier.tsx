@@ -1,5 +1,5 @@
-import { CopyButton, styled } from '@jfrader/ui';
-import { useControlSize } from '../shell/use-shell-layout';
+import { styled } from '@jfrader/ui';
+import { CopyAction } from '../../components/CopyValue';
 
 const GROUP_SIZE = 6;
 const GROUPS = new RegExp(`.{1,${GROUP_SIZE}}`, 'g');
@@ -47,23 +47,12 @@ function identifierText(value: string, grouped: boolean, truncated: boolean) {
  * The groups are adjacent spans, so selecting the text still copies the exact string.
  */
 export function Identifier({ value, label, prominent = false, grouped = true, truncated = false }: IdentifierProps) {
-  const size = useControlSize();
   return (
     <Row>
       <Groups prominent={prominent} title={value}>
         {identifierText(value, grouped, truncated)}
       </Groups>
-      <CopyButton
-        iconOnly
-        variant="ghost"
-        size={size}
-        text={value}
-        label={`Copy ${label.toLowerCase()}`}
-        pendingLabel="Copying"
-        copiedLabel={`${label} copied`}
-        errorLabel="Copy failed"
-        sx={{ flexShrink: 0 }}
-      />
+      <CopyAction value={value} label={label.toLowerCase()} variant="ghost" copiedLabel={`${label} copied`} />
     </Row>
   );
 }

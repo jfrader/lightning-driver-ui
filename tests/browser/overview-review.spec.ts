@@ -1,6 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { fixture, installSyntheticApi, operation, unresolvedOperation } from './synthetic-api';
+import { expectNoHorizontalOverflow, isPhone } from './support';
 
 /** The phone review's primary action must clear the fixed tab bar by at least this much. */
 const TAB_BAR_CLEARANCE_PX = 12;
@@ -8,7 +9,6 @@ const REVIEW_PATH = `/nodes/lnd-lab/operations/${operation('pay_invoice').id}`;
 const PAYMENT_HASH = examples.fixtures.payments_page.value.items[0].payment_hash;
 const BALANCES = examples.fixtures.balances.value;
 
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
 test('an unknown operation shows the withheld check on overview and detail', async ({ page }) => {
   await installSyntheticApi(page);
@@ -33,11 +33,6 @@ test('an unknown operation shows the withheld check on overview and detail', asy
   await expect(page).toHaveURL(`/nodes/lnd-lab/operations/${unknown.id}`);
   await expect(page.getByText('The node could not be reached.', { exact: true })).toBeVisible();
 });
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 const SIZES = [
   { width: 390, height: 844 },

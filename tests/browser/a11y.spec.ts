@@ -1,16 +1,11 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { installSyntheticApi, operation } from './synthetic-api';
+import { expectNoHorizontalOverflow, isPhone } from './support';
 
 /** Implementation spec §11 and §13, with Playwright's own emulation only. */
 const MIN_TOUCH_PX = 44;
 const TAB_BAR_CLEARANCE_PX = 12;
 const REVIEW_PATH = `/nodes/lnd-lab/operations/${operation('pay_invoice').id}`;
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 /** The control is entirely inside the viewport and is what a pointer at its centre would hit. */
 async function expectWholeAndOnTop(target: Locator) {

@@ -1,14 +1,5 @@
 import { styled } from '@jfrader/ui';
+import { visuallyHidden } from './visually-hidden';
 
-export const VisuallyHidden = styled.span({
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  clipPath: 'inset(50%)',
-  whiteSpace: 'nowrap',
-  border: 0,
-});
+/** An inline label for assistive technology only; the style has one source in `visually-hidden`. */
+export const VisuallyHidden = styled.span(visuallyHidden);

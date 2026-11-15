@@ -1,6 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import examples from '../../contract/examples.v1.json' with { type: 'json' };
 import { installSyntheticApi } from './synthetic-api';
+import { expectNoHorizontalOverflow } from './support';
 
 const fixtures = examples.fixtures;
 const SIZES = [
@@ -17,11 +18,6 @@ const SCREENS = [
   { name: 'Peers', path: `/nodes/lnd-lab/peers?selected=${fixtures.peers_page.value.items[0].pubkey}`, list: 'Peers' },
   { name: 'Fleet', path: '/fleet', list: 'Nodes' },
 ];
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 for (const screen of SCREENS) {
   test(`${screen.name} has no horizontal overflow at 390, 768 and 1440 in dark and light`, async ({ page }) => {

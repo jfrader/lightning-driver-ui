@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { fixture, installSyntheticApi } from './synthetic-api';
+import { expectNoHorizontalOverflow, isPhone } from './support';
 import { doubleText } from './text-size';
 
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 
 test('@layout phone section links scroll only horizontally and reveal keyboard focus', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'phone-390', 'phone sibling navigation only');
@@ -213,11 +213,6 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
     expect.soft(usable, await control.textContent() ?? 'strip control').toBe(true);
   }
 });
-
-async function expectNoHorizontalOverflow(page: Page, tolerance = 0) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(tolerance);
-}
 
 for (const path of ['/nodes/lnd-lab', '/nodes/lnd-lab/payments', '/nodes/lnd-lab/channels', '/fleet']) {
   test(`${path} has no horizontal overflow`, async ({ page }) => {

@@ -1,14 +1,6 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { installSyntheticApi, operation } from './synthetic-api';
-
-async function tabTo(page: Page, target: Locator) {
-  await target.waitFor({ state: 'visible' });
-  for (let step = 0; step < 50; step++) {
-    if (await target.evaluate((element) => element === document.activeElement)) return;
-    await page.keyboard.press('Tab');
-  }
-  await expect(target).toBeFocused();
-}
+import { tabTo } from './support';
 
 for (const width of [390, 1440]) {
   test.describe(`all-kind sheets at ${width}`, () => {

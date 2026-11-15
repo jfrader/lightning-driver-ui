@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { APP_ORIGIN, fixture, installSyntheticApi } from './synthetic-api';
+import { expectNoHorizontalOverflow, isPhone } from './support';
 import { doubleText } from './text-size';
 
 /** Touch targets on the phone layout. */
@@ -8,7 +9,6 @@ const SIZES = [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ];
-const PHONE_MAX_WIDTH = 1023;
 
 test('@layout sign-in and enrollment actions remain contained at 200% text size', async ({ page }) => {
   await installSyntheticApi(page);
@@ -36,12 +36,6 @@ test('@layout sign-in and enrollment actions remain contained at 200% text size'
   }
 });
 
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
-
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) <= PHONE_MAX_WIDTH;
 
 async function expectTouchTarget(page: Page, target: Locator) {
   if (!isPhone(page)) return;

@@ -10,6 +10,7 @@ import { InspectorLayout } from '../../components/InspectorLayout';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { RowBody, RowLine } from '../../components/RowLayout';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { VisuallyHidden } from '../../components/VisuallyHidden';
@@ -26,18 +27,6 @@ import { InvoiceInspector } from './InvoiceInspector';
 import { INVOICE_STATE, INVOICE_STATE_LABEL } from './labels';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/invoices');
-
-const RowBody = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
-
-const Line = styled.div(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  columnGap: theme.space[3],
-  rowGap: theme.space[1],
-  minInlineSize: 0,
-}));
 
 const Small = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
 
@@ -59,17 +48,17 @@ function columns(open: Open): ResourceColumn<Invoice>[] {
 function InvoiceRow({ invoice, open }: { invoice: Invoice; open: Open }) {
   return (
     <RowBody>
-      <Line>
+      <RowLine>
         <Amount value={invoice.amount_msat} unit="msat" />
         <StateWord state={INVOICE_STATE[invoice.state]} />
-      </Line>
+      </RowLine>
       <InvoiceDescription invoice={invoice} lines={2} />
-      <Line>
+      <RowLine>
         <Small>{open(invoice, <ListTime at={invoice.created_at} />)}</Small>
         <Small>
           <InvoiceExpiryText invoice={invoice} />
         </Small>
-      </Line>
+      </RowLine>
     </RowBody>
   );
 }

@@ -1,4 +1,4 @@
-import { CopyButton, Flex, styled } from '@jfrader/ui';
+import { CopyButton, Flex, styled, type SxProps } from '@jfrader/ui';
 import { InlineCode } from './InlineCode';
 import { useControlSize } from '../features/shell/use-shell-layout';
 
@@ -39,19 +39,34 @@ interface CopyValueProps {
   prominent?: boolean;
 }
 
-export function CopyAction({ value, label, iconOnly = true }: Pick<CopyValueProps, 'value' | 'label'> & { iconOnly?: boolean }) {
+interface CopyActionProps {
+  value: string;
+  /** The noun the accessible name is built from: `Copy ${label}`. */
+  label: string;
+  iconOnly?: boolean;
+  variant?: 'outline' | 'ghost';
+  /** Override the default "'{label} copied'" / "Copied" feedback when the copy names a different object. */
+  copiedLabel?: string;
+  /** The drawn label when it is deliberately shorter than the accessible name, e.g. a bare "Copy". */
+  visibleLabel?: string;
+  sx?: SxProps['sx'];
+}
+
+/** One copy control: the widget, its labels and its feedback live here instead of in every caller. */
+export function CopyAction({ value, label, iconOnly = true, variant, copiedLabel, visibleLabel, sx }: CopyActionProps) {
   const size = useControlSize();
   return (
     <CopyButton
       iconOnly={iconOnly}
       size={size}
       text={value}
-      label={iconOnly ? `Copy ${label}` : 'Copy'}
+      label={iconOnly ? `Copy ${label}` : (visibleLabel ?? `Copy ${label}`)}
       aria-label={`Copy ${label}`}
       pendingLabel="Copying"
-      copiedLabel={iconOnly ? `${label} copied` : 'Copied'}
+      copiedLabel={copiedLabel ?? (iconOnly ? `${label} copied` : 'Copied')}
       errorLabel="Copy failed"
-      sx={keepTargetSize}
+      variant={variant}
+      sx={sx ?? keepTargetSize}
     />
   );
 }
@@ -60,7 +75,7 @@ export function CopyField({ value, label }: Pick<CopyValueProps, 'value' | 'labe
   return (
     <Field>
       <FieldValue role="region" aria-label={`${label} value`} tabIndex={0}>{value}</FieldValue>
-      <CopyAction value={value} label={label} iconOnly={false} />
+      <CopyAction value={value} label={label} iconOnly={false} visibleLabel="Copy" />
     </Field>
   );
 }

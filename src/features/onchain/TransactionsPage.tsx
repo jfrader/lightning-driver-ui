@@ -9,6 +9,7 @@ import { InspectorLayout } from '../../components/InspectorLayout';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { RowBody, RowLine } from '../../components/RowLayout';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { VisuallyHidden } from '../../components/VisuallyHidden';
@@ -27,18 +28,6 @@ import {
 import { TransactionInspector } from './TransactionInspector';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/onchain');
-
-const RowBody = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
-
-const Line = styled.div(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  columnGap: theme.space[3],
-  rowGap: theme.space[1],
-  minInlineSize: 0,
-}));
 
 const Small = styled.span(({ theme }) => ({
   display: 'inline-flex',
@@ -66,21 +55,21 @@ function columns(open: Open): ResourceColumn<Transaction>[] {
 function TransactionRow({ transaction, open }: { transaction: Transaction; open: Open }) {
   return (
     <RowBody>
-      <Line>
+      <RowLine>
         <Amount value={transaction.amount_sat} unit="sat" />
         <TransactionDirection transaction={transaction} />
-      </Line>
-      <Line>
+      </RowLine>
+      <RowLine>
         <TransactionConfirmations transaction={transaction} />
         <Small>
           <span>Fee</span>
           <Amount value={transaction.fee_sat} unit="sat" />
         </Small>
-      </Line>
-      <Line>
+      </RowLine>
+      <RowLine>
         <Small>{open(transaction, <TransactionTime transaction={transaction} />)}</Small>
         <ShortIdentifier value={transaction.txid} />
-      </Line>
+      </RowLine>
     </RowBody>
   );
 }
