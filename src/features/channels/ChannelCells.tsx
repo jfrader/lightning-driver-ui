@@ -1,4 +1,5 @@
 import { styled } from '@jfrader/ui';
+import { Muted } from '../../components/text';
 import type { Channel } from '../../api/types';
 import { MsatAmount } from '../display/Amount';
 import { NotReported } from '../display/NotReported';
@@ -18,10 +19,6 @@ const Split = styled.div(({ theme }) => ({
   fontSize: theme.textSize.xs,
 }));
 
-const Remote = styled.span(({ theme }) => ({ color: theme.color.textMuted }));
-
-const Flag = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
-
 /** The bar plus the exact local (left) and remote (right) amounts it draws. */
 export function ChannelLiquidityCell({ channel }: { channel: Channel }) {
   const liquidity = channelLiquidity(channel);
@@ -31,9 +28,9 @@ export function ChannelLiquidityCell({ channel }: { channel: Channel }) {
       <LiquidityBar name={channelName(channel)} liquidity={liquidity} />
       <Split>
         <MsatAmount msat={liquidity.local} />
-        <Remote>
+        <Muted>
           <MsatAmount msat={liquidity.remote} />
-        </Remote>
+        </Muted>
       </Split>
     </Cell>
   );
@@ -44,7 +41,7 @@ export function ChannelStateCell({ channel }: { channel: Channel }) {
   return (
     <span>
       <StateWord state={CHANNEL_STATE[channel.state]} />
-      {channel.private && <Flag> · private</Flag>}
+      {channel.private && <Muted size="xs"> · private</Muted>}
     </span>
   );
 }

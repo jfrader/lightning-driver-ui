@@ -1,5 +1,6 @@
 import { useCallback, useMemo, type ReactNode } from 'react';
-import { Flex, styled } from '@jfrader/ui';
+import { Flex } from '@jfrader/ui';
+import { Mono, Muted } from '../../components/text';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { peersQueryOptions } from '../../api/node-queries';
@@ -25,15 +26,11 @@ import { BitcoinPeersPage } from '../bitcoin/BitcoinPeersPage';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/peers');
 
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm, overflowWrap: 'anywhere' }));
-
-const Small = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
-
 type Open = (peer: Peer, label: ReactNode) => ReactNode;
 const getRowId = (peer: Peer) => peer.pubkey;
 
 function PeerAddress({ peer }: { peer: Peer }) {
-  return peer.address ? <Mono>{peer.address}</Mono> : <NotReported>Address not reported</NotReported>;
+  return peer.address ? <Mono size="sm" wrap>{peer.address}</Mono> : <NotReported>Address not reported</NotReported>;
 }
 
 function PeerDirection({ peer }: { peer: Peer }) {
@@ -58,9 +55,9 @@ function PeerRow({ peer, open }: { peer: Peer; open: Open }) {
         <StateWord state={connectionLabel(peer.connected)} />
       </RowLine>
       <PeerAddress peer={peer} />
-      <Small>
+      <Muted size="xs">
         <PeerDirection peer={peer} />
-      </Small>
+      </Muted>
     </RowBody>
   );
 }

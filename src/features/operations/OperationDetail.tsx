@@ -1,4 +1,5 @@
 import { Flex, Pill, styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { NodeSummary, Operation } from '../../api/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { DetailList } from '../../components/DetailList';
@@ -34,8 +35,6 @@ const TitleRow = styled.div(({ theme }) => ({
 
 const Title = styled.h2(({ theme }) => ({ margin: 0, fontSize: theme.textSize.xl, fontWeight: theme.fontWeight.semibold }));
 
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm }));
-
 const Anchor = styled.div({ scrollMarginBlockStart: '4rem' });
 
 interface OperationDetailProps {
@@ -66,7 +65,7 @@ export function OperationDetail({ operation, node, unanswered }: OperationDetail
         { label: 'Stage', value: OPERATION_STAGE[operation.stage] },
         { label: 'Authorization', value: AUTHORIZATION_STATUS[operation.authorization.status] },
         { label: 'Result', value: operation.result ? 'Reported' : <NotReported>None reported</NotReported> },
-        { label: 'Error code', value: operation.error ? <Mono>{operation.error.code}</Mono> : <NotReported>None</NotReported> },
+        { label: 'Error code', value: operation.error ? <Mono size="sm">{operation.error.code}</Mono> : <NotReported>None</NotReported> },
       ]}
     />
   );

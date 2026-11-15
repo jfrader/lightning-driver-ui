@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { styled, type NavigationGroupRecord } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { useRouter } from '@tanstack/react-router';
 import { RouterNavigation } from '../../components/RouterNavigation';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
@@ -15,12 +16,8 @@ const Label = styled.span(({ theme }) => ({
   gap: theme.space[2],
 }));
 
-const Count = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontSize: theme.textSize.xs,
-  fontVariantNumeric: 'tabular-nums',
-  color: theme.color.warning,
-}));
+/** The unresolved count keeps the machine rule and takes the warning tone. */
+const Count = styled(Mono)(({ theme }) => ({ color: theme.color.warning }));
 
 /** Grouped node sections, then global destinations. */
 export function SideNav() {
@@ -34,7 +31,7 @@ export function SideNav() {
     return (
       <Label>
         {text}
-        <Count aria-label={`${formatInteger(unresolved)} unresolved`}>{formatInteger(unresolved)}</Count>
+        <Count size="xs" aria-label={`${formatInteger(unresolved)} unresolved`}>{formatInteger(unresolved)}</Count>
       </Label>
     );
   };

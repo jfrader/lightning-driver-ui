@@ -1,14 +1,7 @@
-import { styled } from '@jfrader/ui';
 import { wireToMsat } from '../../lib/money';
+import { Mono } from '../../components/text';
 import { formatRatio } from '../../lib/ratio';
 import { NotReported } from './NotReported';
-
-const Ratio = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontVariantNumeric: 'tabular-nums',
-  overflowWrap: 'anywhere',
-  color: theme.color.textMuted,
-}));
 
 interface FeeRatioProps {
   feeMsat: string | null;
@@ -22,5 +15,5 @@ export function FeeRatio({ feeMsat, amountMsat, cap = false }: FeeRatioProps) {
   if (feeMsat === null || amountMsat === null) return <NotReported />;
   const ratio = formatRatio(wireToMsat(feeMsat, 'msat'), wireToMsat(amountMsat, 'msat'));
   if (ratio === null) return <NotReported>Not applicable</NotReported>;
-  return <Ratio>{cap ? `at most ${ratio} of amount` : ratio}</Ratio>;
+  return <Mono wrap muted>{cap ? `at most ${ratio} of amount` : ratio}</Mono>;
 }

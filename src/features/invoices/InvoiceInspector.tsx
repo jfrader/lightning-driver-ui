@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { CopyAction } from '../../components/CopyValue';
 import { Disclosure } from '../../components/Disclosure';
 import type { Invoice } from '../../api/types';
@@ -17,8 +18,6 @@ import { INVOICE_STATE, payableBolt11 } from './labels';
 const Stack = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[4], minInlineSize: 0 }));
 
 const Note = styled.p(({ theme }) => ({ margin: 0, fontSize: theme.textSize.sm, color: theme.color.textMuted }));
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm }));
 
 const FullText = styled.span({ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' });
 
@@ -59,7 +58,7 @@ export function InvoiceInspector({ invoice, close }: InvoiceInspectorProps) {
           stacked: true,
           value: invoice.bolt11 ? <Identifier value={invoice.bolt11} label="Invoice text" /> : <NotReported />,
         },
-        { label: 'Node state', value: <Mono>{invoice.backend_state}</Mono> },
+        { label: 'Node state', value: <Mono size="sm">{invoice.backend_state}</Mono> },
       ]}
     />
   );

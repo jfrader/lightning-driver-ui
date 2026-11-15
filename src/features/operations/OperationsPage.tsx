@@ -1,4 +1,5 @@
-import { Flex, Pill, styled } from '@jfrader/ui';
+import { Flex, Pill } from '@jfrader/ui';
+import { Muted } from '../../components/text';
 import { getRouteApi } from '@tanstack/react-router';
 import { useOperationList } from './use-operation-list';
 import type { Operation } from '../../api/types';
@@ -14,8 +15,6 @@ import { OPERATION_KIND, OPERATION_LIST_STATE, OPERATION_STAGE, outcomeLabel } f
 import { OperationAmount } from './OperationAmount';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/operations');
-
-const Stage = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
 
 function ActionLink({ operation }: { operation: Operation }) {
   return (
@@ -44,7 +43,7 @@ function columns(): ResourceColumn<Operation>[] {
     },
     { id: 'kind', header: 'Action', cell: (operation) => <ActionLink operation={operation} /> },
     { id: 'state', header: 'State', cell: (operation) => <OutcomePill operation={operation} /> },
-    { id: 'stage', header: 'Stage', cell: (operation) => <Stage>{OPERATION_STAGE[operation.stage]}</Stage> },
+    { id: 'stage', header: 'Stage', cell: (operation) => <Muted size="xs">{OPERATION_STAGE[operation.stage]}</Muted> },
     { id: 'amount', header: 'Amount', numeric: true, cell: (operation) => <OperationAmount operation={operation} /> },
   ];
 }
@@ -60,7 +59,7 @@ function OperationRow({ operation }: { operation: Operation }) {
         <OperationAmount operation={operation} />
         <ListTime at={operation.created_at} />
       </RowLine>
-      <Stage>{OPERATION_STAGE[operation.stage]}</Stage>
+      <Muted size="xs">{OPERATION_STAGE[operation.stage]}</Muted>
     </RowBody>
   );
 }

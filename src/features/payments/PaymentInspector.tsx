@@ -1,4 +1,5 @@
 import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { Payment } from '../../api/types';
 import { DetailList } from '../../components/DetailList';
 import { Section } from '../../components/Section';
@@ -8,8 +9,6 @@ import { FeeRatio } from '../display/FeeRatio';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
 import { PaymentState } from './PaymentState';
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm }));
 
 const Note = styled.p(({ theme }) => ({ margin: 0, fontSize: theme.textSize.sm, color: theme.color.textMuted }));
 
@@ -48,7 +47,7 @@ export function PaymentInspector({ payment, close }: PaymentInspectorProps) {
             value: payment.destination ? <Identifier value={payment.destination} label="Destination" /> : <NotReported />,
           },
           { label: 'Payment hash', stacked: true, value: <Identifier value={payment.payment_hash} label="Payment hash" /> },
-          { label: 'Node state', value: <Mono>{payment.backend_state}</Mono> },
+          { label: 'Node state', value: <Mono size="sm">{payment.backend_state}</Mono> },
         ]}
       />
     </Section>

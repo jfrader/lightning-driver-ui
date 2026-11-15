@@ -1,5 +1,6 @@
 import { useCallback, useMemo, type ReactNode } from 'react';
 import { Flex, styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { channelsQueryOptions } from '../../api/node-queries';
@@ -26,8 +27,6 @@ import { LIQUIDITY_PARTS } from './liquidity';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/channels');
 
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm }));
-
 const Meta = styled.span(({ theme }) => ({
   display: 'inline-flex',
   flexWrap: 'wrap',
@@ -41,7 +40,7 @@ const getRowId = (channel: Channel) => channel.id;
 
 function channelColumns(open: Open): ResourceColumn<Channel>[] {
   return [
-    { id: 'channel', header: 'Channel', width: '8rem', cell: (channel) => open(channel, <Mono>{channelName(channel)}</Mono>) },
+    { id: 'channel', header: 'Channel', width: '8rem', cell: (channel) => open(channel, <Mono size="sm">{channelName(channel)}</Mono>) },
     { id: 'peer', header: 'Peer', width: '9.5rem', cell: (channel) => <ShortIdentifier value={channel.peer_pubkey} /> },
     { id: 'state', header: 'State', width: '9rem', cell: (channel) => <ChannelStateCell channel={channel} /> },
     { id: 'liquidity', header: 'Local / remote', cell: (channel) => <ChannelLiquidityCell channel={channel} /> },
@@ -53,7 +52,7 @@ function ChannelRow({ channel, open }: { channel: Channel; open: Open }) {
   return (
     <RowBody gap="md">
       <RowLine align="center">
-        {open(channel, <Mono>{channelName(channel)}</Mono>)}
+        {open(channel, <Mono size="sm">{channelName(channel)}</Mono>)}
         <ChannelStateCell channel={channel} />
       </RowLine>
       <ChannelLiquidityCell channel={channel} />

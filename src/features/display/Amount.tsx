@@ -1,13 +1,7 @@
-import { styled } from '@jfrader/ui';
 import { formatMsat, wireToMsat, type WireUnit } from '../../lib/money';
+import { Mono } from '../../components/text';
 import { NotReported } from './NotReported';
 import { useDisplayUnit } from './unit-context';
-
-const Value = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontVariantNumeric: 'tabular-nums',
-  overflowWrap: 'anywhere',
-}));
 
 interface AmountProps {
   /** Canonical wire decimal, or `null` when the node did not report it. */
@@ -20,11 +14,11 @@ interface AmountProps {
 export function Amount({ value, unit, className }: AmountProps) {
   const { unit: displayUnit } = useDisplayUnit();
   if (value === null) return <NotReported />;
-  return <Value className={className}>{formatMsat(wireToMsat(value, unit), displayUnit)}</Value>;
+  return <Mono wrap className={className}>{formatMsat(wireToMsat(value, unit), displayUnit)}</Mono>;
 }
 
 /** An exact msat amount already parsed (for derived figures such as an "at most" total). */
 export function MsatAmount({ msat, className }: { msat: bigint; className?: string }) {
   const { unit } = useDisplayUnit();
-  return <Value className={className}>{formatMsat(msat, unit)}</Value>;
+  return <Mono wrap className={className}>{formatMsat(msat, unit)}</Mono>;
 }

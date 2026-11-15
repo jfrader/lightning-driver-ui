@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { Transaction } from '../../api/types';
 import { DetailList } from '../../components/DetailList';
 import { Section } from '../../components/Section';
@@ -32,8 +33,6 @@ const Line = styled.div(({ theme }) => ({
   columnGap: theme.space[3],
   fontSize: theme.textSize.sm,
 }));
-
-const Index = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, color: theme.color.textMuted }));
 
 interface TransactionInspectorProps {
   /** The selected transaction, or `null` when its txid is not on the loaded page. */
@@ -74,7 +73,7 @@ export function TransactionInspector({ transaction, close }: TransactionInspecto
               {outputs.map((output) => (
                 <Output key={output.index}>
                   <Line>
-                    <Index>#{output.index}</Index>
+                    <Mono muted>#{output.index}</Mono>
                     <Amount value={output.amount_sat} unit="sat" />
                   </Line>
                   {output.address ? <Identifier value={output.address} label="Address" /> : <NotReported>Address not reported</NotReported>}

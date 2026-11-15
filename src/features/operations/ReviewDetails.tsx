@@ -1,12 +1,10 @@
-import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { Disclosure } from '../../components/Disclosure';
 import type { DecodedInvoice, Operation } from '../../api/types';
 import { DetailList, type DetailItem } from '../../components/DetailList';
 import { UtcTime } from '../../components/UtcTime';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm, overflowWrap: 'anywhere' }));
 
 interface ReviewDetailsProps {
   operation: Operation;
@@ -25,10 +23,10 @@ export function ReviewDetails({ operation, decoded = null }: ReviewDetailsProps)
     },
     { label: 'Node public key', stacked: true, value: <Identifier value={review.node.identity_pubkey} label="Node public key" /> },
     { label: 'Review digest', stacked: true, value: <Identifier value={review.digest} label="Review digest" /> },
-    { label: 'Operation ID', value: <Mono>{review.operation_id}</Mono> },
-    error !== null && { label: 'Request ID', value: <Mono>{error.request_id}</Mono> },
-    { label: 'Node binding', value: <Mono>{review.node.identity_revision}</Mono> },
-    { label: 'Policy revision', value: <Mono>{review.policy_revision}</Mono> },
+    { label: 'Operation ID', value: <Mono size="sm" wrap>{review.operation_id}</Mono> },
+    error !== null && { label: 'Request ID', value: <Mono size="sm" wrap>{error.request_id}</Mono> },
+    { label: 'Node binding', value: <Mono size="sm" wrap>{review.node.identity_revision}</Mono> },
+    { label: 'Policy revision', value: <Mono size="sm" wrap>{review.policy_revision}</Mono> },
     { label: 'Review expires', value: <UtcTime value={review.expires_at} /> },
     operation.request.kind === 'pay_invoice' && {
       label: 'Invoice expires',

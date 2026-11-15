@@ -1,4 +1,5 @@
-import { Button, Flex, Pill, styled } from '@jfrader/ui';
+import { Button, Flex, Pill } from '@jfrader/ui';
+import { Muted } from '../../components/text';
 import { useQuery } from '@tanstack/react-query';
 import { feeEstimatesQueryOptions } from '../../api/node-queries';
 import type { AmountBounds, FeeEstimates } from '../../api/types';
@@ -13,8 +14,6 @@ const ESTIMATES = [
   { key: 'normal', label: 'Normal' },
   { key: 'priority', label: 'Priority' },
 ] as const satisfies readonly { key: keyof FeeEstimates; label: string }[];
-
-const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
 
 interface FeeRateFieldProps {
   nodeId: string;
@@ -60,7 +59,7 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
       {estimates.data && (
         <Flex wrap gap="sm" align="center">
           {estimates.data.stale && <Pill tone="warning">Stale</Pill>}
-          <Muted>
+          <Muted size="sm">
             {reported.length === 0
               ? 'No fee estimates reported.'
               : estimates.data.observed_at === null
@@ -70,10 +69,10 @@ export function FeeRateField({ nodeId, value, onChange, bounds, error }: FeeRate
           {reported.some(({ key }) => {
             const estimate = estimates.data[key];
             return estimate !== null && !isWithin(parseWireDecimal(estimate.fee_rate_sat_vbyte), bounds);
-          }) && <Muted>Outside this node's fee-rate limits: disabled.</Muted>}
+          }) && <Muted size="sm">Outside this node's fee-rate limits: disabled.</Muted>}
         </Flex>
       )}
-      {estimates.isError && <Muted>No fee estimates reported.</Muted>}
+      {estimates.isError && <Muted size="sm">No fee estimates reported.</Muted>}
       <ExactNumberField
         kind="whole"
         label="Fee rate (sat/vB)"

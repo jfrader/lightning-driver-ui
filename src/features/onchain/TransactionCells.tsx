@@ -4,8 +4,10 @@ import { ListTime } from '../../components/ListTime';
 import { NotReported } from '../display/NotReported';
 import { StateWord } from '../display/StateWord';
 import { blockLabel, confirmationsLabel, DIRECTION } from './labels';
+import { Mono } from '../../components/text';
 
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }));
+/** A cell that must not wrap: the height and the timestamp columns. */
+const Cell = styled(Mono)({ whiteSpace: 'nowrap' });
 
 export function TransactionDirection({ transaction }: { transaction: Transaction }) {
   return <StateWord state={DIRECTION[transaction.direction]} />;
@@ -19,7 +21,7 @@ export function TransactionConfirmations({ transaction }: { transaction: Transac
 export function TransactionBlock({ transaction }: { transaction: Transaction }) {
   const label = blockLabel(transaction);
   if (label === null) return <NotReported />;
-  return transaction.block_height === null ? <span>{label}</span> : <Mono>{label}</Mono>;
+  return transaction.block_height === null ? <span>{label}</span> : <Cell>{label}</Cell>;
 }
 
 export function TransactionTime({ transaction }: { transaction: Transaction }) {

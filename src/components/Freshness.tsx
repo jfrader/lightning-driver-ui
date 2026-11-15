@@ -1,8 +1,7 @@
-import { Flex, Pill, styled } from '@jfrader/ui';
+import { Flex, Pill } from '@jfrader/ui';
+import { Muted } from './text';
 import { formatAge, formatDateTime } from '../lib/time';
 import { useNow } from '../lib/use-now';
-
-const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontSize: theme.textSize.sm }));
 
 interface FreshnessProps {
   observedAt: string | null;
@@ -16,7 +15,7 @@ export function Freshness({ observedAt, stale }: FreshnessProps) {
   return (
     <Flex wrap gap="sm" align="center">
       {stale && <Pill tone="warning">Stale</Pill>}
-      <Muted title={observedAt ? (formatDateTime(observedAt) ?? undefined) : undefined}>
+      <Muted size="sm" title={observedAt ? (formatDateTime(observedAt) ?? undefined) : undefined}>
         {age ? `Observed ${age}` : 'Never observed'}
       </Muted>
     </Flex>

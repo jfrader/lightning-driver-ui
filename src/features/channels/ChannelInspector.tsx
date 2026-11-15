@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { Channel, NodeSummary } from '../../api/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { DetailList, type DetailItem } from '../../components/DetailList';
@@ -18,8 +19,6 @@ import { LiquidityBar } from './LiquidityBar';
 const Stack = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[4], minInlineSize: 0 }));
 
 const Keyed = styled.span({ display: 'inline-flex', alignItems: 'center' });
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm, overflowWrap: 'anywhere' }));
 
 const Note = styled.p(({ theme }) => ({ margin: 0, fontSize: theme.textSize.sm, color: theme.color.textMuted }));
 
@@ -75,8 +74,8 @@ export function ChannelInspector({ channel, node, close }: ChannelInspectorProps
       label: 'Visibility',
       value: channel.private === null ? <NotReported /> : channel.private ? 'Private' : 'Public',
     },
-    { label: 'Short channel ID', value: channel.short_channel_id ? <Mono>{channel.short_channel_id}</Mono> : <NotReported /> },
-    { label: 'Channel ID', value: <Mono>{channel.id}</Mono> },
+    { label: 'Short channel ID', value: channel.short_channel_id ? <Mono size="sm" wrap>{channel.short_channel_id}</Mono> : <NotReported /> },
+    { label: 'Channel ID', value: <Mono size="sm" wrap>{channel.id}</Mono> },
     ...(channel.close_type === null ? [] : [{ label: 'Close type', value: CLOSE_TYPE[channel.close_type] }]),
     { label: 'Peer', stacked: true, value: <Identifier value={channel.peer_pubkey} label="Peer" /> },
     {
@@ -84,7 +83,7 @@ export function ChannelInspector({ channel, node, close }: ChannelInspectorProps
       stacked: true,
       value: channel.funding_outpoint ? <Identifier value={channel.funding_outpoint} label="Funding outpoint" /> : <NotReported />,
     },
-    { label: 'Node state', value: <Mono>{channel.backend_state}</Mono> },
+    { label: 'Node state', value: <Mono size="sm" wrap>{channel.backend_state}</Mono> },
   ];
   return (
     <Section title={`Channel ${name}`} action={close}>

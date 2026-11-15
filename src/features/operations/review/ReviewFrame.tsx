@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Flex, Pill, styled } from '@jfrader/ui';
+import { Mono } from '../../../components/text';
 import type { DecodedInvoice, Operation } from '../../../api/types';
 import { WorkLayout } from '../../../components/WorkLayout';
 import { READING_WIDTH, TABLE_MEDIA } from '../../../config';
@@ -24,8 +25,6 @@ const TitleRow = styled.div(({ theme }) => ({
 const Title = styled.h2(({ theme }) => ({ margin: 0, fontSize: theme.textSize.xl, fontWeight: theme.fontWeight.semibold }));
 
 const Expiry = styled.span(({ theme }) => ({ fontSize: theme.textSize.sm, color: theme.color.textMuted }));
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono }));
 
 const Stack = styled.div(({ theme }) => ({
   display: 'grid',

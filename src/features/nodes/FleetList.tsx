@@ -1,4 +1,5 @@
 import { Pill, styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { useQuery } from '@tanstack/react-query';
 import { fleetQueryOptions } from '../../api/node-queries';
 import type { NodeSummary } from '../../api/types';
@@ -16,15 +17,8 @@ import { surfacesFor } from '../shell/nav-model';
 
 const NodeName = styled.span(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
 
-const Id = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontSize: theme.textSize.xs,
-  color: theme.color.textMuted,
-}));
-
-const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontFamily: theme.font.mono }));
-
-const Count = styled.span(({ theme }) => ({ color: theme.color.warning, fontFamily: theme.font.mono }));
+/** The unresolved count in the warning tone: same machine rule, different colour. */
+const Count = styled(Mono)(({ theme }) => ({ color: theme.color.warning }));
 
 const Meta = styled.span(({ theme }) => ({
   display: 'inline-flex',
@@ -63,7 +57,7 @@ function Observed({ node }: { node: NodeSummary }) {
 function Unresolved({ node }: { node: NodeSummary }) {
   if (node.kind === 'bitcoin') return <>—</>;
   const count = parseWireDecimal(node.unresolved_operation_count);
-  if (count === 0n || !surfacesFor(node).includes('operations')) return <Muted>{formatInteger(count)}</Muted>;
+  if (count === 0n || !surfacesFor(node).includes('operations')) return <Mono muted>{formatInteger(count)}</Mono>;
   return (
     <TextLink to="/nodes/$nodeId/operations" params={{ nodeId: node.id }} search={{ state: 'nonterminal' }}>
       <Count>{formatInteger(count)}</Count> unresolved
@@ -79,7 +73,7 @@ function columns(): ResourceColumn<NodeSummary>[] {
       cell: (node) => (
         <NodeName>
           <NodeLink node={node} />
-          <Id>{node.id}</Id>
+          <Mono muted size="xs">{node.id}</Mono>
         </NodeName>
       ),
     },

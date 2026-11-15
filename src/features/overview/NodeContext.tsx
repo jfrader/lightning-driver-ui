@@ -1,4 +1,4 @@
-import { styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { nodeInfoQueryOptions, nodePolicyQueryOptions } from '../../api/node-queries';
 import type { NodeSummary } from '../../api/types';
@@ -14,8 +14,6 @@ import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
 import { useAuthMethod } from '../auth/use-auth-method';
 import { BACKEND_LABEL, REAUTH_LABEL, syncLabel } from '../nodes/labels';
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono }));
 
 function NodeFacts({ node }: { node: NodeSummary }) {
   const info = useQuery(nodeInfoQueryOptions(node.id));

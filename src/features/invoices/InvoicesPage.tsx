@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Flex, styled } from '@jfrader/ui';
+import { Flex } from '@jfrader/ui';
+import { Muted } from '../../components/text';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { invoicesQueryOptions } from '../../api/node-queries';
@@ -28,8 +29,6 @@ import { INVOICE_STATE, INVOICE_STATE_LABEL } from './labels';
 
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/invoices');
 
-const Small = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
-
 type Open = (invoice: Invoice, label: ReactNode) => ReactNode;
 
 function columns(open: Open): ResourceColumn<Invoice>[] {
@@ -54,10 +53,10 @@ function InvoiceRow({ invoice, open }: { invoice: Invoice; open: Open }) {
       </RowLine>
       <InvoiceDescription invoice={invoice} lines={2} />
       <RowLine>
-        <Small>{open(invoice, <ListTime at={invoice.created_at} />)}</Small>
-        <Small>
+        <Muted size="xs">{open(invoice, <ListTime at={invoice.created_at} />)}</Muted>
+        <Muted size="xs">
           <InvoiceExpiryText invoice={invoice} />
-        </Small>
+        </Muted>
       </RowLine>
     </RowBody>
   );
