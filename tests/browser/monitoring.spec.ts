@@ -22,7 +22,8 @@ test('Bitcoin workspace has monitoring sections, peers and no Lightning actions'
     await expect(page.getByRole('main').getByRole('heading', { name, exact: true })).toBeVisible();
   }
   await expect(page.getByRole('combobox', { name: 'Node' })).toHaveAccessibleDescription('Online · Monitor only');
-  await expect(page.getByText('9,007,199,254,740,993 bytes')).toBeVisible();
+  await expect(page.getByText('8 PiB (9,007,199,254,740,993 bytes)', { exact: true })).toBeVisible();
+  await expect(page.getByText('1 hour', { exact: true })).toBeVisible();
   const nav = page.getByRole('navigation', {
     name: (page.viewportSize()?.width ?? 0) < 1024 ? 'Sections' : 'Node sections',
   });

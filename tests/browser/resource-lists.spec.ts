@@ -64,3 +64,14 @@ test('the invoice inspector copies the exact invoice text', async ({ page, conte
   await page.getByRole('button', { name: 'Copy invoice' }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(invoice.bolt11);
 });
+
+test('numeric cells stay one line beside the node aside at 1280', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installSyntheticApi(page, { appOrigin: test.info().project.use.baseURL as string });
+  await page.goto('/nodes/lnd-lab');
+  await expect(page.getByRole('heading', { name: 'Recent payments', exact: true })).toBeVisible();
+  const fee = page.getByRole('table', { name: 'Recent payments' }).getByText('0.123 sat', { exact: true });
+  await expect(fee).toBeVisible();
+  expect(await fee.evaluate((element) => element.getClientRects().length)).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+});

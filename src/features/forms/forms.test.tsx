@@ -140,6 +140,15 @@ describe('open channel form', () => {
     expect(await screen.findByText('Connected')).toBeInTheDocument();
     expect(within(screen.getByRole('radiogroup', { name: 'Visibility' })).getByRole('radio', { name: 'Public' })).toBeChecked();
   });
+
+  it('picks a connected peer from the peer list into the same key field', async () => {
+    const { user } = renderApp('/nodes/lnd-lab/channels/new');
+    const picker = await screen.findByRole('combobox', { name: 'Peer' });
+    await user.click(picker);
+    await user.click(await screen.findByRole('option', { name: new RegExp(PEER.slice(0, 10)) }));
+    expect(screen.getByLabelText(/^Peer public key/)).toHaveValue(PEER);
+    expect(await screen.findByText('Connected')).toBeInTheDocument();
+  });
 });
 
 describe('close channel form', () => {

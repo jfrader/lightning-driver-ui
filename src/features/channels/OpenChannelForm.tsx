@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { Flex, SegmentedControl } from '@jfrader/ui';
+import { Flex, SegmentedControl, Select } from '@jfrader/ui';
 import { FormTextField } from '../../components/FormTextField';
 import { useQuery } from '@tanstack/react-query';
 import { peersQueryOptions } from '../../api/node-queries';
-import type { NodePolicy } from '../../api/types';
+import type { NodePolicy, Peer } from '../../api/types';
 import { msatToWireSat } from '../../lib/money';
 import { useDisplayUnit } from '../display/unit-context';
 import { AmountField, type AmountEntry } from '../forms/AmountField';
@@ -13,6 +13,7 @@ import { ReviewSubmit } from '../forms/ReviewSubmit';
 import { checkAmount, checkFeeRate, checkPubkey, rangeText, type Checked } from '../forms/validation';
 import { useSubmitOperation } from '../operations/use-submit-operation';
 import { useControlSize } from '../shell/use-shell-layout';
+import { peerChoiceLabel } from '../peers/peer-address';
 
 const FIELDS = ['peer', 'amount'] as const;
 const VISIBILITY = [
@@ -36,10 +37,8 @@ interface FormState {
 }
 
 /** The peer's connection as the loaded peers page shows it; a hint, never a block (G-8). */
-function useConnectionHint(nodeId: string, pubkey: string | null): string | null {
-  const peers = useQuery(peersQueryOptions(nodeId, {}));
-  if (!pubkey || !peers.data) return null;
-  const peer = peers.data.items.find((item) => item.pubkey === pubkey);
+function connectionHint(peer: Peer | undefined, loaded: boolean): string | null {
+  if (!loaded) return null;
   if (!peer) return 'Not on the loaded peers page.';
   return peer.connected ? 'Connected' : 'Not connected to this peer.';
 }
@@ -48,6 +47,7 @@ function useConnectionHint(nodeId: string, pubkey: string | null): string | null
 export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChannelFormProps) {
   const { unit } = useDisplayUnit();
   const size = useControlSize();
+  const peers = useQuery(peersQueryOptions(nodeId, {}));
   const [form, setForm] = useState<FormState>({
     peer: initialPeer,
     amount: { text: '', unit },
@@ -61,7 +61,12 @@ export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChanne
   const amount = checkAmount(form.amount, { allowMsat: false, bounds: policy.open_channel_sat, boundsUnit: 'sat' });
   const feeRate = checkFeeRate(form.feeRate, policy.fee_rate_sat_vbyte);
   const show = (check: Checked<unknown>) => (form.submitted && !check.ok ? check.error : undefined);
-  const connection = useConnectionHint(nodeId, peer.ok ? peer.value : null);
+  const peerItems = peers.data?.items ?? [];
+  const picked = peerItems.find((item) => item.pubkey === form.peer);
+  const connection = peer.ok ? connectionHint(picked, peers.data !== undefined) : null;
+  const choosePeer = (value: string) => {
+    if (value) setForm((current) => ({ ...current, peer: value }));
+  };
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -81,6 +86,17 @@ export function OpenChannelForm({ nodeId, policy, initialPeer = '' }: OpenChanne
   return (
     <form noValidate onSubmit={onSubmit}>
       <Flex direction="column" gap="md">
+        {/* Always rendered: inserting the picker after the peers read would shift every field below it. */}
+        <Select
+          label="Peer"
+          size={size}
+          options={[
+            { value: '', label: peers.isPending ? 'Loading peers…' : peers.isError ? 'Peers not loaded' : peerItems.length > 0 ? 'Choose a peer' : 'No peers on this node' },
+            ...peerItems.map((item) => ({ value: item.pubkey, label: peerChoiceLabel(item) })),
+          ]}
+          value={picked?.pubkey ?? ''}
+          onValueChange={choosePeer}
+        />
         <FormTextField
           label="Peer public key"
           description={connection ?? undefined}

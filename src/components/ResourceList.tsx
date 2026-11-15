@@ -82,6 +82,13 @@ const HEADER_NO_WRAP = {
   },
 };
 
+/** Numeric cells are one token: an amount or a fee never breaks digit by digit in a narrow column. */
+const Table = styled.div({
+  minInlineSize: 0,
+  '& [data-numeric]': { whiteSpace: 'nowrap' },
+  '& [data-ui="data-table-scroller"]': { scrollbarWidth: 'thin' },
+});
+
 function sortedRows<T>(rows: readonly T[], columns: readonly ResourceColumn<T>[], sort: SortState | null): readonly T[] {
   const column = sort && columns.find((column) => column.id === sort.columnId);
   if (!sort || !column?.compare) return rows;
@@ -102,18 +109,20 @@ function ResourceListBody<T>({ caption, rows, columns, getRowId, sort = null, on
   const ordered = sortedRows(rows, columns, sort);
   if (table) {
     return (
-      <DataTable
-        caption={caption}
-        captionHidden
-        size="sm"
-        rows={ordered}
-        getRowId={getRowId}
-        sortMode="manual"
-        value={sort}
-        onValueChange={onSort}
-        columns={columns.map((column) => ({ ...column, sortable: Boolean(column.compare && onSort) }))}
-        slotProps={HEADER_NO_WRAP}
-      />
+      <Table>
+        <DataTable
+          caption={caption}
+          captionHidden
+          size="sm"
+          rows={ordered}
+          getRowId={getRowId}
+          sortMode="manual"
+          value={sort}
+          onValueChange={onSort}
+          columns={columns.map((column) => ({ ...column, sortable: Boolean(column.compare && onSort) }))}
+          slotProps={HEADER_NO_WRAP}
+        />
+      </Table>
     );
   }
   const sortOptions = columns.filter((column) => column.compare).flatMap((column) =>

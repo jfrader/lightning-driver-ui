@@ -62,7 +62,9 @@ export function OperationSheet({ title, hasReview, busy, onClose, onDiscard, chi
       <Surface.Content withDescription={false} onKeyDown={containTab} onCancel={(event) => { if (!canDismiss) event.preventDefault(); }}>
         <Surface.Panel appearance="default">
           <Surface.Header sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: theme.space[2] }}>
-            <Surface.Title ref={titleRef} tabIndex={-1}>{title}</Surface.Title>
+            {/* The title takes focus on open so assistive tech reads it; it is not an interactive
+                control, so it must not paint a focus ring. */}
+            <Surface.Title ref={titleRef} tabIndex={-1} sx={{ '&:focus, &:focus-visible': { outline: 'none' } }}>{title}</Surface.Title>
             <Button size={desktop ? 'sm' : 'lg'} variant="ghost" disabled={busy} onClick={hasReview ? onDiscard : onClose}>
               {hasReview ? 'Discard review' : 'Close'}
             </Button>

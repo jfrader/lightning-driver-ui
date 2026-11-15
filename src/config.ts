@@ -29,7 +29,7 @@ export const SHARE_BAR_HEIGHT = { inline: 8, detail: 14 } as const;
 /** Breakpoints are single sources: lists become tables at 48rem, the aside sits beside content at 80rem. */
 export const TABLE_QUERY = '(min-width: 48rem)';
 export const TABLE_MEDIA = `@media ${TABLE_QUERY}`;
-export const ASIDE_QUERY = '(min-width: 80rem)';
+export const ASIDE_QUERY = '(min-width: 84rem)';
 export const ASIDE_MEDIA = `@media ${ASIDE_QUERY}`;
 export const READING_WIDTH = '42rem';
 export const AUTH_COLUMN_WIDTH = '24rem';

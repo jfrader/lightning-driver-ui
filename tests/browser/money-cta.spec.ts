@@ -42,6 +42,23 @@ for (const width of [390, 1440]) {
       });
     }
 
+    test('the money-moving action is the accent on every money list', async ({ page }) => {
+      await installSyntheticApi(page);
+      const background = async (path: string, name: string) => {
+        await page.goto(`/nodes/lnd-lab${path}`);
+        const button = page.getByRole('button', { name, exact: true });
+        await expect(button).toBeVisible();
+        return button.evaluate((element) => getComputedStyle(element).backgroundColor);
+      };
+      const pay = await background('/payments', 'Pay invoice');
+      const create = await background('/invoices', 'Create invoice');
+      const send = await background('/onchain', 'Send on-chain');
+      const receive = await background('/onchain', 'New address');
+      expect(send).toBe(pay);
+      expect(send).toBe(create);
+      expect(receive).not.toBe(send);
+    });
+
     test('blocked page CTAs keep their disabled state and literal reason', async ({ page }) => {
       await installSyntheticApi(page);
       const node = fixture('node_lnd');

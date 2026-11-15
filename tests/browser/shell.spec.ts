@@ -77,6 +77,7 @@ test('@layout missing-node recovery is touch-sized and opens the fleet', async (
     await page.goto('/nodes/unconfigured-synthetic-node');
     await expect(page.getByRole('heading', { name: 'Node not found', exact: true })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: /^(Overview|Wallet|Channels)$/ })).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Sections', exact: true }).getByRole('link', { name: 'Fleet', exact: true })).toBeVisible();
     if (enlarged) await doubleText(page);
     const recovery = page.getByRole('link', { name: 'Open fleet', exact: true });
     const box = await recovery.boundingBox();
@@ -115,12 +116,12 @@ test('@layout enlarged Lightning header controls remain separate and quick actio
   await page.route('**/api/v1/nodes/lnd-lab', route => route.fulfill({ json: node }));
   await page.goto('/nodes/lnd-lab');
   await expect(page.getByRole('heading', { name: 'Balances', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await doubleText(page);
   const chooser = page.getByRole('combobox', { name: 'Node' });
   await expect(chooser).toHaveAttribute('title', 'LND lab · Regtest');
-  const unresolved = page.getByRole('button', { name: 'Operations: 1', exact: true });
+  const unresolved = page.getByRole('button', { name: '1 unresolved operation', exact: true });
   await expectNoHorizontalOverflow(page, 1);
   const first = await chooser.boundingBox();
   const second = await unresolved.boundingBox();
@@ -176,7 +177,7 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   await page.goto('/nodes/lnd-lab/invoices');
   await expect(page.getByRole('heading', { name: 'Invoices', exact: true })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Display unit' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Go to/ })).toBeVisible();
   await doubleText(page);
   const rail = await page.getByRole('complementary', { name: 'Node and sections' }).boundingBox();
@@ -197,7 +198,7 @@ test('@layout enlarged desktop preferences stay inside the rail instead of cover
   });
   expect.soft(unitHit, 'display unit control at 200% text').toBe(true);
   const stripControls = [
-    page.getByRole('button', { name: 'Operations: 1', exact: true }),
+    page.getByRole('button', { name: '1 unresolved operation', exact: true }),
     page.getByRole('button', { name: /^Go to/ }),
   ];
   for (const control of stripControls) {
@@ -347,7 +348,7 @@ test('@layout every status strip control shares one height and baseline', async 
   await installSyntheticApi(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/nodes/lnd-lab');
-  await expect(page.getByRole('button', { name: 'Operations: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '1 unresolved operation', exact: true })).toBeVisible();
   const controls = page.evaluate(() => {
     const strip = [...document.querySelectorAll('div')].find((element) => {
       const style = getComputedStyle(element);
@@ -366,4 +367,42 @@ test('@layout every status strip control shares one height and baseline', async 
   expect(boxes.length).toBeGreaterThanOrEqual(4);
   expect(new Set(boxes.map((box) => box.height)).size).toBe(1);
   expect(new Set(boxes.map((box) => box.top))).toEqual(new Set([boxes[0].top]));
+});
+
+test('@layout the status strip stays one row at 1280', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installSyntheticApi(page);
+  await page.goto('/nodes/lnd-lab');
+  const status = page.getByRole('list', { name: 'Node status' });
+  const go = page.getByRole('button', { name: /Go to/ });
+  await expect(status).toBeVisible();
+  await expect(go).toBeVisible();
+  const statusBox = await status.boundingBox();
+  const goBox = await go.boundingBox();
+  if (!statusBox || !goBox) throw new Error('Missing strip geometry');
+  expect(Math.abs(statusBox.y + statusBox.height / 2 - (goBox.y + goBox.height / 2))).toBeLessThanOrEqual(2);
+  await expect(go.evaluate((element) => element.getBoundingClientRect().right)).resolves.toBeLessThanOrEqual(1280 - 20);
+  // The shortcut is one unit: Ctrl and K never split across two lines.
+  const keys = go.locator('kbd');
+  const ctrl = await keys.nth(0).boundingBox();
+  const k = await keys.nth(1).boundingBox();
+  if (!ctrl || !k) throw new Error('Missing shortcut geometry');
+  expect(Math.abs(ctrl.y - k.y)).toBeLessThanOrEqual(1);
+});
+
+test('@layout theme segments stay equal and separated', async ({ page }) => {
+  await installSyntheticApi(page);
+  await page.goto('/more');
+  const theme = page.locator('[aria-label="Theme"]').first();
+  const boxes = [];
+  for (const name of ['Dark', 'Light', 'System']) {
+    const box = await theme.getByRole('radio', { name, exact: true }).boundingBox();
+    if (!box) throw new Error(`Missing ${name} segment`);
+    boxes.push(box);
+  }
+  const widths = boxes.map((box) => box.width);
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1);
+  for (let index = 1; index < boxes.length; index += 1) {
+    expect(boxes[index].x - (boxes[index - 1].x + boxes[index - 1].width)).toBeGreaterThanOrEqual(2);
+  }
 });

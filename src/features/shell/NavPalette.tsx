@@ -30,6 +30,23 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
   const switchLocked = useConfirmInFlight();
 
   const items: CommandPaletteItemRecord[] = [];
+  // Forms first: the palette is a shortcut to act, not only to navigate. On an empty query the
+  // operator should see Pay invoice / Create invoice before a list of destinations.
+  if (nodeId !== null && node) {
+    for (const form of FORM_DESTINATIONS.filter(
+      (form) => node.kind === 'lightning' && surfacesFor(node).includes(ACTION_SURFACES[form.capability]),
+    )) {
+      const reason = capabilityBlock(node, form.capability);
+      items.push({
+        value: `form-${form.capability}`,
+        label: reason ? `${form.label} ${capabilityReasonText(reason, node)}` : form.label,
+        group: 'Open form',
+        keywords: form.keywords,
+        disabled: reason !== null,
+        onSelect: () => void navigate({ ...destination, to: form.to, params: { nodeId }, search: (previous) => ({ ...previous, palette: undefined }) }),
+      });
+    }
+  }
   if (nodeId !== null) {
     for (const key of node ? surfacesFor(node) : (['operations'] as const)) {
       const { label, to } = NODE_DESTINATIONS[key];
@@ -53,21 +70,6 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
   for (const key of keysOf(GLOBAL_DESTINATIONS)) {
     const { label, to, keywords } = GLOBAL_DESTINATIONS[key];
     items.push({ value: `go-${key}`, label, group: 'Go to', keywords, onSelect: () => void navigate({ ...destination, to, search: {} }) });
-  }
-  if (nodeId !== null && node) {
-    for (const form of FORM_DESTINATIONS.filter(
-      (form) => node.kind === 'lightning' && surfacesFor(node).includes(ACTION_SURFACES[form.capability]),
-    )) {
-      const reason = capabilityBlock(node, form.capability);
-      items.push({
-        value: `form-${form.capability}`,
-        label: reason ? `${form.label} ${capabilityReasonText(reason, node)}` : form.label,
-        group: 'Open form',
-        keywords: form.keywords,
-        disabled: reason !== null,
-        onSelect: () => void navigate({ ...destination, to: form.to, params: { nodeId }, search: (previous) => ({ ...previous, palette: undefined }) }),
-      });
-    }
   }
   for (const other of fleet.data?.items ?? []) {
     if (other.id === nodeId) continue;
@@ -96,7 +98,7 @@ export function NavPalette({ open, onOpenChange }: NavPaletteProps) {
       open={open}
       onOpenChange={(next) => { if (!selected.current) onOpenChange(next); }}
       onSelect={() => { selected.current = true; }}
-      slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } } }}
+      slotProps={{ item: { sx: { minBlockSize: desktop ? undefined : TOUCH_TARGET } }, list: { sx: { maxBlockSize: 'min(60dvh, 520px)', scrollbarWidth: 'thin' } } }}
     />
   );
 }

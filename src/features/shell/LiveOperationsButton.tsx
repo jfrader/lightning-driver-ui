@@ -5,11 +5,14 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 import { ButtonLink } from '../../components/ButtonLink';
 import { wrappingControlText } from '../../components/control-styles';
 import { LoadingState } from '../../components/LoadingState';
+import { DISPLAY_LOCALE } from '../../config';
 import { formatInteger } from '../../lib/money';
 import { isInFlight, OPERATION_KIND, OPERATION_STAGE, OPERATION_STATE } from '../operations/labels';
 import { OperationAmount } from '../operations/OperationAmount';
 import { useOperationList } from '../operations/use-operation-list';
 import { useControlSize } from './use-shell-layout';
+
+const PLURAL = new Intl.PluralRules(DISPLAY_LOCALE);
 
 const List = styled.ul(({ theme }) => ({ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: theme.space[4] }));
 
@@ -24,7 +27,10 @@ export function LiveOperationsButton({ node }: { node: NodeSummary }) {
   const operations = useOperationList(node.id, { state: 'nonterminal' });
   const active = [...new Map(operations.data?.items.filter((operation) => operation.state === 'awaiting_confirmation' || isInFlight(operation.state)).map((operation) => [operation.id, operation])).values()];
   const more = !!(operations.data?.next_cursor || operations.data?.truncated);
-  const count = operations.data ? `${formatInteger(BigInt(active.length))}${more ? '+' : ''}` : '…';
+  const total = operations.data ? `${formatInteger(BigInt(active.length))}${more ? '+' : ''}` : '…';
+  // "1 unresolved" / "2 unresolved": the word is the same, the count is localised.
+  const count = `${total} unresolved`;
+  const plural = more || PLURAL.select(active.length) !== 'one' ? 'operations' : 'operation';
 
   let content: ReactNode;
   if (operations.isPending) content = <LoadingState label="Loading operations" />;
@@ -47,7 +53,7 @@ export function LiveOperationsButton({ node }: { node: NodeSummary }) {
 
   if (operations.isPending || active.length === 0) return null;
   return (
-    <Popover open={open} onOpenChange={setOpen} placement="bottom-end" triggerLabel={<Pill tone="warning">{count}</Pill>} label="Operations" slots={{ trigger: LiveTrigger }} slotProps={{ trigger: { 'aria-label': `Operations: ${count}` }, root: { sx: { flexShrink: 0 } } }} content={
+    <Popover open={open} onOpenChange={setOpen} placement="bottom-end" triggerLabel={<Pill tone="warning">{count}</Pill>} label="Operations" slots={{ trigger: LiveTrigger }} slotProps={{ trigger: { 'aria-label': `${total} unresolved ${plural}` }, root: { sx: { flexShrink: 0 } } }} content={
       <Flex direction="column" gap="md">
         {content}
         {more && <ButtonLink size={size} variant="ghost" to="/nodes/$nodeId/operations" params={{ nodeId: node.id }} search={{ state: 'nonterminal' }} onClick={() => setOpen(false)}>All unresolved operations</ButtonLink>}

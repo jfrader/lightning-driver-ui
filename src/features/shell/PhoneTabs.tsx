@@ -56,7 +56,7 @@ export function PhoneTabs() {
   const remembered = useCachedQueryData(tabNodeId === null ? null : nodeQueryOptions(tabNodeId).queryKey);
   const node = currentNode ?? remembered ?? null;
   const active: PhoneTab | null =
-    pathname === '/more' ? 'more' : destination ? (groupOf(destination, node)?.tab ?? null) : null;
+    pathname === '/fleet' ? 'fleet' : pathname === '/more' ? 'more' : destination ? (groupOf(destination, node)?.tab ?? null) : null;
 
   return (
     <Bar aria-label="Sections">
@@ -64,7 +64,7 @@ export function PhoneTabs() {
         const current = tab.key === active ? 'page' : undefined;
         if (tab.destination === null) {
           return (
-            <Tab key={tab.key} activeOptions={EXACT} to="/more" aria-current={current}>
+            <Tab key={tab.key} activeOptions={EXACT} to={tab.key === 'fleet' ? '/fleet' : '/more'} aria-current={current}>
               {tab.label}
             </Tab>
           );

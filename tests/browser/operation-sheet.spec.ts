@@ -159,3 +159,16 @@ for (const width of [390, 1440]) {
     });
   });
 }
+
+test.describe('route sheet title', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('takes focus without painting a focus ring', async ({ page }) => {
+    await installSyntheticApi(page);
+    await page.goto('/nodes/lnd-lab/payments/new');
+    const dialog = page.getByRole('dialog', { name: 'Pay invoice', exact: true });
+    const title = dialog.locator('[data-ui~="drawer-title"]');
+    await expect(title).toBeFocused();
+    expect(await title.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe('none');
+  });
+});
