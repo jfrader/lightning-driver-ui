@@ -125,7 +125,7 @@ const PhoneHeaderRow = styled.div(({ theme }) => ({
   gap: theme.space[2],
   // The chooser keeps a usable minimum: below it, the row wraps instead of squeezing the selector to
   // a sliver at 320 px or doubled text. The pill and the money action then share the second line.
-  '& > :first-child': { flex: '1 1 10rem', minInlineSize: 0, inlineSize: 'auto' },
+  '& > :first-child': { flex: '1 1 7rem', minInlineSize: 0, inlineSize: 'auto' },
   '& > button': { flexShrink: 0 },
 }));
 
