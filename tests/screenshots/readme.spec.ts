@@ -12,8 +12,11 @@ const NODE_ID = examples.fixtures.node_lnd.value.id;
 const CHANNEL_ID = examples.fixtures.channels_page.value.items[0].id;
 const PAY_REVIEW = `/nodes/${NODE_ID}/operations/${operation('pay_invoice').id}`;
 
-/** The fixtures' sentinel alias and version are test markers; the captures read as demo data. */
-const DEMO: SyntheticOptions = { nodeInfo: { alias: 'LND lab', version: '0.19.3-beta' } };
+/**
+ * The fixtures' sentinel alias and version are test markers; the captures read as demo data.
+ * The journal's unresolved payment is a test input, so the README shows a node with nothing outstanding.
+ */
+const DEMO: SyntheticOptions = { nodeInfo: { alias: 'LND lab', version: '0.19.3-beta' }, unresolvedOperation: false };
 
 const DESKTOP = { width: 1440, height: 1000 };
 const PHONE = { width: 390, height: 844 };

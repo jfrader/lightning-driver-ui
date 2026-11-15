@@ -279,19 +279,18 @@ test('the palette opens with the keyboard, traps focus and returns it on close',
   await expect(skip).toBeFocused();
 });
 
-/** Records the keyframe properties of every `Element.animate` call (the screen-change motion). */
-async function recordAnimations(page: Page) {
+/** Records every `document.startViewTransition` call, one entry per screen change. */
+async function recordViewTransitions(page: Page) {
   await page.addInitScript(() => {
-    const calls: string[][] = [];
-    Object.assign(window, { __animateCalls: calls });
-    const animate = Element.prototype.animate;
-    Element.prototype.animate = function record(this: Element, keyframes, options) {
-      const frames = Array.isArray(keyframes) ? keyframes : [];
-      calls.push(frames.flatMap((frame) => Object.keys(frame)));
-      return animate.call(this, keyframes, options);
-    };
+    const calls: string[] = [];
+    Object.assign(window, { __viewTransitions: calls });
+    const start = document.startViewTransition.bind(document);
+    document.startViewTransition = ((options?: StartViewTransitionOptions) => {
+      calls.push(window.location.pathname);
+      return start(options);
+    }) as typeof document.startViewTransition;
   });
-  return () => page.evaluate(() => (window as unknown as { __animateCalls: string[][] }).__animateCalls);
+  return () => page.evaluate(() => (window as unknown as { __viewTransitions: string[] }).__viewTransitions);
 }
 
 async function changeScreen(page: Page) {
@@ -301,21 +300,20 @@ async function changeScreen(page: Page) {
 }
 
 for (const reducedMotion of ['reduce', 'no-preference'] as const) {
-  test(`screen change motion with reduced motion ${reducedMotion}`, async ({ page }) => {
+  test(`screen changes cross-fade with reduced motion ${reducedMotion}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion });
-    const animateCalls = await recordAnimations(page);
+    const viewTransitions = await recordViewTransitions(page);
     await installSyntheticApi(page);
     await page.goto('/nodes/lnd-lab');
     await expect(page.getByRole('heading', { name: 'LND lab' })).toBeVisible();
     await changeScreen(page);
 
-    const calls = await animateCalls();
+    const calls = await viewTransitions();
     if (reducedMotion === 'reduce') {
       expect(calls).toEqual([]);
       return;
     }
-    expect(calls.length).toBeGreaterThan(0);
-    for (const properties of calls) expect(new Set(properties)).toEqual(new Set(['opacity', 'transform']));
+    expect(calls).toEqual(['/nodes/lnd-lab/channels']);
   });
 }
 

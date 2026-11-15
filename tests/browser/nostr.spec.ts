@@ -162,6 +162,8 @@ test('desktop More: sidebar keyboard entry, linked key controls and removal ends
   await page.keyboard.press('Enter');
   const confirm = methods.getByRole('button', { name: 'Remove key' });
   await confirm.scrollIntoViewIfNeeded();
+  // A running view transition paints the snapshot over the page, so wait for the screen change to settle.
+  await page.waitForFunction(() => !document.getAnimations().some((animation) => (animation.effect as KeyframeEffect | null)?.pseudoElement?.startsWith('::view-transition')));
   expect(await confirm.evaluate((element) => {
     const box = element.getBoundingClientRect();
     const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);

@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-router';
 import { isSessionLoss } from '../api/errors';
 import { nodeQueryOptions } from '../api/node-queries';
+import { REDUCED_MOTION_QUERY } from '../config';
 import type { ChannelState, InvoiceState, OperationKind, OperationListState, PaymentState } from '../api/types';
 import { RouteError } from '../components/RouteError';
 import { RoutePending } from '../components/RoutePending';
@@ -326,6 +327,10 @@ const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
+/** A screen is a shell section: a sidebar route is the node plus one more segment at most. */
+const SCREEN_MAX_DEPTH = 3;
+const sectionDepth = (pathname: string) => pathname.split('/').filter(Boolean).length;
+
 export function createAppRouter(queryClient: QueryClient, history?: RouterHistory) {
   return createRouter({
     routeTree,
@@ -333,6 +338,20 @@ export function createAppRouter(queryClient: QueryClient, history?: RouterHistor
     context: { queryClient },
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // Screen changes cross-fade the outgoing paint into the incoming one inside the View
+    // Transitions API, so the content region never blanks between screens. Sheet routes folded
+    // into a screen (its /new and /review children) keep their own motion and swap instantly, and
+    // reduced motion keeps the straight cut.
+    defaultViewTransition: {
+      types: ({ fromLocation, toLocation, pathChanged }) =>
+        pathChanged &&
+        fromLocation !== undefined &&
+        sectionDepth(fromLocation.pathname) <= SCREEN_MAX_DEPTH &&
+        sectionDepth(toLocation.pathname) <= SCREEN_MAX_DEPTH &&
+        !window.matchMedia(REDUCED_MOTION_QUERY).matches
+          ? []
+          : false,
+    },
     defaultErrorComponent: RouteError,
     defaultPendingComponent: RoutePending,
     scrollRestoration: true,

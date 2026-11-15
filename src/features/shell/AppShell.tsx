@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { styled } from '@jfrader/ui';
-import { Outlet, useLocation, useSearch } from '@tanstack/react-router';
+import { Outlet, useSearch } from '@tanstack/react-router';
 import { useCachedQueryData } from '../../api/use-cached-query-data';
 import { Wordmark } from '../../components/Wordmark';
 import { OverlayInvokerContext } from '../../components/overlay-invoker-context';
@@ -155,14 +155,13 @@ function NodeMoneySheet() {
 export function AppShell() {
   const desktop = useDesktopShell();
   const palette = usePalette();
-  const pathname = useLocation({ select: (location) => location.pathname });
   const search = useSearch({ strict: false });
   const moneySheet = useOverlayEntry('moneySheet', !!(search.send || search.receive || search.operation));
   const session = useCachedQueryData(sessionQueryOptions.queryKey);
   useSessionExpiry();
   if (!session) return null;
   const content = (
-    <ContentRegion screenKey={pathname}>
+    <ContentRegion>
       <Outlet />
     </ContentRegion>
   );
