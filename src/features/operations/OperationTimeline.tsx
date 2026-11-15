@@ -1,4 +1,5 @@
 import { styled } from '@jfrader/ui';
+import { mono } from '../../components/text-rule';
 import type { Operation } from '../../api/types';
 import { TABLE_MEDIA } from '../../config';
 import { formatAge, formatClockTime } from '../../lib/time';
@@ -64,7 +65,8 @@ const When = styled.span(({ theme }) => ({
   [TABLE_MEDIA]: { textAlign: 'end' },
 }));
 
-const Mono = styled.time(({ theme }) => ({ fontFamily: theme.font.mono, fontVariantNumeric: 'tabular-nums', color: theme.color.text }));
+/** A clock keeps its `time` element and takes the shared machine-value rule. */
+const Clock = styled.time(({ theme }) => ({ ...mono({ theme }), color: theme.color.text }));
 
 const Unrecorded = styled.span(({ theme }) => ({ fontStyle: 'italic', color: theme.color.textSubtle }));
 
@@ -80,7 +82,7 @@ function StepTime({ step }: { step: OperationStep }) {
   }
   return (
     <When>
-      <Mono dateTime={step.at}>{clock}</Mono> UTC · {formatAge(step.at, now)}
+      <Clock dateTime={step.at}>{clock}</Clock> UTC · {formatAge(step.at, now)}
     </When>
   );
 }

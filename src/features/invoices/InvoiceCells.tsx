@@ -1,4 +1,5 @@
 import { styled } from '@jfrader/ui';
+import { Muted } from '../../components/text';
 import type { Invoice } from '../../api/types';
 import { ListTime } from '../../components/ListTime';
 import { formatAgeShort } from '../../lib/time';
@@ -7,8 +8,6 @@ import { NotReported } from '../display/NotReported';
 import { invoiceExpiry } from './labels';
 
 const Passed = styled.span(({ theme }) => ({ color: theme.color.warning }));
-
-const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted }));
 
 /** Time and age on two lines: a dense cell otherwise breaks "in 59 minutes" mid-phrase. */
 const Stack = styled.span({ display: 'grid', justifyItems: 'start' });

@@ -1,4 +1,5 @@
 import { Pill, styled } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { NodeSummary } from '../../api/types';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
 import { formatAge, formatClockTime } from '../../lib/time';
@@ -29,8 +30,6 @@ const Fact = styled.li(({ theme }) => ({
 }));
 
 const Strong = styled.span(({ theme }) => ({ color: theme.color.text, fontWeight: theme.fontWeight.medium }));
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontVariantNumeric: 'tabular-nums' }));
 
 const Marker = styled.span<{ online: boolean }>(({ theme, online }) => ({
   inlineSize: '0.5rem',

@@ -1,5 +1,6 @@
 import { styled } from '@jfrader/ui';
 import { CopyAction } from '../../components/CopyValue';
+import { Mono } from '../../components/text';
 
 const GROUP_SIZE = 6;
 const GROUPS = new RegExp(`.{1,${GROUP_SIZE}}`, 'g');
@@ -11,14 +12,14 @@ const Row = styled.div(({ theme }) => ({
   minInlineSize: 0,
 }));
 
-const Groups = styled.span<{ prominent: boolean }>(({ theme, prominent }) => ({
+/** The value in 6-character groups: the machine rule, then the wrap and emphasis it needs. */
+const Groups = styled(Mono)<{ prominent: boolean }>(({ theme, prominent }) => ({
   display: 'flex',
   flexWrap: 'wrap',
   columnGap: '0.6ch',
   rowGap: theme.space[1],
   flex: 1,
   minInlineSize: 0,
-  fontFamily: theme.font.mono,
   fontSize: prominent ? theme.textSize.md : theme.textSize.sm,
   color: prominent ? theme.color.text : theme.color.textMuted,
 }));
@@ -57,12 +58,8 @@ export function Identifier({ value, label, prominent = false, grouped = true, tr
   );
 }
 
-const Short = styled.span(({ theme }) => ({
-  fontFamily: theme.font.mono,
-  fontSize: theme.textSize.sm,
-  color: theme.color.textMuted,
-  whiteSpace: 'nowrap',
-}));
+/** A list cell must not wrap, whatever the width. */
+const Short = styled(Mono)({ whiteSpace: 'nowrap' });
 
 const SHORT_HEAD = 8;
 const SHORT_TAIL = 6;
@@ -73,5 +70,5 @@ function shortForm(value: string): string {
 
 /** List-cell form of an identifier: head…tail, full value in the title. Copy lives in the inspector. */
 export function ShortIdentifier({ value }: { value: string }) {
-  return <Short title={value}>{shortForm(value)}</Short>;
+  return <Short muted size="sm" title={value}>{shortForm(value)}</Short>;
 }

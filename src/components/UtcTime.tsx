@@ -1,9 +1,7 @@
-import { styled } from '@jfrader/ui';
+import { Mono } from './text';
 import { NotReported } from '../features/display/NotReported';
 import { formatAge, formatDetailTime } from '../lib/time';
 import { useNow } from '../lib/use-now';
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontVariantNumeric: 'tabular-nums' }));
 
 export function LiveUtcTime({ value }: { value: string | null }) {
   const now = useNow();

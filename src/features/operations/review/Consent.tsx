@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
 import { Pill, styled } from '@jfrader/ui';
+import { Mono, Muted as BaseMuted } from '../../../components/text';
+
+/** The review's muted text sits inside semibold headings, so it resets the weight. */
+export const Muted = styled(BaseMuted)(({ theme }) => ({ fontWeight: theme.fontWeight.regular }));
 import type { NodeSummary, Operation } from '../../../api/types';
 import { TABLE_MEDIA } from '../../../config';
 import { MsatAmount } from '../../display/Amount';
@@ -66,7 +70,6 @@ const Qualifier = styled.span(({ theme }) => ({
 const Value = styled.dd({ margin: 0, minInlineSize: 0, overflowWrap: 'anywhere', display: 'grid', justifyItems: 'end', textAlign: 'end' });
 
 /** "at most", "estimate" and similar qualifiers inside a value. */
-export const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontWeight: theme.fontWeight.regular }));
 
 export const SmallLine = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs }));
 
@@ -83,8 +86,6 @@ const Warning = styled.p(({ theme }) => ({ margin: 0, color: theme.color.warning
 const NodeLine = styled.span(({ theme }) => ({ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: theme.space[2] }));
 
 const Strong = styled.span(({ theme }) => ({ fontWeight: theme.fontWeight.semibold }));
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm, color: theme.color.textMuted }));
 
 interface ConsentProps {
   /** What is being authorized, e.g. "Send on-chain". */
@@ -154,7 +155,7 @@ export function FromField({ operation, node }: { operation: Operation; node: Nod
       <NodeLine>
         {node && <Strong>{node.label}</Strong>}
         <Pill tone="neutral">{NETWORK_LABEL[bound.network]}</Pill>
-        <Mono>{bound.node_id}</Mono>
+        <Mono size="sm" muted>{bound.node_id}</Mono>
       </NodeLine>
     </ConsentField>
   );

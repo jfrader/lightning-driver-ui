@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Alert, Flex, styled } from '@jfrader/ui';
+import { Alert, Flex } from '@jfrader/ui';
+import { Mono } from '../../components/text';
 import type { Channel, NodePolicy } from '../../api/types';
 import { DetailList } from '../../components/DetailList';
 import { Amount } from '../display/Amount';
@@ -10,8 +11,6 @@ import { ReviewSubmit } from '../forms/ReviewSubmit';
 import { checkFeeRate } from '../forms/validation';
 import { useSubmitOperation } from '../operations/use-submit-operation';
 import { CHANNEL_STATE, channelName } from './labels';
-
-const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm, overflowWrap: 'anywhere' }));
 
 interface CloseChannelFormProps {
   nodeId: string;
@@ -37,7 +36,7 @@ export function CloseChannelForm({ nodeId, channel, policy }: CloseChannelFormPr
       <Flex direction="column" gap="md">
         <DetailList
           items={[
-            { label: 'Channel', value: <Mono>{channelName(channel)}</Mono> },
+            { label: 'Channel', value: <Mono size="sm" wrap>{channelName(channel)}</Mono> },
             { label: 'State', value: <StateWord state={CHANNEL_STATE[channel.state]} /> },
             { label: 'Capacity', numeric: true, value: <Amount value={channel.capacity_sat} unit="sat" /> },
             { label: 'Local balance', numeric: true, value: <Amount value={channel.local_msat} unit="msat" /> },
