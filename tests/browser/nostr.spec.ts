@@ -1,24 +1,18 @@
 import { expect, test, type Page } from '@playwright/test';
 import { SYNTHETIC_NPUB, installNostrSigner } from './nostr-signer';
 import { fixture, installSyntheticApi, operation, type RecordedRequest } from './synthetic-api';
+import { expectNoHorizontalOverflow, isPhone } from './support';
 
 const MIN_TOUCH_PX = 44;
-const PHONE_MAX_WIDTH = 1023;
 const REVIEW = operation('pay_invoice');
 const REVIEW_PATH = `/nodes/lnd-lab/operations/${REVIEW.id}`;
 
-const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) <= PHONE_MAX_WIDTH;
 
 async function expectTouchTarget(page: Page, name: string) {
   if (!isPhone(page)) return;
   const box = await page.getByRole('button', { name }).boundingBox();
   if (!box) throw new Error(`Missing geometry for ${name}`);
   expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_PX);
-}
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
 }
 
 /** Console errors and failed responses of the app origin, which a clean journey has none of. */

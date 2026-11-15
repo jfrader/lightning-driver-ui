@@ -8,7 +8,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 import { wrappingControlText } from '../../components/control-styles';
 import { safeRedirectPath } from '../../lib/safe-redirect';
 import { useControlSize } from '../shell/use-shell-layout';
-import { visuallyHidden } from '../shell/visually-hidden';
+import { visuallyHidden } from '../../components/visually-hidden';
 import { AuthLayout } from './AuthLayout';
 import { signInWithNostr, signInWithPasskey } from './ceremonies';
 import { HostInstruction } from './HostInstruction';

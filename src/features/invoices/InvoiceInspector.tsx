@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { CopyButton, styled } from '@jfrader/ui';
+import { styled } from '@jfrader/ui';
+import { CopyAction } from '../../components/CopyValue';
 import { Disclosure } from '../../components/Disclosure';
 import type { Invoice } from '../../api/types';
 import { DetailList, type DetailItem } from '../../components/DetailList';
@@ -10,7 +11,6 @@ import { Amount } from '../display/Amount';
 import { Identifier } from '../display/Identifier';
 import { NotReported } from '../display/NotReported';
 import { StateWord } from '../display/StateWord';
-import { useControlSize } from '../shell/use-shell-layout';
 import { InvoiceExpiryText } from './InvoiceCells';
 import { INVOICE_STATE, payableBolt11 } from './labels';
 
@@ -77,18 +77,14 @@ export function InvoiceInspector({ invoice, close }: InvoiceInspectorProps) {
 }
 
 function InvoiceCopy({ invoice }: { invoice: Invoice }) {
-  const size = useControlSize();
   const now = useDeadlineNow(invoice.expires_at ?? '');
   const bolt11 = payableBolt11(invoice, now);
   return bolt11 !== null ? (
-    <CopyButton
-      text={bolt11}
-      label="Copy invoice"
-      pendingLabel="Copying"
+    <CopyAction
+      value={bolt11}
+      label="invoice"
+      iconOnly={false}
       copiedLabel="Invoice copied"
-      errorLabel="Copy failed"
-      size={size}
-      variant="outline"
       sx={{ justifySelf: 'start' }}
     />
   ) : (

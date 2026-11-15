@@ -1,15 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { installSyntheticApi, operation } from './synthetic-api';
+import { expectNoHorizontalOverflow } from './support';
 
 const SIZES = [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ];
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 async function expectVisibleConfirmation(page: Page, name: string) {
   const action = page.getByRole('dialog').getByRole('button', { name });

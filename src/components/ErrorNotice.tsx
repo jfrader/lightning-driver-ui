@@ -1,4 +1,5 @@
-import { Alert, Button, CopyButton, Flex } from '@jfrader/ui';
+import { Alert, Button, Flex } from '@jfrader/ui';
+import { CopyAction } from './CopyValue';
 import { describeError } from '../api/describe-error';
 import { useControlSize } from '../features/shell/use-shell-layout';
 
@@ -25,14 +26,7 @@ export function ErrorNotice({ error, onRetry, retryLabel = 'Try again', stale = 
               </Button>
             )}
             {requestId && (
-              <CopyButton
-                size={size}
-                text={requestId}
-                label="Copy request ID"
-                pendingLabel="Copying"
-                copiedLabel="Request ID copied"
-                errorLabel="Copy failed"
-              />
+              <CopyAction value={requestId} label="request ID" iconOnly={false} copiedLabel="Request ID copied" />
             )}
           </Flex>
         )}

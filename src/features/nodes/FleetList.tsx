@@ -5,6 +5,7 @@ import type { NodeSummary } from '../../api/types';
 import { ListTime } from '../../components/ListTime';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { RowBody, RowLine } from '../../components/RowLayout';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { formatInteger, parseWireDecimal } from '../../lib/money';
@@ -24,18 +25,6 @@ const Id = styled.span(({ theme }) => ({
 const Muted = styled.span(({ theme }) => ({ color: theme.color.textMuted, fontFamily: theme.font.mono }));
 
 const Count = styled.span(({ theme }) => ({ color: theme.color.warning, fontFamily: theme.font.mono }));
-
-const RowBody = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
-
-const Line = styled.div(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  columnGap: theme.space[3],
-  rowGap: theme.space[1],
-  minInlineSize: 0,
-}));
 
 const Meta = styled.span(({ theme }) => ({
   display: 'inline-flex',
@@ -109,19 +98,19 @@ function columns(): ResourceColumn<NodeSummary>[] {
 function FleetRow({ node }: { node: NodeSummary }) {
   return (
     <RowBody>
-      <Line>
+      <RowLine align="center">
         <NodeLink node={node} />
         <StateWord state={NODE_STATUS[node.status.status]} />
-      </Line>
+      </RowLine>
       <Meta>
         <NetworkPill node={node} />
         <span>{BACKEND_LABEL[node.backend]}</span>
         <span>{accessLabel(node)}</span>
       </Meta>
-      <Line>
+      <RowLine align="center">
         <Observed node={node} />
         {node.unresolved_operation_count !== '0' && <Unresolved node={node} />}
-      </Line>
+      </RowLine>
       {node.kind === 'bitcoin' && (
         <Meta>
           <span>Actions {capabilitySummary(node)}</span>

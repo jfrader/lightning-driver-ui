@@ -9,6 +9,7 @@ import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { RowBody, RowLine } from '../../components/RowLayout';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
 import { InspectorLayout } from '../../components/InspectorLayout';
@@ -26,18 +27,6 @@ import { LIQUIDITY_PARTS } from './liquidity';
 const route = getRouteApi('/_authed/nodes/$nodeId/_configured/channels');
 
 const Mono = styled.span(({ theme }) => ({ fontFamily: theme.font.mono, fontSize: theme.textSize.sm }));
-
-const RowBody = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[2], minInlineSize: 0 }));
-
-const Line = styled.div(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  columnGap: theme.space[3],
-  rowGap: theme.space[1],
-  minInlineSize: 0,
-}));
 
 const Meta = styled.span(({ theme }) => ({
   display: 'inline-flex',
@@ -62,19 +51,19 @@ function channelColumns(open: Open): ResourceColumn<Channel>[] {
 
 function ChannelRow({ channel, open }: { channel: Channel; open: Open }) {
   return (
-    <RowBody>
-      <Line>
+    <RowBody gap="md">
+      <RowLine align="center">
         {open(channel, <Mono>{channelName(channel)}</Mono>)}
         <ChannelStateCell channel={channel} />
-      </Line>
+      </RowLine>
       <ChannelLiquidityCell channel={channel} />
-      <Line>
+      <RowLine align="center">
         <ShortIdentifier value={channel.peer_pubkey} />
         <Meta>
           <span>Capacity</span>
           <Amount value={channel.capacity_sat} unit="sat" />
         </Meta>
-      </Line>
+      </RowLine>
     </RowBody>
   );
 }

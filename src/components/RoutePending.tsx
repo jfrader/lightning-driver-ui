@@ -1,5 +1,5 @@
 import { styled } from '@jfrader/ui';
-import { visuallyHidden } from '../features/shell/visually-hidden';
+import { visuallyHidden } from './visually-hidden';
 
 const Hidden = styled.span(visuallyHidden);
 

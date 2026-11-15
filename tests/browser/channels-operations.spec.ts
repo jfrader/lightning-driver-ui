@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { UNRESOLVED_OPERATION_ID, fixture, installSyntheticApi, operation, syntheticChannels } from './synthetic-api';
+import { expectNoHorizontalOverflow } from './support';
 import { doubleText } from './text-size';
 
 const OPERATION_PATH = `/nodes/lnd-lab/operations/${UNRESOLVED_OPERATION_ID}`;
@@ -41,11 +42,6 @@ test('historical-node navigation has usable phone targets and still opens the jo
     await expect(page.getByRole('heading', { name: 'Fleet', exact: true })).toBeVisible();
   }
 });
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 for (const path of ['/nodes/lnd-lab/channels?selected=channel-synthetic-remainder', '/nodes/lnd-lab/operations', OPERATION_PATH]) {
   test(`${path} has no horizontal overflow at 390, 768 and 1440`, async ({ page }) => {

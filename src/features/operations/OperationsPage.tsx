@@ -6,6 +6,7 @@ import { FilterSelect } from '../../components/FilterSelect';
 import { PageHeader } from '../../components/PageHeader';
 import { PagedList } from '../../components/PagedList';
 import type { ResourceColumn } from '../../components/ResourceList';
+import { RowBody, RowLine } from '../../components/RowLayout';
 import { ListTime } from '../../components/ListTime';
 import { ROW_PRIMARY_LINK } from '../../components/row-link';
 import { TextLink } from '../../components/TextLink';
@@ -15,17 +16,6 @@ import { OperationAmount } from './OperationAmount';
 const route = getRouteApi('/_authed/nodes/$nodeId/operations');
 
 const Stage = styled.span(({ theme }) => ({ fontSize: theme.textSize.xs, color: theme.color.textMuted }));
-
-const RowBody = styled.div(({ theme }) => ({ display: 'grid', gap: theme.space[1], minInlineSize: 0 }));
-
-const Line = styled.div(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  columnGap: theme.space[3],
-  rowGap: theme.space[1],
-}));
 
 function ActionLink({ operation }: { operation: Operation }) {
   return (
@@ -62,14 +52,14 @@ function columns(): ResourceColumn<Operation>[] {
 function OperationRow({ operation }: { operation: Operation }) {
   return (
     <RowBody>
-      <Line>
+      <RowLine align="center">
         <ActionLink operation={operation} />
         <OutcomePill operation={operation} />
-      </Line>
-      <Line>
+      </RowLine>
+      <RowLine align="center">
         <OperationAmount operation={operation} />
         <ListTime at={operation.created_at} />
-      </Line>
+      </RowLine>
       <Stage>{OPERATION_STAGE[operation.stage]}</Stage>
     </RowBody>
   );
